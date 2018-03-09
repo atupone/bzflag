@@ -3545,19 +3545,16 @@ static void     handlePlayerMessage(uint16_t code, uint16_t,
 static void doCachedRead()
 {
     int e = 0;
-    bool full;
     uint16_t code;
     uint16_t len;
     char *msg;
-
-    full = messageQueue.isFull();
 
     // handle server messages
     if (serverLink)
     {
         while (!serverError)
         {
-            if (full)
+            if (messageQueue.isFull())
                 break;
             msg = messageQueue.getHead();
             e = serverLink->read(code, len, msg, 0);
@@ -3611,7 +3608,7 @@ static void doCachedRead()
             case MsgPlayerUpdate:
             case MsgPlayerUpdateSmall:
             case MsgGMUpdate:
-                full = messageQueue.saveHead(true, code, len);
+                messageQueue.saveHead(true, code, len);
             }
         }
         if (e == -2)
@@ -3625,13 +3622,14 @@ static void doCachedRead()
 #ifdef ROBOT
     for (int i = 0; i < numRobots; i++)
     {
-        if (full)
+        if (messageQueue.isFull())
             break;
         msg = messageQueue.getHead();
+        code = MsgNull;
         while (robotServer[i] && robotServer[i]->read(code, len, msg, 0) == 1)
             ;
         if (code == MsgKilled || code == MsgShotBegin || code == MsgShotEnd)
-            full = messageQueue.saveHead(false, code, len);
+            messageQueue.saveHead(false, code, len);
     }
 #endif
 }
@@ -3642,8 +3640,7 @@ static void doCachedRead()
 
 static void     doMessages()
 {
-    bool empty = messageQueue.isEmpty();
-    while (!empty)
+    while (!messageQueue.isEmpty())
     {
         bool human;
         uint16_t code;
@@ -3652,7 +3649,7 @@ static void     doMessages()
 
         messageQueue.getTail(human, code, len, msg);
         handleServerMessage(human, code, len, msg);
-        empty = messageQueue.dequeue();
+        messageQueue.dequeue();
     }
 }
 
