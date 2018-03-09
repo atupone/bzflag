@@ -93,6 +93,8 @@ bzflag_SOURCES =			\
 	MainWindow.h			\
 	MenuDefaultKey.h		\
 	MenuDefaultKey.cxx		\
+	MessageQueue.h			\
+	MessageQueue.cxx		\
 	motd.h				\
 	motd.cxx			\
 	NewVersionMenu.cxx		\
