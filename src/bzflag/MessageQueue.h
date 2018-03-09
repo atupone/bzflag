@@ -5,7 +5,7 @@
 
 #include <stdint.h>
 #ifdef HAVE_SDL2
-#include "SDL_mutex.h"
+#include "SDL_atomic.h"
 #endif
 
 #include "Protocol.h"
@@ -27,8 +27,8 @@ public:
     void reset();
     bool isFull();
     bool isEmpty();
-    bool saveHead(bool human, uint16_t code, uint16_t len);
-    bool dequeue();
+    void saveHead(bool human, uint16_t code, uint16_t len);
+    void dequeue();
     void getTail(
         bool &human,
         uint16_t &code,
@@ -36,16 +36,14 @@ public:
         char *&msg);
     char *getHead();
 private:
-    void lock();
-    void unlock();
-
     static const unsigned int queueSize = 128;
     Message messages[queueSize];
-    unsigned int head;
-    unsigned int tail;
-    unsigned int next;
 #ifdef HAVE_SDL2
-    SDL_mutex *mutex;
+    SDL_atomic_t atomHead;
+    SDL_atomic_t atomTail;
 #endif
+    int tail;
+    int head;
+    int next;
 };
 #endif
