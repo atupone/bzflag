@@ -27,6 +27,9 @@
 #include <utime.h>
 #endif
 #include <cmath>
+#ifdef HAVE_SDL2
+#include "SDL_thread.h"
+#endif
 
 // common headers
 #include "AccessList.h"
@@ -75,6 +78,7 @@
 #include "HUDDialogStack.h"
 #include "HUDRenderer.h"
 #include "MainMenu.h"
+#include "MessageQueue.h"
 #include "motd.h"
 #include "RadarRenderer.h"
 #include "Roaming.h"
@@ -233,6 +237,8 @@ static Address serverNetworkAddress = Address();
 OpenGLFramebuffer glFramebuffer;
 
 static AccessList   ServerAccessList("ServerAccess.txt", NULL);
+
+static MessageQueue messageQueue;
 
 // access silencePlayers from bzflag.cxx
 std::vector<std::string>& getSilenceList()
@@ -3538,17 +3544,78 @@ static void     handlePlayerMessage(uint16_t code, uint16_t,
 // message handling
 //
 
-static void     doMessages()
+static void doCachedRead()
 {
-    char msg[MaxPacketLen];
-    uint16_t code, len;
     int e = 0;
+    bool full;
+    uint16_t code;
+    uint16_t len;
+    char *msg;
+
+    full = messageQueue.isFull();
+
     // handle server messages
     if (serverLink)
     {
-
-        while (!serverError && (e = serverLink->read(code, len, msg, 0)) == 1)
-            handleServerMessage(true, code, len, msg);
+        while (!serverError)
+        {
+            if (full)
+                break;
+            msg = messageQueue.getHead();
+            e = serverLink->read(code, len, msg, 0);
+            if (e != 1)
+                break;
+            switch (code)
+            {
+            case MsgFetchResources:
+            case MsgUDPLinkEstablished:
+            case MsgUDPLinkRequest:
+            case MsgSuperKill:
+            case MsgAccept:
+            case MsgGameSettings:
+            case MsgCacheURL:
+            case MsgWantWHash:
+            case MsgGetWorld:
+            case MsgGameTime:
+            case MsgFlagType:
+            case MsgLagPing:
+                handleServerMessage(true, code, len, msg);
+                break;
+            case MsgNearFlag:
+            case MsgCustomSound:
+            case MsgReject:
+            case MsgNegotiateFlags:
+            case MsgTimeUpdate:
+            case MsgScoreOver:
+            case MsgAddPlayer:
+            case MsgRemovePlayer:
+            case MsgFlagUpdate:
+            case MsgTeamUpdate:
+            case MsgAlive:
+            case MsgAutoPilot:
+            case MsgPause:
+            case MsgKilled:
+            case MsgGrabFlag:
+            case MsgDropFlag:
+            case MsgCaptureFlag:
+            case MsgNewRabbit:
+            case MsgShotBegin:
+            case MsgShotEnd:
+            case MsgHandicap:
+            case MsgScore:
+            case MsgSetVar:
+            case MsgTeleport:
+            case MsgTransferFlag:
+            case MsgMessage:
+            case MsgReplayReset:
+            case MsgAdminInfo:
+            case MsgPlayerInfo:
+            case MsgPlayerUpdate:
+            case MsgPlayerUpdateSmall:
+            case MsgGMUpdate:
+                full = messageQueue.saveHead(true, code, len);
+            }
+        }
         if (e == -2)
         {
             printError("Server communication error");
@@ -3560,12 +3627,35 @@ static void     doMessages()
 #ifdef ROBOT
     for (int i = 0; i < numRobots; i++)
     {
+        if (full)
+            break;
+        msg = messageQueue.getHead();
         while (robotServer[i] && robotServer[i]->read(code, len, msg, 0) == 1)
             ;
         if (code == MsgKilled || code == MsgShotBegin || code == MsgShotEnd)
-            handleServerMessage(false, code, len, msg);
+            full = messageQueue.saveHead(false, code, len);
     }
 #endif
+}
+
+//
+// message handling
+//
+
+static void     doMessages()
+{
+    bool empty = messageQueue.isEmpty();
+    while (!empty)
+    {
+        bool human;
+        uint16_t code;
+        uint16_t len;
+        char *msg;
+
+        messageQueue.getTail(human, code, len, msg);
+        handleServerMessage(human, code, len, msg);
+        empty = messageQueue.dequeue();
+    }
 }
 
 static void     updateFlags(float dt)
@@ -6971,6 +7061,20 @@ static void     updateDestructCountdown(float dt)
     return;
 }
 
+#ifdef HAVE_SDL2
+static bool doThreadRead;
+
+static int handleAllServerMessages (void *)
+{
+    while (doThreadRead)
+    {
+        // handle incoming packets
+        doCachedRead();
+        TimeKeeper::sleep(0.01f);
+    }
+    return 0;
+}
+#endif
 
 //
 // main playing loop
@@ -6979,6 +7083,20 @@ static void     updateDestructCountdown(float dt)
 static void     playingLoop()
 {
     int i;
+
+    messageQueue.reset();
+
+#ifdef HAVE_SDL2
+    doThreadRead = true;
+    SDL_Thread *handleAllMessageThread =
+        SDL_CreateThread(handleAllServerMessages, "handleNetworkRead", NULL);;
+
+    if (handleAllMessageThread == NULL)
+    {
+        printFatalError("Error creating SDL_Thread\n");
+        exit(0);
+    }
+#endif
 
     // main loop
     while (!CommandsStandard::isQuit())
@@ -7492,12 +7610,22 @@ static void     playingLoop()
             lastTime = TimeKeeper::getCurrent();
         } // end energy saver check
 
+#ifndef HAVE_SDL2
+        doCachedRead();
+#endif
+
         // handle incoming packets
         doMessages();
 
     } // end main client loop
 
     dropLastExplosions();
+
+#ifdef HAVE_SDL2
+    int status;
+    doThreadRead = false;
+    SDL_WaitThread(handleAllMessageThread, &status);
+#endif
 }
 
 
