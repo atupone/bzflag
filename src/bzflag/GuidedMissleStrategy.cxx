@@ -23,6 +23,7 @@
 #include "TextureManager.h"
 #include "Intersect.h"
 #include "OpenGLAPI.h"
+#include "VBO_Drawing.h"
 
 /* local implementation headers */
 #include "LocalPlayer.h"
@@ -477,41 +478,27 @@ void GuidedMissileStrategy::radarRender() const
     const int size   = (int)BZDBCache::sizedRadarShots;
 
     float shotTailLength = BZDB.eval(StateDatabase::BZDB_SHOTTAILLENGTH);
+    glPushMatrix();
+    glTranslatef(orig[0], orig[1], 0.0f);
     // Display leading lines
     if (length > 0)
     {
         const auto vel = getPath().getVelocity();
         const auto dir = glm::normalize(vel) * shotTailLength * float(length);
-        glBegin(GL_LINES);
-        glVertex(orig);
+        glScalef(dir[0], dir[1], 0.0f);
         if (BZDBCache::leadingShotLine == 1)   //leading
-        {
-            glVertex2f(orig[0] + dir[0], orig[1] + dir[1]);
-            glEnd();
-        }
+            DRAWER.leadingLine();
         else if (BZDBCache::leadingShotLine == 0)     //lagging
-        {
-            glVertex2f(orig[0] - dir[0], orig[1] - dir[1]);
-            glEnd();
-        }
+            DRAWER.laggingLine();
         else if (BZDBCache::leadingShotLine == 2)     //both
-        {
-            glVertex2f(orig[0] + dir[0], orig[1] + dir[1]);
-            glEnd();
-            glBegin(GL_LINES);
-            glVertex(orig);
-            glVertex2f(orig[0] - dir[0], orig[1] - dir[1]);
-            glEnd();
-        }
+            DRAWER.leadlagLine();
 
         // draw a "bright reddish" missle tip
         if (size > 0)
         {
             glColor3f(1.0f, 0.75f, 0.75f);
             glPointSize((float)size);
-            glBegin(GL_POINTS);
-            glVertex2f(orig[0], orig[1]);
-            glEnd();
+            DRAWER.point();
             glPointSize(1.0f);
         }
     }
@@ -521,19 +508,16 @@ void GuidedMissileStrategy::radarRender() const
         {
             // draw a sized missle
             glPointSize((float)size);
-            glBegin(GL_POINTS);
-            glVertex(orig);
-            glEnd();
+            DRAWER.point();
             glPointSize(1.0f);
         }
         else
         {
             // draw the tiny missle
-            glBegin(GL_POINTS);
-            glVertex(orig);
-            glEnd();
+            DRAWER.point();
         }
     }
+    glPopMatrix();
 }
 
 // Local Variables: ***

@@ -25,6 +25,7 @@
 #include "OpenGLAPI.h"
 #include "Vertex_Chunk.h"
 #include "VBO_Geometry.h"
+#include "VBO_Drawing.h"
 
 // local implementation headers
 #include "ViewFrustum.h"
@@ -424,6 +425,8 @@ void            FlagSceneNode::FlagRenderNode::render(bool shadow)
 
             if (realFlag)
                 glPopMatrix();
+            else
+                glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
         }
         else
         {
@@ -466,9 +469,6 @@ void            FlagSceneNode::FlagRenderNode::render(bool shadow)
         }
         else
         {
-            if (is_billboard)
-                glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
-
             glBegin(GL_TRIANGLE_STRIP);
             {
                 glVertex3f(-poleWidth, 0.0f, 0.0f);
