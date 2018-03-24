@@ -7463,7 +7463,6 @@ void            startPlaying(BzfDisplay* _display,
     // initialize the tank display lists
     // (do this before calling SceneRenderer::render())
     TankGeometryMgr::init();
-    SphereLodSceneNode::init();
 
     // make control panel
     ControlPanel _controlPanel(*mainWindow, *sceneRenderer);
@@ -7823,7 +7822,6 @@ void            startPlaying(BzfDisplay* _display,
 
     // clean up
     TankGeometryMgr::kill();
-    SphereLodSceneNode::kill();
     if (resourceDownloader)
         delete resourceDownloader;
     delete motd;

@@ -23,6 +23,7 @@
 #include "Flag.h"
 #include "playing.h"
 #include "OpenGLAPI.h"
+#include "VBO_Drawing.h"
 
 class StdSpawnEffect : public BasicEffect
 {
@@ -1014,21 +1015,8 @@ void FlashShotEffect::draw(const SceneRenderer &)
     glDepthMask(0);
 
     // draw me here
-    glBegin(GL_TRIANGLE_STRIP);
-
-    glTexCoord2f(0,1);
-    glVertex3f(0,0,radius);
-
-    glTexCoord2f(0,0);
-    glVertex3f(0,length,radius);
-
-    glTexCoord2f(1,1);
-    glVertex3f(0,0,-radius);
-
-    glTexCoord2f(1,0);
-    glVertex3f(0,length,-radius);
-
-    glEnd();
+    glScalef(0.0f, length, radius);
+    DRAWER.verticalTexturedRect();
 
     glColor4f(1,1,1,1);
     glDepthMask(1);
@@ -1447,25 +1435,6 @@ bool SmokeGMPuffEffect::update ( float time )
     return false;
 }
 
-void QuadGuts ( float u0, float v0, float u1, float v1, float h, float v)
-{
-    glTexCoord2f(u0, v0);
-    glVertex2f(-h, -v);
-    glTexCoord2f(u1, v0);
-    glVertex2f(+h, -v);
-    glTexCoord2f(u0, v1);
-    glVertex2f(-h, +v);
-    glTexCoord2f(u1, v1);
-    glVertex2f(+h, +v);
-}
-
-void DrawTextureQuad ( float u0, float v0, float u1, float v1, float h, float v)
-{
-    glBegin(GL_TRIANGLE_STRIP);
-    QuadGuts(u0,v0,u1,v1,h,v);
-    glEnd();
-}
-
 void SmokeGMPuffEffect::draw(const SceneRenderer &)
 {
     glPushMatrix();
@@ -1476,7 +1445,6 @@ void SmokeGMPuffEffect::draw(const SceneRenderer &)
 
     glTranslatef(pos[0]+jitter.x,pos[1]+jitter.y,pos[2]+jitter.z+vertDrift);
 
-    glPushMatrix();
     RENDERER.getViewFrustum().executeBillboard();
     glRotatef(age*180,0,0,1);
 
@@ -1494,9 +1462,15 @@ void SmokeGMPuffEffect::draw(const SceneRenderer &)
 
     float size = 0.5f + (age * 1.25f);
 
-    DrawTextureQuad ( (float)u, (float)v, (float)u + du, (float)v + dv, size, size);
-
+    glScalef(size, size, 0.0f);
+    glMatrixMode(GL_TEXTURE);
+    glPushMatrix();
+    glTranslatef(u, v, 0.0f);
+    glScalef(du, dv, 0.0f);
+    DRAWER.simmetricTexturedRect();
     glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
+
     glDepthMask(1);
     glPopMatrix();
 }

@@ -26,6 +26,7 @@
 #include "Intersect.h"
 #include "Extents.h"
 #include "OpenGLAPI.h"
+#include "VBO_Drawing.h"
 
 // local impl headers
 #include "RoofTops.h"
@@ -65,7 +66,7 @@ WeatherRenderer::WeatherRenderer()
 
     puddleColor = glm::vec4(1.0f);
 
-    dropList = puddleList = INVALID_GL_LIST_ID;
+    dropList = INVALID_GL_LIST_ID;
 
     gridSize = 200.0f;
 
@@ -138,8 +139,6 @@ void WeatherRenderer::init(void)
 
     gstate.setTexture(tm.getTextureID("puddle"));
     puddleState = gstate.getState();
-
-    buildPuddleList();
 }
 
 
@@ -506,11 +505,6 @@ void WeatherRenderer::freeContext(void)
         glDeleteLists(dropList, 1);
         dropList = INVALID_GL_LIST_ID;
     }
-    if (puddleList != INVALID_GL_LIST_ID)
-    {
-        glDeleteLists(puddleList, 1);
-        puddleList = INVALID_GL_LIST_ID;
-    }
     return;
 }
 
@@ -518,7 +512,6 @@ void WeatherRenderer::freeContext(void)
 void WeatherRenderer::rebuildContext(void)
 {
     buildDropList();
-    buildPuddleList();
     return;
 }
 
@@ -602,39 +595,6 @@ void WeatherRenderer::buildDropList(bool _draw)
         glEnd();
         glPopMatrix();
     }
-
-    if (!_draw)
-        glEndList();
-}
-
-
-void WeatherRenderer::buildPuddleList(bool _draw)
-{
-    float scale = 1;
-    if (!_draw)
-    {
-        if (puddleList != INVALID_GL_LIST_ID)
-        {
-            glDeleteLists(puddleList, 1);
-            puddleList = INVALID_GL_LIST_ID;
-        }
-        puddleList = glGenLists(1);
-        glNewList(puddleList, GL_COMPILE);
-    }
-
-    glBegin(GL_TRIANGLE_STRIP);
-    glTexCoord2f(0, 0);
-    glVertex3f(-scale, -scale, 0);
-
-    glTexCoord2f(1, 0);
-    glVertex3f(scale, -scale, 0);
-
-    glTexCoord2f(0, 1);
-    glVertex3f(-scale, scale, 0);
-
-    glTexCoord2f(1, 1);
-    glVertex3f(scale, scale, 0);
-    glEnd();
 
     if (!_draw)
         glEndList();
@@ -790,10 +750,7 @@ void WeatherRenderer::drawPuddle(puddle& splash)
     glColor4f(puddleColor[0], puddleColor[1], puddleColor[2], 1.0f - lifeTime);
 
     glScalef(scale, scale, scale);
-    if (1)
-        glCallList(puddleList);
-    else
-        buildPuddleList(true);
+    DRAWER.simmetricTexturedRect();
 
     glPopMatrix();
 }

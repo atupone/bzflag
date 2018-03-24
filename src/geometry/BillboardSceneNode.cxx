@@ -24,6 +24,7 @@
 #include "TextureManager.h"
 #include "mathRoutine.h"
 #include "OpenGLAPI.h"
+#include "VBO_Drawing.h"
 
 // local implementation headers
 #include "ViewFrustum.h"
@@ -362,19 +363,19 @@ void            BillboardSceneNode::BillboardRenderNode::render()
         glTranslate(pos);
         frustum.executeBillboard();
         glRotatef(sceneNode->angle, 0.0f, 0.0f, 1.0f);
+        glScalef(sceneNode->width, sceneNode->height, 0.0f);
+        glMatrixMode(GL_TEXTURE);
+        glPushMatrix();
+        glLoadIdentity();
+        glTranslatef(u, v, 0.0f);
+        glScalef(du, dv, 0.0f);
 
         // draw billboard
         myColor4fv(sceneNode->color);
-        glBegin(GL_TRIANGLE_STRIP);
-        glTexCoord2f(   u,    v);
-        glVertex2f  (-sceneNode->width, -sceneNode->height);
-        glTexCoord2f(du+u,    v);
-        glVertex2f  ( sceneNode->width, -sceneNode->height);
-        glTexCoord2f(   u, dv+v);
-        glVertex2f  (-sceneNode->width,  sceneNode->height);
-        glTexCoord2f(du+u, dv+v);
-        glVertex2f  ( sceneNode->width,  sceneNode->height);
-        glEnd();
+        DRAWER.simmetricTexturedRect();
+
+        glPopMatrix();
+        glMatrixMode(GL_MODELVIEW);
     }
     glPopMatrix();
 
