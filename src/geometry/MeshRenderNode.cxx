@@ -91,7 +91,7 @@ void OpaqueRenderNode::renderShadow()
 {
     glPushMatrix();
     glMultMatrixf(xformMatrix);
-    drawMgr->executeSetGeometry(lod, set);
+    drawMgr->executeSet(lod, set, false, false);
     glPopMatrix();
 
     addTriangleCount(triangles);

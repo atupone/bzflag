@@ -45,14 +45,11 @@ MeshFragSceneNode::Geometry::Geometry(MeshFragSceneNode &node)
     : style(0)
     , sceneNode(node)
 {
-    list = INVALID_GL_LIST_ID;
-    OpenGLGState::registerContextInitializer (freeContext, initContext, this);
 }
 
 
 MeshFragSceneNode::Geometry::~Geometry()
 {
-    OpenGLGState::unregisterContextInitializer (freeContext, initContext, this);
 }
 
 
@@ -64,92 +61,20 @@ void MeshFragSceneNode::Geometry::init()
 
 void MeshFragSceneNode::Geometry::initDisplayList()
 {
-    if (list != INVALID_GL_LIST_ID)
-        glDeleteLists(list, 1);
-    list = INVALID_GL_LIST_ID;
-    if (BZDB.isTrue("meshLists"))
     {
-        list = glGenLists(1);
-        glNewList(list, GL_COMPILE);
         drawVTN();
-        glEndList();
     }
     return;
 }
 
 
-void MeshFragSceneNode::Geometry::freeDisplayList()
+inline void MeshFragSceneNode::Geometry::drawVTN()
 {
-    if (list != INVALID_GL_LIST_ID)
-        glDeleteLists(list, 1);
-    list = INVALID_GL_LIST_ID;
-    return;
-}
-
-
-void MeshFragSceneNode::Geometry::freeContext(void *data)
-{
-    ((MeshFragSceneNode::Geometry*)data)->freeDisplayList();
-    return;
-}
-
-
-void MeshFragSceneNode::Geometry::initContext(void *data)
-{
-    ((MeshFragSceneNode::Geometry*)data)->initDisplayList();
-    return;
-}
-
-
-inline void MeshFragSceneNode::Geometry::drawV() const
-{
-    glDisableClientState(GL_NORMAL_ARRAY);
-    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-
-    glVertexPointer(sceneNode.vertices);
-    glDrawArrays(GL_TRIANGLES, 0, sceneNode.arrayCount * 3);
-
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-    glEnableClientState(GL_NORMAL_ARRAY);
-
-    return;
-}
-
-
-inline void MeshFragSceneNode::Geometry::drawVT() const
-{
-    glDisableClientState(GL_NORMAL_ARRAY);
-
-    glVertexPointer(sceneNode.vertices);
-    glTexCoordPointer(2, GL_FLOAT, 0, sceneNode.texcoords);
-    glDrawArrays(GL_TRIANGLES, 0, sceneNode.arrayCount * 3);
-
-    glEnableClientState(GL_NORMAL_ARRAY);
-
-    return;
-}
-
-
-inline void MeshFragSceneNode::Geometry::drawVN() const
-{
-    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-
-    glVertexPointer(sceneNode.vertices);
-    glNormalPointer(GL_FLOAT, 0, sceneNode.normals);
-    glDrawArrays(GL_TRIANGLES, 0, sceneNode.arrayCount * 3);
-
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-
-    return;
-}
-
-
-inline void MeshFragSceneNode::Geometry::drawVTN() const
-{
-    glVertexPointer(sceneNode.vertices);
-    glNormalPointer(GL_FLOAT, 0, sceneNode.normals);
-    glTexCoordPointer(2, GL_FLOAT, 0, sceneNode.texcoords);
-    glDrawArrays(GL_TRIANGLES, 0, sceneNode.arrayCount * 3);
+    const int count = sceneNode.arrayCount * 3;
+    vboChunk = Vertex_Chunk(Vertex_Chunk::VTN, count);
+    vboChunk.vertexData(sceneNode.vertices);
+    vboChunk.textureData(sceneNode.texcoords);
+    vboChunk.normalData(sceneNode.normals);
 
     return;
 }
@@ -166,25 +91,8 @@ void MeshFragSceneNode::Geometry::render()
     // set the color
     sceneNode.setColor();
 
-    if (list != INVALID_GL_LIST_ID)
-        glCallList(list);
-    else
-    {
-        if (BZDBCache::lighting)
-        {
-            if (BZDBCache::texture)
-                drawVTN();
-            else
-                drawVN();
-        }
-        else
-        {
-            if (BZDBCache::texture)
-                drawVT();
-            else
-                drawV();
-        }
-    }
+    vboChunk.enableArrays(BZDBCache::texture, BZDBCache::lighting, false);
+    vboChunk.glDrawArrays(GL_TRIANGLES);
 
     if (switchLights)
         RENDERER.reenableLights();
@@ -197,15 +105,9 @@ void MeshFragSceneNode::Geometry::render()
 
 void MeshFragSceneNode::Geometry::renderShadow()
 {
-    const int triangles = sceneNode.arrayCount;
-    if (list != INVALID_GL_LIST_ID)
-        glCallList(list);
-    else
-    {
-        glVertexPointer(sceneNode.vertices);
-        glDrawArrays(GL_TRIANGLES, 0, triangles * 3);
-    }
-    addTriangleCount(triangles);
+    vboChunk.enableVertexOnly();
+    vboChunk.glDrawArrays(GL_TRIANGLES);
+    addTriangleCount(sceneNode.arrayCount);
     return;
 }
 
@@ -224,10 +126,16 @@ const glm::vec3 &MeshFragSceneNode::Geometry::getPosition() const
 //
 
 MeshFragSceneNode::MeshFragSceneNode(int faceCount_, const MeshFace** faces_)
-    : renderNode(*this)
+    : WallSceneNode()
+    , renderNode(*this)
     , faceCount(faceCount_)
     , faces(faces_)
+    , noRadar(false)
+    , noShadow(false)
     , arrayCount(0)
+    , vertices(nullptr)
+    , normals(nullptr)
+    , texcoords(nullptr)
 {
     int i, j, k;
 
