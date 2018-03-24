@@ -23,6 +23,7 @@
 #include "StateDatabase.h"
 #include "BZDBCache.h"
 #include "Vertex_Chunk.h"
+#include "VBO_Drawing.h"
 
 // local implementation headers
 #include "ViewFrustum.h"
@@ -430,20 +431,17 @@ void            FlagSceneNode::FlagRenderNode::render(bool shadow)
 
             if (realFlag)
                 glPopMatrix();
+            else
+                glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
         }
         else
         {
             // Not wawing flag
-            glBegin(GL_TRIANGLE_STRIP);
-            glTexCoord2f(0.0f, 0.0f);
-            glVertex3f(0.0f, 0.0f, base);
-            glTexCoord2f(1.0f, 0.0f);
-            glVertex3f(Width, 0.0f, base);
-            glTexCoord2f(0.0f, 1.0f);
-            glVertex3f(0.0f, 0.0f, topHeight);
-            glTexCoord2f(1.0f, 1.0f);
-            glVertex3f(Width, 0.0f, topHeight);
-            glEnd();
+            glPushMatrix();
+            glTranslatef(0.0f, 0.0f, base);
+            glScalef(Width, 0.0f, topHeight - base);
+            DRAWER.asimmetricTexturedRectXZ();
+            glPopMatrix();
             addTriangleCount(2);
         }
 
@@ -453,50 +451,21 @@ void            FlagSceneNode::FlagRenderNode::render(bool shadow)
         if (doing_texturing)
             glDisable(GL_TEXTURE_2D);
 
+
+        glScalef(poleWidth, poleWidth, topHeight);
         if (is_billboard && realFlag)
         {
-            glBegin(GL_TRIANGLE_STRIP);
-            {
-                glVertex3f(-poleWidth, 0.0f, 0.0f);
-                glVertex3f(-poleWidth, 0.0f, topHeight);
-                glVertex3f(0.0f, -poleWidth, 0.0f);
-                glVertex3f(0.0f, -poleWidth, topHeight);
-                glVertex3f(+poleWidth, 0.0f, 0.0f);
-                glVertex3f(+poleWidth, 0.0f, topHeight);
-                glVertex3f(0.0f, +poleWidth, 0.0f);
-                glVertex3f(0.0f, +poleWidth, topHeight);
-                glVertex3f(-poleWidth, 0.0f, 0.0f);
-                glVertex3f(-poleWidth, 0.0f, topHeight);
-            }
-            glEnd();
+            DRAWER.cubeSXYAZ();
             addTriangleCount(8);
         }
         else if (geoPole)
         {
-            if (is_billboard)
-                glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
-
-            glBegin(GL_TRIANGLE_STRIP);
-            {
-                glVertex3f(-poleWidth, 0.0f, 0.0f);
-                glVertex3f(+poleWidth, 0.0f, 0.0f);
-                glVertex3f(-poleWidth, 0.0f, topHeight);
-                glVertex3f(+poleWidth, 0.0f, topHeight);
-            }
-            glEnd();
+            DRAWER.rectSXAZ();
             addTriangleCount(2);
         }
         else
         {
-            if (is_billboard)
-                glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
-
-            glBegin(GL_LINE_STRIP);
-            {
-                glVertex3f(0.0f, 0.0f, 0.0f);
-                glVertex3f(0.0f, 0.0f, topHeight);
-            }
-            glEnd();
+            DRAWER.asimmetricLineZ();
             addTriangleCount(1);
         }
 

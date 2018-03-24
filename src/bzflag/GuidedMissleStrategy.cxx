@@ -21,6 +21,7 @@
 #include "BZDBCache.h"
 #include "TextureManager.h"
 #include "Intersect.h"
+#include "VBO_Drawing.h"
 
 /* local implementation headers */
 #include "LocalPlayer.h"
@@ -497,49 +498,31 @@ void GuidedMissileStrategy::expire()
 void GuidedMissileStrategy::radarRender() const
 {
     const float *orig = getPath().getPosition();
-    const int length = (int)BZDBCache::linedRadarShots;
+    const float length = BZDBCache::linedRadarShots;
     const int size   = (int)BZDBCache::sizedRadarShots;
 
     float shotTailLength = BZDB.eval(StateDatabase::BZDB_SHOTTAILLENGTH);
+    glPushMatrix();
+    glTranslatef(orig[0], orig[1], 0.0f);
     // Display leading lines
-    if (length > 0)
+    if (length > 0.0f)
     {
-        const float* vel = getPath().getVelocity();
-        const float d = 1.0f / hypotf(vel[0], hypotf(vel[1], vel[2]));
-        float dir[3];
-        dir[0] = vel[0] * d * shotTailLength * length;
-        dir[1] = vel[1] * d * shotTailLength * length;
-        dir[2] = vel[2] * d * shotTailLength * length;
-        glBegin(GL_LINES);
-        glVertex2fv(orig);
+        auto vel = glm::make_vec3(getPath().getVelocity());
+        auto dir = glm::normalize(vel) * shotTailLength * length;
+        glScalef(dir[0], dir[1], 0.0f);
         if (BZDBCache::leadingShotLine == 1)   //leading
-        {
-            glVertex2f(orig[0] + dir[0], orig[1] + dir[1]);
-            glEnd();
-        }
+            DRAWER.leadingLine();
         else if (BZDBCache::leadingShotLine == 0)     //lagging
-        {
-            glVertex2f(orig[0] - dir[0], orig[1] - dir[1]);
-            glEnd();
-        }
+            DRAWER.laggingLine();
         else if (BZDBCache::leadingShotLine == 2)     //both
-        {
-            glVertex2f(orig[0] + dir[0], orig[1] + dir[1]);
-            glEnd();
-            glBegin(GL_LINES);
-            glVertex2fv(orig);
-            glVertex2f(orig[0] - dir[0], orig[1] - dir[1]);
-            glEnd();
-        }
+            DRAWER.leadlagLine();
 
         // draw a "bright reddish" missle tip
         if (size > 0)
         {
             glColor3f(1.0f, 0.75f, 0.75f);
             glPointSize((float)size);
-            glBegin(GL_POINTS);
-            glVertex2f(orig[0], orig[1]);
-            glEnd();
+            DRAWER.point();
             glPointSize(1.0f);
         }
     }
@@ -549,19 +532,16 @@ void GuidedMissileStrategy::radarRender() const
         {
             // draw a sized missle
             glPointSize((float)size);
-            glBegin(GL_POINTS);
-            glVertex2fv(orig);
-            glEnd();
+            DRAWER.point();
             glPointSize(1.0f);
         }
         else
         {
             // draw the tiny missle
-            glBegin(GL_POINTS);
-            glVertex2fv(orig);
-            glEnd();
+            DRAWER.point();
         }
     }
+    glPopMatrix();
 }
 
 // Local Variables: ***

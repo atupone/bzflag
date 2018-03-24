@@ -126,6 +126,7 @@ noinst_HEADERS =			\
 	Vertex_Chunk.h			\
 	ViewFrustum.h			\
 	VotingBooth.h			\
+	VBO_Drawing.h			\
 	WallObstacle.h			\
 	WallSceneNode.h			\
 	WallSceneNodeGenerator.h	\

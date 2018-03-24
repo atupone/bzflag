@@ -13,6 +13,9 @@
 #ifndef _FONT_MANAGER_H_
 #define _FONT_MANAGER_H_
 
+// 1st
+#include "common.h"
+
 #include <map>
 #include <string>
 #include <vector>
