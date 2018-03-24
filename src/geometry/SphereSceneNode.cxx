@@ -24,6 +24,7 @@
 #include "BZDBCache.h"
 #include "OpenGLMaterial.h"
 #include "TextureManager.h"
+#include "VBO_Drawing.h"
 
 // local implementation headers
 #include "ViewFrustum.h"
@@ -108,48 +109,8 @@ void SphereSceneNode::notifyStyleChange()
 //
 
 
-bool SphereLodSceneNode::initialized = false;
-GLuint SphereLodSceneNode::lodLists[sphereLods];
 float SphereLodSceneNode::lodPixelsSqr[sphereLods];
 int SphereLodSceneNode::listTriangleCount[sphereLods];
-
-
-static GLuint buildSphereList(GLdouble radius, GLint slices, GLint stacks)
-{
-    GLuint list;
-
-    GLUquadric* quadric = gluNewQuadric();
-    gluQuadricDrawStyle(quadric, GLU_FILL);
-    gluQuadricTexture(quadric, GL_TRUE);
-    gluQuadricNormals(quadric, GL_SMOOTH);
-    gluQuadricOrientation(quadric, GLU_OUTSIDE);
-
-    list = glGenLists(1);
-    glNewList(list, GL_COMPILE);
-    {
-        gluSphere(quadric, radius, slices, stacks);
-    }
-    glEndList();
-
-    gluDeleteQuadric(quadric);
-
-    return list;
-}
-
-
-void SphereLodSceneNode::freeContext(void *)
-{
-    for (int i = 0; i < sphereLods; i++)
-    {
-        if (lodLists[i] != INVALID_GL_LIST_ID)
-        {
-            glDeleteLists(lodLists[i], 1);
-            lodLists[i] = INVALID_GL_LIST_ID;
-        }
-    }
-    return;
-}
-
 
 static int calcTriCount(int slices, int stacks)
 {
@@ -158,67 +119,34 @@ static int calcTriCount(int slices, int stacks)
     return (trifans + quads);
 }
 
-void SphereLodSceneNode::initContext(void *)
-{
-    initialized = true;
-
-    lodLists[0] = buildSphereList(1.0, 32, 32);
-    lodPixelsSqr[0] = 80.0f * 80.0f;
-    listTriangleCount[0] = calcTriCount(32, 32);
-
-    lodLists[1] = buildSphereList(1.0, 16, 16);
-    lodPixelsSqr[1] = 40.0f * 40.0f;
-    listTriangleCount[1] = calcTriCount(16, 16);
-
-    lodLists[2] = buildSphereList(1.0,  8, 8);
-    lodPixelsSqr[2] = 20.0f * 20.0f;
-    listTriangleCount[2] = calcTriCount(8, 8);
-
-    lodLists[3] = buildSphereList(1.0,  6, 6);
-    lodPixelsSqr[3] = 10.0f * 10.0f;
-    listTriangleCount[3] = calcTriCount(6, 6);
-
-    lodLists[4] = buildSphereList(1.0,  4, 4);
-    lodPixelsSqr[4] = 5.0f * 5.0f;
-    listTriangleCount[4] = calcTriCount(4, 4);
-
-    return;
-}
-
-
-void SphereLodSceneNode::init()
-{
-    initialized = false; // no lists yet
-    for (int i = 0; i < sphereLods; i++)
-    {
-        lodLists[i] = INVALID_GL_LIST_ID;
-        lodPixelsSqr[i] = 0.0f;
-    }
-    return;
-}
-
-
-void SphereLodSceneNode::kill()
-{
-    if (initialized)
-    {
-        freeContext(NULL);
-        OpenGLGState::unregisterContextInitializer(freeContext, initContext, NULL);
-    }
-    return;
-}
-
-
 SphereLodSceneNode::SphereLodSceneNode(const glm::vec3 &pos, GLfloat _radius) :
     SphereSceneNode(pos, _radius),
     renderNode(this)
 {
-    if (!initialized)
-    {
-        initialized = true;
-        initContext(NULL);
-        OpenGLGState::registerContextInitializer(freeContext, initContext, NULL);
-    }
+
+    lodPixelsSqr[0] = 80.0f * 80.0f;
+    listTriangleCount[0] = calcTriCount(32, 32);
+
+    lodPixelsSqr[1] = 40.0f * 40.0f;
+    listTriangleCount[1] = calcTriCount(16, 16);
+
+    lodPixelsSqr[2] = 20.0f * 20.0f;
+    listTriangleCount[2] = calcTriCount(8, 8);
+
+    lodPixelsSqr[3] = 10.0f * 10.0f;
+    listTriangleCount[3] = calcTriCount(6, 6);
+
+    lodPixelsSqr[4] = 5.0f * 5.0f;
+    listTriangleCount[4] = calcTriCount(4, 4);
+
+    OpenGLGStateBuilder builder(gstate);
+    builder.disableCulling();
+    gstate = builder.getState();
+
+    setColor(1.0f, 1.0f, 1.0f, 1.0f);
+
+    // position sphere
+    move(pos, _radius);
 
     inside = false;
     shockWave = false;
@@ -226,7 +154,6 @@ SphereLodSceneNode::SphereLodSceneNode(const glm::vec3 &pos, GLfloat _radius) :
     renderNode.setLod(0);
 
     // adjust the gstate for this type of sphere
-    OpenGLGStateBuilder builder(gstate);
     builder.setCulling(GL_BACK);
     builder.setShading(GL_SMOOTH);
     const auto spec = glm::vec3(1.0f);
@@ -337,7 +264,7 @@ static inline void drawFullScreenRect()
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     glLoadIdentity();
-    glRectf(-1.0f, -1.0f, +1.0f, +1.0f);
+    DRAWER.simmetricRect();
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
     glMatrixMode(GL_MODELVIEW);
@@ -357,7 +284,9 @@ void SphereLodSceneNode::SphereLodRenderNode::render()
 
     const bool transparent = sceneNode->transparent;
 
-    const GLuint list = SphereLodSceneNode::lodLists[lod];
+    const int lod2slices[] = {32, 16, 8, 6, 4};
+
+    const int slices = lod2slices[lod];
 
     glPushMatrix();
     {
@@ -379,12 +308,12 @@ void SphereLodSceneNode::SphereLodRenderNode::render()
             glEnable(GL_COLOR_LOGIC_OP);
             {
                 glCullFace(GL_FRONT);
-                glCallList(list);
+                DRAWER.sphere(slices);
                 addTriangleCount(listTriangleCount[lod]);
                 glCullFace(GL_BACK);
                 if (!sceneNode->inside)
                 {
-                    glCallList(list);
+                    DRAWER.sphere(slices);
                     addTriangleCount(listTriangleCount[lod]);
                 }
                 else
@@ -408,13 +337,13 @@ void SphereLodSceneNode::SphereLodRenderNode::render()
         myColor4fv(sceneNode->color);
         {
             glCullFace(GL_FRONT);
-            glCallList(list);
+            DRAWER.sphere(slices);
             addTriangleCount(listTriangleCount[lod]);
         }
         glCullFace(GL_BACK);
         if (!sceneNode->inside)
         {
-            glCallList(list);
+            DRAWER.sphere(slices);
             addTriangleCount(listTriangleCount[lod]);
         }
         else

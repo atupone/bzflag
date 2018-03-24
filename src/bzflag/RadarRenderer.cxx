@@ -28,6 +28,7 @@
 #include "PyramidBuilding.h"
 #include "MeshObstacle.h"
 #include "OpenGLAPI.h"
+#include "VBO_Drawing.h"
 
 // local implementation headers
 #include "LocalPlayer.h"
@@ -187,20 +188,20 @@ void RadarRenderer::drawTank(const glm::vec3 &pos, const Player* player, bool us
     // align to the screen axes
     glRotatef(float(myAngle * 180.0 / M_PI), 0.0f, 0.0f, 1.0f);
     if (useSquares)
-        glRectf(-size, -size, +size, +size);
+    {
+        glPushMatrix();
+        glScalef(size, size, 0.0f);
+        DRAWER.simmetricRect();
+        glPopMatrix();
+    }
 
     // adjust with height box size
     const float boxHeight = BZDB.eval(StateDatabase::BZDB_BOXHEIGHT);
     size = size * (1.0f + (0.5f * (pos[2] / boxHeight)));
 
     // draw the height box
-    glBegin(GL_LINE_STRIP);
-    glVertex2f(-size, 0.0f);
-    glVertex2f(0.0f, -size);
-    glVertex2f(+size, 0.0f);
-    glVertex2f(0.0f, +size);
-    glVertex2f(-size, 0.0f);
-    glEnd();
+    glScalef(size, size, 0.0f);
+    DRAWER.diamondLoop();
 }
 
 
@@ -241,16 +242,11 @@ void RadarRenderer::drawFancyTank(const Player* player)
 void RadarRenderer::drawFlag(const glm::vec3 &pos)
 {
     GLfloat s = BZDBCache::flagRadius > 3.0f * ps ? BZDBCache::flagRadius : 3.0f * ps;
-    glBegin(GL_LINES);
-    glVertex2f(pos[0] - s, pos[1]);
-    glVertex2f(pos[0] + s, pos[1]);
-    glVertex2f(pos[0] + s, pos[1]);
-    glVertex2f(pos[0] - s, pos[1]);
-    glVertex2f(pos[0], pos[1] - s);
-    glVertex2f(pos[0], pos[1] + s);
-    glVertex2f(pos[0], pos[1] + s);
-    glVertex2f(pos[0], pos[1] - s);
-    glEnd();
+    glPushMatrix();
+    glTranslatef(pos[0], pos[1], 0.0f);
+    glScalef(s, s, 0);
+    DRAWER.cross();
+    glPopMatrix();
 }
 
 void RadarRenderer::drawFlagOnTank()
@@ -263,16 +259,8 @@ void RadarRenderer::drawFlagOnTank()
 
     float tankRadius = BZDBCache::tankRadius;
     GLfloat s = 2.5f * tankRadius > 4.0f * ps ? 2.5f * tankRadius : 4.0f * ps;
-    glBegin(GL_LINES);
-    glVertex2f(-s, 0.0f);
-    glVertex2f(+s, 0.0f);
-    glVertex2f(+s, 0.0f);
-    glVertex2f(-s, 0.0f);
-    glVertex2f(0.0f, -s);
-    glVertex2f(0.0f, +s);
-    glVertex2f(0.0f, +s);
-    glVertex2f(0.0f, -s);
-    glEnd();
+    glScalef(s, s, 0);
+    DRAWER.cross();
 
     glPopMatrix();
 }
@@ -298,9 +286,7 @@ void RadarRenderer::renderFrame(SceneRenderer& renderer)
     glScissor(ox + x - 1, oy + y - 1, w + 2, h + 2);
 
     const float left = float(ox + x) - 0.5f;
-    const float right = float(ox + x + w) + 0.5f;
     const float top = float(oy + y) - 0.5f;
-    const float bottom = float(oy + y + h) + 0.5f;
 
     float outlineOpacity = RENDERER.getRadarOpacity();
     float fudgeFactor = BZDBCache::hudGUIBorderOpacityFactor; // bzdb cache this maybe?
@@ -313,14 +299,11 @@ void RadarRenderer::renderFrame(SceneRenderer& renderer)
 
     glColor(teamColor, outlineOpacity);
 
-    glBegin(GL_LINE_LOOP);
-    {
-        glVertex2f(left, top);
-        glVertex2f(right, top);
-        glVertex2f(right, bottom);
-        glVertex2f(left, bottom);
-    }
-    glEnd();
+    glPushMatrix();
+    glTranslatef(left, top, 0.0f);
+    glScalef(float(w + 1), float(h + 1), 0.0f);
+    DRAWER.asimmetricSquareLoop();
+    glPopMatrix();
 
     {
         glDisable(GL_BLEND);
@@ -336,7 +319,9 @@ void RadarRenderer::renderFrame(SceneRenderer& renderer)
         if (opacity < 1.0f)
             glEnable(GL_BLEND);
         glColor4f(0.0f, 0.0f, 0.0f, opacity);
-        glRectf((float) x, (float) y, (float)(x + w), (float)(y + h));
+        glTranslatef((float)x, (float)y, 0.0f);
+        glScalef((float)w, (float)h, 0.0f);
+        DRAWER.asimmetricRect();
         if (opacity < 1.0f)
             glDisable(GL_BLEND);
     }
@@ -423,6 +408,7 @@ void RadarRenderer::render(SceneRenderer& renderer, bool blank, bool observer)
     {
         glPushMatrix();
         glLoadIdentity();
+        glScalef(radarRange, radarRange, radarRange);
 
         TextureManager &tm = TextureManager::instance();
         int noiseTexture = tm.getTextureID( "noise" );
@@ -455,18 +441,15 @@ void RadarRenderer::render(SceneRenderer& renderer, bool blank, bool observer)
             glEnable(GL_TEXTURE_2D);
             tm.bind(noiseTexture);
 
-            glBegin(GL_TRIANGLE_STRIP);
-            {
-                glTexCoord2f(np[noisePattern+0],np[noisePattern+1]);
-                glVertex2f(-radarRange,-radarRange);
-                glTexCoord2f(np[noisePattern+2],np[noisePattern+1]);
-                glVertex2f( radarRange,-radarRange);
-                glTexCoord2f(np[noisePattern+0],np[noisePattern+3]);
-                glVertex2f(-radarRange, radarRange);
-                glTexCoord2f(np[noisePattern+2],np[noisePattern+3]);
-                glVertex2f( radarRange, radarRange);
-            }
-            glEnd();
+            glMatrixMode(GL_TEXTURE);
+            glPushMatrix();
+            glTranslatef(np[noisePattern], np[noisePattern + 1], 0.0f);
+            glScalef(np[noisePattern+2] - np[noisePattern],
+                     np[noisePattern+3] - np[noisePattern + 1],
+                     1.0f);
+            DRAWER.simmetricTexturedRect();
+            glPopMatrix();
+            glMatrixMode(GL_MODELVIEW);
 
             glDisable(GL_TEXTURE_2D);
         }
@@ -513,11 +496,10 @@ void RadarRenderer::render(SceneRenderer& renderer, bool blank, bool observer)
             glColor3f(1.0f, 0.625f, 0.125f);
             const float fovx = renderer.getViewFrustum().getFOVx();
             const float viewWidth = radarRange * tanf(0.5f * fovx);
-            glBegin(GL_LINE_STRIP);
-            glVertex2f(-viewWidth, radarRange);
-            glVertex2f(0.0f, 0.0f);
-            glVertex2f(viewWidth, radarRange);
-            glEnd();
+            glPushMatrix();
+            glScalef(viewWidth, radarRange, 0.0f);
+            DRAWER.viewAngle();
+            glPopMatrix();
         }
 
         // transform to the observer's viewpoint
@@ -684,21 +666,19 @@ void RadarRenderer::render(SceneRenderer& renderer, bool blank, bool observer)
         // north marker
         GLfloat ns = 0.05f * radarRange, ny = 0.9f * radarRange;
         glColor3f(1.0f, 1.0f, 1.0f);
-        glBegin(GL_LINE_STRIP);
-        glVertex2f(-ns, ny - ns);
-        glVertex2f(-ns, ny + ns);
-        glVertex2f(ns, ny - ns);
-        glVertex2f(ns, ny + ns);
-        glEnd();
+        glTranslatef(0.0f, ny, 0.0f);
+        glScalef(ns, ns, 0.0f);
+        DRAWER.north();
 
         // always up
         glPopMatrix();
 
         // forward tick
-        glBegin(GL_LINES);
-        glVertex2f(0.0f, radarRange - ps);
-        glVertex2f(0.0f, radarRange - 4.0f * ps);
-        glEnd();
+        glPushMatrix();
+        glTranslatef(0.0f, radarRange - 4.0f * ps, 0.0f);
+        glScalef(0.0f, 3.0 * ps, 0.0f);
+        DRAWER.asimmetricLineY();
+        glPopMatrix();
 
         if (!observer)
         {
@@ -726,7 +706,10 @@ void RadarRenderer::render(SceneRenderer& renderer, bool blank, bool observer)
             // darken the entire radar if we're dimmed
             // we're drawing positively, so dimming is actually an opacity
             glColor4f(0.0f, 0.0f, 0.0f, 1.0f - dimming);
-            glRectf(-radarRange, -radarRange, +radarRange, +radarRange);
+            glPushMatrix();
+            glScalef(radarRange, radarRange, 0.0f);
+            DRAWER.simmetricRect();
+            glPopMatrix();
         }
         glDisable(GL_BLEND);
         glDisable(GL_LINE_SMOOTH);

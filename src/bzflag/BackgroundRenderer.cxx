@@ -28,6 +28,7 @@
 #include "ParseColor.h"
 #include "BZDBCache.h"
 #include "OpenGLAPI.h"
+#include "VBO_Drawing.h"
 
 // local headers
 #include "daylight.h"
@@ -1088,24 +1089,28 @@ void BackgroundRenderer::drawGroundGrid(
     // x lines
     if (doShadows) glColor3f(0.0f, 0.75f, 0.5f);
     else glColor3f(0.0f, 0.4f, 0.3f);
-    glBegin(GL_LINES);
+    glPushMatrix();
+    glTranslatef(x0 - xhalf, y0, 0.0f);
+    glScalef(1.0f, yhalf, 0.0f);
     for (i = -xhalf; i <= xhalf; i += gridSpacing)
     {
-        glVertex2f(x0 + i, y0 - yhalf);
-        glVertex2f(x0 + i, y0 + yhalf);
+        DRAWER.simmetricLineY();
+        glTranslatef(gridSpacing, 0.0f, 0.0f);
     }
-    glEnd();
+    glPopMatrix();
 
     /* z lines */
     if (doShadows) glColor3f(0.5f, 0.75f, 0.0f);
     else glColor3f(0.3f, 0.4f, 0.0f);
-    glBegin(GL_LINES);
+    glPushMatrix();
+    glTranslatef(x0, y0 - yhalf, 0.0f);
+    glScalef(xhalf, 1.0f, 0.0f);
     for (i = -yhalf; i <= yhalf; i += gridSpacing)
     {
-        glVertex2f(x0 - xhalf, y0 + i);
-        glVertex2f(x0 + xhalf, y0 + i);
+        DRAWER.simmetricLineX();
+        glTranslatef(0.0f, gridSpacing, 0.0f);
     }
-    glEnd();
+    glPopMatrix();
 }
 
 void BackgroundRenderer::drawGroundShadows(

@@ -34,6 +34,7 @@
 #include "BZDBCache.h"
 #include "MeshSceneNode.h"
 #include "OpenGLAPI.h"
+#include "VBO_Drawing.h"
 
 /* FIXME - local implementation dependancies */
 #include "BackgroundRenderer.h"
@@ -754,7 +755,8 @@ void SceneRenderer::render(bool _lastFrame, bool _sameFrame)
             glEnable(GL_BLEND);
             glColor(mirrorColor);
         }
-        glRectf(-extent, -extent, +extent, +extent);
+        glScalef(extent, extent, 0.0f);
+        DRAWER.simmetricRect();
         {
             glDisable(GL_BLEND);
         }
@@ -1093,7 +1095,7 @@ void SceneRenderer::renderDimming()
         {
             glEnable(GL_BLEND);
         }
-        glRectf(-1.0f, -1.0f, +1.0f, +1.0f);
+        DRAWER.simmetricRect();
         {
             glDisable(GL_BLEND);
         }
@@ -1124,8 +1126,9 @@ void SceneRenderer::renderDepthComplexity()
     for (int i = 0; i < numColors; i++)
     {
         glStencilFunc(i == numColors - 1 ? GL_LEQUAL : GL_EQUAL, i, 0xf);
-        glColor3fv(depthColors[i]);
-        glRectf(-1.0f, -1.0f, 1.0f, 1.0f);
+        const GLfloat *c = depthColors[i];
+        glColor4f(c[0], c[1], c[2], 1.0f);
+        DRAWER.simmetricRect();
     }
     glDisable(GL_STENCIL_TEST);
 
