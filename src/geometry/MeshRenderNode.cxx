@@ -90,14 +90,10 @@ void OpaqueRenderNode::render()
 
 void OpaqueRenderNode::renderShadow()
 {
-    if (xformMatrix)
-    {
-        glPushMatrix();
-        glMultMatrixf(xformMatrix);
-    }
-    drawMgr->executeSetGeometry(lod, set);
-    if (xformMatrix)
-        glPopMatrix();
+    glPushMatrix();
+    glMultMatrixf(xformMatrix);
+    drawMgr->executeSet(lod, set, false, false);
+    glPopMatrix();
 
     addTriangleCount(triangles);
 
