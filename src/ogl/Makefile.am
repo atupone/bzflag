@@ -14,12 +14,20 @@ MAINTAINERCLEANFILES = \
 
 libGLKit_la_LDFLAGS = -static
 libGLKit_la_SOURCES =			\
+	Element_Chunk.cxx		\
 	OpenGLFramebuffer.cxx		\
 	OpenGLGState.cxx		\
 	OpenGLLight.cxx			\
 	OpenGLMaterial.cxx		\
 	OpenGLTexture.cxx		\
-	OpenGLUtils.cxx		\
+	Vertex_Chunk.cxx                \
+	VBO_Element.h			\
+	VBO_Element.cxx                 \
+	VBO_Handler.h			\
+	VBO_Handler.cxx                 \
+	VBO_Vertex.h                    \
+	VBO_Vertex.cxx			\
+	OpenGLUtils.cxx			\
 	RenderNode.cxx
 
 EXTRA_DIST = \
