@@ -23,6 +23,7 @@
 #include "TextureManager.h"
 #include "OpenGLAPI.h"
 #include "VBO_Geometry.h"
+#include "VBO_Drawing.h"
 
 // local implementation headers
 #include "ViewFrustum.h"
@@ -652,21 +653,13 @@ void            BoltSceneNode::BoltRenderNode::render()
         if (sceneNode->texturing)
         {
             // draw billboard square
-            const float u0 = (float)u * du;
-            const float v0 = (float)v * dv;
-            const float u1 = u0 + du;
-            const float v1 = v0 + dv;
             myColor4fv(textureColor); // 1.0f all
-            glBegin(GL_TRIANGLE_STRIP);
-            glTexCoord2f(u0, v0);
-            glVertex2f(-1.0f, -1.0f);
-            glTexCoord2f(u1, v0);
-            glVertex2f(+1.0f, -1.0f);
-            glTexCoord2f(u0, v1);
-            glVertex2f(-1.0f, +1.0f);
-            glTexCoord2f(u1, v1);
-            glVertex2f(+1.0f, +1.0f);
-            glEnd();
+            glMatrixMode(GL_TEXTURE);
+            glPushMatrix();
+            glLoadIdentity();
+            glScalef(du, dv, 0.0f);
+            glTranslatef(u, v, 0.0f);
+            DRAWER.simmetricTexturedRect();
             addTriangleCount(2);
 
             // draw shot trail  (more billboarded quads)
@@ -695,6 +688,10 @@ void            BoltSceneNode::BoltRenderNode::render()
 
                 int uvCell = rand() % 16;
 
+                glLoadIdentity();
+                glScalef(0.25f, 0.25f, 0);
+                glMatrixMode(GL_MODELVIEW);
+
                 for (int i = 0; i < shotLength; i++)
                 {
                     Size  -= sizeStep;
@@ -706,10 +703,8 @@ void            BoltSceneNode::BoltRenderNode::render()
                         continue;
 
                     uvCell = (uvCell + 1) % 16;
-                    const float U0 = (uvCell % 4 ) * 0.25f;
-                    const float V0 = (uvCell / 4 ) * 0.25f;
-                    const float U1 = U0 + 0.25f;
-                    const float V1 = V0 + 0.25f;
+                    const float U0 = uvCell % 4;
+                    const float V0 = uvCell / 4;
 
                     alpha -= alphaStep;
                     glColor4f(mainColor[0],mainColor[1],mainColor[2], alpha);
@@ -720,22 +715,21 @@ void            BoltSceneNode::BoltRenderNode::render()
                     RENDERER.getViewFrustum().executeBillboard();
                     glScalef(s, s, s);
 
-                    glBegin(GL_TRIANGLE_STRIP);
-                    glTexCoord2f(U0, V0);
-                    glVertex2f(-1.0f, -1.0f);
-                    glTexCoord2f(U1, V0);
-                    glVertex2f(+1.0f, -1.0f);
-                    glTexCoord2f(U0, V1);
-                    glVertex2f(-1.0f, +1.0f);
-                    glTexCoord2f(U1, V1);
-                    glVertex2f(+1.0f, +1.0f);
-                    glEnd();
+                    glMatrixMode(GL_TEXTURE);
+                    glPushMatrix();
+                    glTranslatef(U0, V0, 0.0f);
+                    DRAWER.simmetricTexturedRect();
+                    glPopMatrix();
+                    glMatrixMode(GL_MODELVIEW);
                 }
 
                 addTriangleCount(shotLength * 2);
                 glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
                 glPopAttrib(); // revert the texture
             }
+            glMatrixMode(GL_TEXTURE);
+            glPopMatrix();
+            glMatrixMode(GL_MODELVIEW);
         }
         else
         {

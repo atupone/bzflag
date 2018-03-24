@@ -160,10 +160,10 @@ private:
 protected:
     bool        occluder;
     Extents     extents;
+    static bool  colorOverride;
 private:
     glm::vec3   sphere;
     float       radius2;
-    static bool  colorOverride;
     static void     (*stipple)(GLfloat);
 };
 

@@ -20,6 +20,7 @@
 #include "TextureManager.h"
 #include "OpenGLTexture.h"
 #include "OpenGLAPI.h"
+#include "VBO_Drawing.h"
 
 //
 // HUDuiTextureLabel
@@ -62,16 +63,11 @@ void            HUDuiTextureLabel::doRender()
         const float yy = getY();
         gstate.setState();
         glColor(textColor);
-        glBegin(GL_TRIANGLE_STRIP);
-        glTexCoord2f(0.0f, 0.0f);
-        glVertex2f(xx, yy - descent);
-        glTexCoord2f(1.0f, 0.0f);
-        glVertex2f(xx + _width, yy - descent);
-        glTexCoord2f(0.0f, 1.0f);
-        glVertex2f(xx, yy - descent + _height);
-        glTexCoord2f(1.0f, 1.0f);
-        glVertex2f(xx + _width, yy - descent + _height);
-        glEnd();
+        glPushMatrix();
+        glTranslatef(xx, yy - descent, 0.0f);
+        glScalef(_width, _height, 0.0f);
+        DRAWER.asimmetricTexturedRect();
+        glPopMatrix();
     }
 }
 
