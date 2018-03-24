@@ -38,11 +38,6 @@ public:
     void addRenderNodes(SceneRenderer&);
     void addShadowNodes(SceneRenderer&);
 
-    static void init();
-    static void kill();
-    static void initContext(void*);
-    static void freeContext(void*);
-
 protected:
     class SphereLodRenderNode : public RenderNode
     {
@@ -67,9 +62,7 @@ protected:
     bool shockWave;
     bool inside;
 
-    static bool initialized;
     static const int sphereLods = 5;
-    static GLuint lodLists[sphereLods];
     static float lodPixelsSqr[sphereLods];
     static int listTriangleCount[sphereLods];
 

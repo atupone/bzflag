@@ -10,9 +10,6 @@
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* BZFlag common header */
-#include "common.h"
-
 /* interface header */
 #include "ControlPanel.h"
 
@@ -33,6 +30,7 @@
 #ifdef _WIN32
 #  include <DirectoryNames.h>
 #endif
+#include "VBO_Drawing.h"
 
 /* local implementation headers */
 #include "SceneRenderer.h"
@@ -361,22 +359,23 @@ void            ControlPanel::render(SceneRenderer& _renderer)
             glEnable(GL_BLEND);
 
         GLint x1 = messageAreaPixels[0];
-        GLint x2 = x1 + messageAreaPixels[2];
         GLint y1 = messageAreaPixels[1];
-        GLint y2 = y1 + messageAreaPixels[3];
         // clear the background
         glColor4f(0.0f, 0.0f, 0.0f, _renderer.getPanelOpacity());
         // clear an extra pixel column to simplify fuzzy float stuff later
-        glRecti(x1 - 1, y1, x2, y2);
+        glPushMatrix();
+        glTranslatef((float)(x1 - 1), (float)y1, 0.0f);
+        glScalef((float)(messageAreaPixels[2] + 1), (float)messageAreaPixels[3], 0.0f);
+        DRAWER.asimmetricRect();
+        glPopMatrix();
 
         // display tabs for chat sections
         if (showTabs)
         {
             if (tabsOnRight)
                 // draw the tabs on the right side
-                x1 = x2 - totalTabWidth;
-            y2 += ay;
-            y1 = y2 - int(lineHeight + 4);
+                x1 += messageAreaPixels[2] - totalTabWidth;
+            y1 += messageAreaPixels[3] + ay - int(lineHeight + 4);
             for (unsigned int tab = 0; tab < tabs->size(); tab++)
             {
 
@@ -386,9 +385,12 @@ void            ControlPanel::render(SceneRenderer& _renderer)
                 else
                     glColor4f(0.10f, 0.10f, 0.10f, _renderer.getPanelOpacity());
 
-                x2 = x1 + int(tabTextWidth[tab]);
-                glRecti(x1, y1, x2, y2);
-                x1 = x2;
+                glPushMatrix();
+                glTranslatef((float)x1, (float)y1, 0.0f);
+                glScalef(tabTextWidth[tab], lineHeight + 4, 0.0f);
+                DRAWER.asimmetricRect();
+                glPopMatrix();
+                x1 += int(tabTextWidth[tab]);
             } // end iteration over tabs
         }
 
@@ -406,13 +408,16 @@ void            ControlPanel::render(SceneRenderer& _renderer)
             const float size = std::max(float(maxLines) / lines, 0.02f);
             const float offset = float(messagesOffset) / lines;
             const int maxTop = messageAreaPixels[1] + messageAreaPixels[3];
-            int top = messageAreaPixels[1] + int((offset + size) * (float)messageAreaPixels[3]);
+            int bottom = messageAreaPixels[1] + int(offset * (float)messageAreaPixels[3]);
+            int top = bottom + (int)(size * (float)messageAreaPixels[3]);
             if (top > maxTop)
                 top = maxTop;
             glColor3f(0.7f, 0.7f, 0.7f);
-            glRecti(messageAreaPixels[0],
-                    messageAreaPixels[1] + int(offset * (float)messageAreaPixels[3]),
-                    messageAreaPixels[0] + 2, top);
+            glPushMatrix();
+            glTranslatef((float)messageAreaPixels[0], (float)bottom, 0.0f);
+            glScalef(2.0f, (float)(top - bottom), 0.0f);
+            DRAWER.asimmetricRect();
+            glPopMatrix();
 
         }
     }

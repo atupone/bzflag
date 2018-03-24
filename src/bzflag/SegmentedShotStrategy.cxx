@@ -21,6 +21,7 @@
 #include "Intersect.h"
 #include "BZDBCache.h"
 #include "WallObstacle.h"
+#include "VBO_Drawing.h"
 
 /* local implementation headers */
 #include "sound.h"
@@ -329,74 +330,43 @@ void  SegmentedShotStrategy::addShot(SceneDatabase* scene, bool colorblind)
 void  SegmentedShotStrategy::radarRender() const
 {
     const float *orig = getPath().getPosition();
-    const int length = (int)BZDBCache::linedRadarShots;
+    const float length = BZDBCache::linedRadarShots;
     const int size = (int)BZDBCache::sizedRadarShots;
 
     float shotTailLength = BZDB.eval(StateDatabase::BZDB_SHOTTAILLENGTH);
 
+    glPushMatrix();
+    glTranslatef(orig[0], orig[1], 0.0f);
     // Display leading lines
-    if (length > 0)
+    if (length > 0.0f)
     {
-        const float* vel = getPath().getVelocity();
-        const float d = 1.0f / hypotf(vel[0], hypotf(vel[1], vel[2]));
-        float dir[3];
-        dir[0] = vel[0] * d * shotTailLength * length;
-        dir[1] = vel[1] * d * shotTailLength * length;
-        dir[2] = vel[2] * d * shotTailLength * length;
-        glBegin(GL_LINES);
-        glVertex2fv(orig);
+        auto vel = glm::make_vec3(getPath().getVelocity());
+        auto dir = glm::normalize(vel) * shotTailLength * length;
+        glPushMatrix();
+        glScalef(dir[0], dir[1], 0.0f);
         if (BZDBCache::leadingShotLine == 0)   //lagging
-        {
-            glVertex2f(orig[0] - dir[0], orig[1] - dir[1]);
-            glEnd();
-        }
+            DRAWER.laggingLine();
         else if (BZDBCache::leadingShotLine == 2)     //both
-        {
-            glVertex2f(orig[0] + dir[0], orig[1] + dir[1]);
-            glEnd();
-            glBegin(GL_LINES);
-            glVertex2fv(orig);
-            glVertex2f(orig[0] - dir[0], orig[1] - dir[1]);
-            glEnd();
-        }
+            DRAWER.leadlagLine();
         else     //leading
-        {
-            glVertex2f(orig[0] + dir[0], orig[1] + dir[1]);
-            glEnd();
-        }
-
-        // draw a "bright" bullet tip
-        if (size > 0)
-        {
-            glColor3f(0.75, 0.75, 0.75);
-            glPointSize((float)size);
-            glBegin(GL_POINTS);
-            glVertex2f(orig[0], orig[1]);
-            glEnd();
-            glPointSize(1.0f);
-        }
+            DRAWER.leadingLine();
+        glPopMatrix();
     }
-    else
+
+    // draw a "bright" bullet tip
+    if (size > 0)
     {
-        if (size > 0)
-        {
-            // draw a sized bullet
-            glPointSize((float)size);
-            glBegin(GL_POINTS);
-            glVertex2fv(orig);
-            glEnd();
-            glPointSize(1.0f);
-
-        }
-        else
-        {
-            // draw the tiny little bullet
-            glBegin(GL_POINTS);
-            glVertex2fv(orig);
-            glEnd();
-        }
+        if (length > 0)
+            glColor3f(0.75, 0.75, 0.75);
+        // draw a sized bullet
+        glPointSize((float)size);
+        DRAWER.point();
+        glPointSize(1.0f);
     }
-
+    else if (length <= 0)
+        // draw the tiny little bullet
+        DRAWER.point();
+    glPopMatrix();
 }
 
 void  SegmentedShotStrategy::makeSegments(ObstacleEffect e)

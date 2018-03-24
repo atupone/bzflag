@@ -19,6 +19,7 @@
 // common implementation headers
 #include "StateDatabase.h"
 #include "BZDBCache.h"
+#include "VBO_Drawing.h"
 
 // FIXME (SceneRenderer.cxx is in src/bzflag)
 #include "SceneRenderer.h"
@@ -155,39 +156,52 @@ void LaserSceneNode::LaserRenderNode::renderGeoLaser()
 
     glDisable(GL_TEXTURE_2D);
 
-    GLUquadric *q = gluNewQuadric();
-
     glm::vec4 coreColor = sceneNode->centerColor;
     coreColor.a     = 0.85f;
     glm::vec4 mainColor = sceneNode->color;
     mainColor.a     = 0.125f;
 
-    myColor4f(coreColor.r, coreColor.g, coreColor.b, coreColor.a);
-    gluCylinder(q, 0.0625f, 0.0625f, len, 10, 1);
+    if (!colorOverride)
+        glColor4f(coreColor.r, coreColor.g, coreColor.b, coreColor.a);
+    glPushMatrix();
+    glScalef(0.0625f, 0.0625f, len);
+    DRAWER.cylinder10();
+    glPopMatrix();
     addTriangleCount(20);
 
-    myColor4f(mainColor.r, mainColor.g, mainColor.b, mainColor.a);
-    gluCylinder(q, 0.1f, 0.1f, len, 16, 1);
+    if (!colorOverride)
+        glColor4f(mainColor.r, mainColor.g, mainColor.b, mainColor.a);
+    glPushMatrix();
+    glScalef(0.1f, 0.1f, len);
+    DRAWER.cylinder16();
+    glPopMatrix();
     addTriangleCount(32);
 
-    gluCylinder(q, 0.2f, 0.2f, len, 24, 1);
+    glPushMatrix();
+    glScalef(0.2f, 0.2f, len);
+    DRAWER.cylinder24();
+    glPopMatrix();
     addTriangleCount(48);
 
-    gluCylinder(q, 0.4f, 0.4f, len, 32, 1);
+    glPushMatrix();
+    glScalef(0.4f, 0.4f, len);
+    DRAWER.cylinder32();
+    glPopMatrix();
     addTriangleCount(64);
 
+    glPushMatrix();
+    glScalef(0.5f, 0.5f, 0.5f);
     if (sceneNode->first)
     {
-        gluSphere(q, 0.5f, 32, 32);
+        DRAWER.sphere(32);
         addTriangleCount(32 * 32 * 2);
     }
     else
     {
-        gluSphere(q, 0.5f, 12, 12);
+        DRAWER.sphere(12);
         addTriangleCount(12 * 12 * 2);
     }
-
-    gluDeleteQuadric(q);
+    glPopMatrix();
 
     glEnable(GL_TEXTURE_2D);
     glPopMatrix();
@@ -245,7 +259,8 @@ void LaserSceneNode::LaserRenderNode::renderFlatLaser()
     else
     {
         // draw beam
-        myColor4f(1.0f, 0.25f, 0.0f, 0.85f);
+        if (!colorOverride)
+            glColor4f(1.0f, 0.25f, 0.0f, 0.85f);
         glBegin(GL_TRIANGLE_STRIP);
         {
             glVertex3f(  0.0f, geom[0][0], geom[0][1]);

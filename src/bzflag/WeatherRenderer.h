@@ -79,7 +79,6 @@ protected:
     float                   puddleSpeed;
     float                   puddleColor[4];
     GLuint                  dropList;
-    GLuint                  puddleList;
 
 public:
     typedef struct
@@ -104,7 +103,6 @@ protected:
     float           lastRainTime;
 
     void buildDropList(bool draw = false);
-    void buildPuddleList(bool draw = false);
 
     bool updateDrop(std::vector<rain>::iterator &drop, float frameTime, std::vector<rain> &toAdd);
     bool updatePuddle(std::vector<puddle>::iterator &splash, float frameTime);

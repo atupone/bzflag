@@ -25,7 +25,7 @@
 #include "SceneDatabase.h"
 #include "SceneRenderer.h"
 #include "SceneNode.h"
-
+#include "VBO_Drawing.h"
 
 using namespace TrackMarks;
 
@@ -644,18 +644,7 @@ static void drawPuddle(const TrackEntry& te)
         glRotatef(te.angle, 0.0f, 0.0f, 1.0f);
         glTranslatef(0.0f, +offset, 0.0f);
         glScalef(scale, scale, 1.0f);
-        glBegin(GL_TRIANGLE_STRIP);
-        {
-            glTexCoord2f(0.0f, 0.0f);
-            glVertex3f(-1.0f, -1.0f, 0.0f);
-            glTexCoord2f(1.0f, 0.0f);
-            glVertex3f(+1.0f, -1.0f, 0.0f);
-            glTexCoord2f(0.0f, 1.0f);
-            glVertex3f(-1.0f, +1.0f, 0.0f);
-            glTexCoord2f(1.0f, 1.0f);
-            glVertex3f(+1.0f, +1.0f, 0.0f);
-        }
-        glEnd();
+        DRAWER.simmetricTexturedRect();
     }
     glPopMatrix();
 
@@ -668,19 +657,7 @@ static void drawPuddle(const TrackEntry& te)
             glRotatef(te.angle, 0.0f, 0.0f, 1.0f);
             glTranslatef(0.0f, -offset, 0.0f);
             glScalef(scale, scale, 1.0f);
-
-            glBegin(GL_TRIANGLE_STRIP);
-            {
-                glTexCoord2f(0.0f, 0.0f);
-                glVertex3f(-1.0f, -1.0f, 0.0f);
-                glTexCoord2f(1.0f, 0.0f);
-                glVertex3f(+1.0f, -1.0f, 0.0f);
-                glTexCoord2f(0.0f, 1.0f);
-                glVertex3f(-1.0f, +1.0f, 0.0f);
-                glTexCoord2f(1.0f, 1.0f);
-                glVertex3f(+1.0f, +1.0f, 0.0f);
-            }
-            glEnd();
+            DRAWER.simmetricTexturedRect();
         }
         glPopMatrix();
     }
@@ -692,6 +669,7 @@ static void drawPuddle(const TrackEntry& te)
 static void drawTreads(const TrackEntry& te)
 {
     const float ratio = (te.lifeTime / TrackFadeTime);
+    const float halfWidth = 0.5f * TreadMarkWidth;
 
     glColor4f(0.0f, 0.0f, 0.0f, 1.0f - ratio);
 
@@ -699,14 +677,16 @@ static void drawTreads(const TrackEntry& te)
     {
         glTranslatef(te.pos[0], te.pos[1], te.pos[2]);
         glRotatef(te.angle, 0.0f, 0.0f, 1.0f);
-        glScalef(1.0f, te.scale, 1.0f);
+        glScalef(halfWidth, te.scale * (TreadOutside - TreadInside) / 2.0f, 0.0f);
 
-        const float halfWidth = 0.5f * TreadMarkWidth;
+        const float offset = (TreadInside + TreadOutside) / (TreadOutside - TreadInside);
 
+        glTranslatef(0.0f, offset, 0.0f);
         if ((te.sides & LeftTread) != 0)
-            glRectf(-halfWidth, +TreadInside, +halfWidth, +TreadOutside);
+            DRAWER.simmetricRect();
+        glTranslatef(0.0f, - 2.0f * offset, 0.0f);
         if ((te.sides & RightTread) != 0)
-            glRectf(-halfWidth, -TreadOutside, +halfWidth, -TreadInside);
+            DRAWER.simmetricRect();
     }
     glPopMatrix();
 

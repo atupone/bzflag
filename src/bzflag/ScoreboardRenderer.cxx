@@ -21,11 +21,15 @@
 #include "OpenGLGState.h"
 #include "TextUtils.h"
 #include "TimeKeeper.h"
+#include "OpenGLCommon.h"
+#include "VBO_Drawing.h"
 
 /* local implementation headers */
 #include "LocalPlayer.h"
 #include "World.h"
 #include "sound.h"
+
+using namespace OpenGLCommon;
 
 // because of the 'player' crap, we can't  #include "Roaming.h"  easily
 extern Player* getRoamTargetTank();
@@ -645,14 +649,18 @@ void ScoreboardRenderer::drawRoamTarget(float _x0, float _y0,
     glDisable(GL_BLEND);
     glDisable(GL_LIGHTING);
     glDisable(GL_TEXTURE_2D);
-    glBegin(GL_LINES);
     glColor4fv(c0);
-    glVertex2f(x0, y1);
-    glVertex2f(x1, y1);
+    glPushMatrix();
+    glTranslatef(x0, y1, 0.0f);
+    glScalef(x1 - x0, 0.0f, 0.0f);
+    DRAWER.asimmetricLineX();
+    glPopMatrix();
     glColor4fv(c1);
-    glVertex2f(x0, y0);
-    glVertex2f(x1, y0);
-    glEnd();
+    glPushMatrix();
+    glTranslatef(x0, y0, 0.0f);
+    glScalef(x1 - x0, 0.0f, 0.0f);
+    DRAWER.asimmetricLineX();
+    glPopMatrix();
     glPopAttrib();
 }
 

@@ -23,6 +23,7 @@
 #include "FontManager.h"
 #include "BZDBCache.h"
 #include "OpenGLCommon.h"
+#include "VBO_Drawing.h"
 
 /* local implementation headers */
 #include "LocalPlayer.h"
@@ -1700,7 +1701,10 @@ void            HUDRenderer::coverWhenBurrowed(const LocalPlayer &myTank)
                  (BZDB.eval(StateDatabase::BZDB_BURROWDEPTH) - 0.1f) *
                  (float)viewHeight / 2.0f;
     glColor4f(0.02f, 0.01f, 0.01f, 1.0);
-    glRectf(0.0f, 0.0f, (float)width, y2);
+    glPushMatrix();
+    glScalef((float)width, y2, 0);
+    DRAWER.asimmetricRect();
+    glPopMatrix();
 }
 
 
@@ -1979,24 +1983,37 @@ void            HUDRenderer::renderShots(const Player* target)
 
     // draw the reload values
     glEnable(GL_BLEND);
+    glPushMatrix();
+    glTranslatef((float)indicatorLeft, (float)indicatorTop, 0.0f);
     for (int i = 0; i < maxShots; ++i)
     {
         const int myWidth = int(indicatorWidth * factors[i]);
-        const int myTop = indicatorTop + i * (indicatorHeight + indicatorSpace);
         if (factors[i] < 1.0f)
         {
             hudColor4f(0.0f, 1.0f, 0.0f, 0.5f); // green
-            glRecti(indicatorLeft, myTop, indicatorLeft + myWidth, myTop + indicatorHeight);
+            glPushMatrix();
+            glScalef((float)myWidth, (float)indicatorHeight, 0.0f);
+            DRAWER.asimmetricRect();
+            glPopMatrix();
+
             hudColor4f(1.0f, 0.0f, 0.0f, 0.5f); // red
-            glRecti(indicatorLeft + myWidth + 1, myTop, indicatorLeft + indicatorWidth,
-                    myTop + indicatorHeight);
+            glPushMatrix();
+            glTranslatef((float)(myWidth + 1), 0.0f, 0.0f);
+            glScalef((float)(indicatorWidth - myWidth - 1), (float)indicatorHeight, 0.0f);
+            DRAWER.asimmetricRect();
+            glPopMatrix();
         }
         else
         {
             hudColor4f(1.0f, 1.0f, 1.0f, 0.5f); // white
-            glRecti(indicatorLeft, myTop, indicatorLeft + myWidth, myTop + indicatorHeight);
+            glPushMatrix();
+            glScalef((float)myWidth, (float)indicatorHeight, 0.0f);
+            DRAWER.asimmetricRect();
+            glPopMatrix();
         }
+        glTranslatef(0.0f, (float)(indicatorHeight + indicatorSpace), 0.0f);
     }
+    glPopMatrix();
     glDisable(GL_BLEND);
 
     delete[] factors;

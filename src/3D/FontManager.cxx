@@ -10,9 +10,6 @@
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-// BZFlag common header
-#include "common.h"
-
 // Interface header
 #include "FontManager.h"
 
@@ -31,6 +28,7 @@
 #include "OpenGLGState.h"
 #include "TimeKeeper.h"
 #include "TextUtils.h"
+#include "VBO_Drawing.h"
 
 // Local implementation headers
 #include "ImageFont.h"
@@ -364,10 +362,8 @@ void FontManager::drawString(float x, float y, float z, int faceID, float size,
                     glColor4fv(color);
                 // still have a translated matrix, these coordinates are
                 // with respect to the string just drawn
-                glBegin(GL_LINES);
-                glVertex2f(0.0f, 0.0f);
-                glVertex2f(width, 0.0f);
-                glEnd();
+                glScalef(width, 0.0f, 0.0f);
+                DRAWER.asimmetricLineX();
                 glEnable(GL_TEXTURE_2D);
             }
             glDepthMask(depthMask);
