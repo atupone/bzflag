@@ -42,6 +42,7 @@ noinst_HEADERS =			\
 	EighthDPyrSceneNode.h		\
 	EighthDimSceneNode.h		\
 	EighthDimShellNode.h		\
+	Element_Chunk.h			\
 	EmptySceneNodeGenerator.h	\
 	ErrorHandler.h			\
 	Extents.h			\
@@ -123,6 +124,7 @@ noinst_HEADERS =			\
 	TextureMatrix.h			\
 	TimeKeeper.h			\
 	TriWallSceneNode.h		\
+	Vertex_Chunk.h			\
 	ViewFrustum.h			\
 	VotingBooth.h			\
 	WallObstacle.h			\
