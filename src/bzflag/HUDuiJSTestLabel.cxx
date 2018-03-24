@@ -20,6 +20,7 @@
 #include "TextureManager.h"
 #include "OpenGLTexture.h"
 #include "playing.h"
+#include "VBO_Drawing.h"
 
 //
 // HUDuiJSTestLabel
@@ -59,12 +60,11 @@ void            HUDuiJSTestLabel::doRender()
     // draw the background
     const auto rangeLimit = float(BZDB.evalInt("jsRangeMax")) / 100.0f;
     glColor4fv(backgroundColor);
-    glBegin(GL_TRIANGLE_FAN);
-    glVertex2f(getX() + (1.0f - rangeLimit) / 2.0f * width, getY() + (1.0f + rangeLimit) / 2.0f * height);
-    glVertex2f(getX() + (1.0f - rangeLimit) / 2.0f * width, getY() + (1.0f - rangeLimit) / 2.0f * height);
-    glVertex2f(getX() + (1.0f + rangeLimit) / 2.0f * width, getY() + (1.0f - rangeLimit) / 2.0f * height);
-    glVertex2f(getX() + (1.0f + rangeLimit) / 2.0f * width, getY() + (1.0f + rangeLimit) / 2.0f * height);
-    glEnd();
+    glPushMatrix();
+    glTranslatef(getX() + width / 2.0f, getY() + height / 2.0f, 0.0f);
+    glScalef(rangeLimit / 2.0f * width, rangeLimit / 2.0f * height, 1.0f);
+    DRAWER.simmetricSquareLoop();
+    glPopMatrix();
 
     // draw the real cursor
     float jsx, jsy;
@@ -76,12 +76,11 @@ void            HUDuiJSTestLabel::doRender()
     glPushAttrib(GL_LINE_BIT);
     glLineWidth(realCursorThickness);
     glColor4fv(realCursorColor);
-    glBegin(GL_LINES);
-    glVertex2f(getX() + jsxTransformed - realCursorLength / 2.0f, getY() + jsyTransformed);
-    glVertex2f(getX() + jsxTransformed + realCursorLength / 2.0f, getY() + jsyTransformed);
-    glVertex2f(getX() + jsxTransformed, getY() + jsyTransformed - realCursorLength / 2.0f);
-    glVertex2f(getX() + jsxTransformed, getY() + jsyTransformed + realCursorLength / 2.0f);
-    glEnd();
+    glPushMatrix();
+    glTranslatef(getX() + jsxTransformed, getY() + jsyTransformed, 0.0f);
+    glScalef(realCursorLength / 2.0f, realCursorLength / 2.0f, 1.0f);
+    DRAWER.cross();
+    glPopMatrix();
     glPopAttrib();
 
     // draw the modified cursor
@@ -90,12 +89,11 @@ void            HUDuiJSTestLabel::doRender()
     jsxTransformed = ((1.0f + jsx) / 2.0f) * width;
     jsyTransformed = ((1.0f - jsy) / 2.0f) * height;
     glColor4fv(modifiedCursorColor);
-    glBegin(GL_TRIANGLE_FAN);
-    glVertex2f(getX() + jsxTransformed, getY() + jsyTransformed - modifiedCursorLength / 2.0f);
-    glVertex2f(getX() + jsxTransformed + modifiedCursorLength / 2.0f, getY() + jsyTransformed);
-    glVertex2f(getX() + jsxTransformed, getY() + jsyTransformed + modifiedCursorLength / 2.0f);
-    glVertex2f(getX() + jsxTransformed - modifiedCursorLength / 2.0f, getY() + jsyTransformed);
-    glEnd();
+    glPushMatrix();
+    glTranslatef(getX() + jsxTransformed, getY() + jsyTransformed, 0.0f);
+    glScalef(modifiedCursorLength / 2.0f, modifiedCursorLength / 2.0f, 1.0f);
+    DRAWER.cross();
+    glPopMatrix();
 }
 
 // Local Variables: ***
