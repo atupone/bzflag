@@ -26,6 +26,7 @@
 #include "BZDBCache.h"
 #include "OpenGLAPI.h"
 #include "VBO_Geometry.h"
+#include "VBO_Drawing.h"
 
 /* local implementation headers */
 #include "LocalPlayer.h"
@@ -1385,22 +1386,15 @@ void            HUDRenderer::renderBox(SceneRenderer&)
 
     // draw targeting box
     hudColor3Afv(hudColor, 1.0f);
-    glBegin(GL_LINE_LOOP);
-    {
-        glVertex2i(centerx - noMotionSize, centery - noMotionSize);
-        glVertex2i(centerx + noMotionSize, centery - noMotionSize);
-        glVertex2i(centerx + noMotionSize, centery + noMotionSize);
-        glVertex2i(centerx - noMotionSize, centery + noMotionSize);
-    }
-    glEnd();
-    glBegin(GL_LINE_LOOP);
-    {
-        glVertex2i(centerx - maxMotionSize, centery - maxMotionSize);
-        glVertex2i(centerx + maxMotionSize, centery - maxMotionSize);
-        glVertex2i(centerx + maxMotionSize, centery + maxMotionSize);
-        glVertex2i(centerx - maxMotionSize, centery + maxMotionSize);
-    }
-    glEnd();
+    glPushMatrix();
+    glTranslatef((float)centerx, (float)centery, 0.0f);
+    float scaling = noMotionSize;
+    glScalef(scaling, scaling, scaling);
+    DRAWER.simmetricSquareLoop();
+    scaling = (float)maxMotionSize / scaling;
+    glScalef(scaling, scaling, scaling);
+    DRAWER.simmetricSquareLoop();
+    glPopMatrix();
 
     // draw heading strip
     if (true /* always draw heading strip */)
@@ -1483,13 +1477,13 @@ void            HUDRenderer::renderBox(SceneRenderer&)
         // draw markers (give 'em a little more space on the sides)
         glScissor(ox + centerx - maxMotionSize - 8, oy + height - viewHeight + centery + maxMotionSize,
                   2 * maxMotionSize + 16, 10);
-        glPushMatrix();
-        glTranslatef((float)centerx, (float)(centery + maxMotionSize), 0.0f);
         for (MarkerList::const_iterator it = markers.begin(); it != markers.end(); ++it)
         {
             const HUDMarker &m = *it;
             const float relAngle = fmodf(360.0f + m.heading - heading, 360.0f);
             hudColor3Afv(m.color, 1.0f);
+            glPushMatrix();
+            glTranslatef((float)centerx, (float)(centery + maxMotionSize), 0.0f);
             if (relAngle <= headingOffset || relAngle >= 360.0f - headingOffset)
             {
                 // on the visible part of tape
@@ -1510,9 +1504,9 @@ void            HUDRenderer::renderBox(SceneRenderer&)
                 glTranslatef(-(float)maxMotionSize, 0.0f, 0.0f);
                 leftTri.draw(GL_TRIANGLES);
             }
+            glPopMatrix();
         }
         markers.clear();
-        glPopMatrix();
     }
 
     // draw altitude strip
@@ -1662,7 +1656,10 @@ void            HUDRenderer::coverWhenBurrowed(const LocalPlayer &myTank)
                  (BZDB.eval(StateDatabase::BZDB_BURROWDEPTH) - 0.1f) *
                  (float)viewHeight / 2.0f;
     glColor4f(0.02f, 0.01f, 0.01f, 1.0);
-    glRectf(0.0f, 0.0f, (float)width, y2);
+    glPushMatrix();
+    glScalef((float)width, y2, 0);
+    DRAWER.asimmetricRect();
+    glPopMatrix();
 }
 
 
@@ -1941,24 +1938,36 @@ void            HUDRenderer::renderShots(const Player* target)
 
     // draw the reload values
     glEnable(GL_BLEND);
+    glPushMatrix();
+    glTranslatef((float)indicatorLeft, (float)indicatorTop, 0.0f);
     for (int i = 0; i < maxShots; ++i)
     {
         const int myWidth = int(indicatorWidth * factors[i]);
-        const int myTop = indicatorTop + i * (indicatorHeight + indicatorSpace);
         if (factors[i] < 1.0f)
         {
             hudColor3Afv(greenColor, 0.5f); // green
-            glRecti(indicatorLeft, myTop, indicatorLeft + myWidth, myTop + indicatorHeight);
+            glPushMatrix();
+            glScalef((float)myWidth, (float)indicatorHeight, 0.0f);
+            DRAWER.asimmetricRect();
+            glPopMatrix();
             hudColor3Afv(redColor, 0.5f); // red
-            glRecti(indicatorLeft + myWidth + 1, myTop, indicatorLeft + indicatorWidth,
-                    myTop + indicatorHeight);
+            glPushMatrix();
+            glTranslatef((float)(myWidth + 1), 0.0f, 0.0f);
+            glScalef((float)(indicatorWidth - myWidth - 1), (float)indicatorHeight, 0.0f);
+            DRAWER.asimmetricRect();
+            glPopMatrix();
         }
         else
         {
             hudColor3Afv(whiteColor, 0.5f); // white
-            glRecti(indicatorLeft, myTop, indicatorLeft + myWidth, myTop + indicatorHeight);
+            glPushMatrix();
+            glScalef((float)myWidth, (float)indicatorHeight, 0.0f);
+            DRAWER.asimmetricRect();
+            glPopMatrix();
         }
+        glTranslatef(0.0f, (float)(indicatorHeight + indicatorSpace), 0.0f);
     }
+    glPopMatrix();
     glDisable(GL_BLEND);
 
     delete[] factors;
