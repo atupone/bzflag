@@ -57,7 +57,6 @@ protected:
         void renderFlatLaser();
         void renderGeoLaser();
         const LaserSceneNode* sceneNode;
-        static glm::vec2 geom[6];
     };
     glm::vec4 color;
     glm::vec4 centerColor;

@@ -38,6 +38,7 @@ libGeometry_la_SOURCES  =		\
 	TankSceneNode.cxx		\
 	TriWallSceneNode.cxx		\
 	ViewFrustum.cxx			\
+	VBO_Drawing.cxx			\
 	VBO_Quadric.cxx			\
 	WallSceneNode.cxx
 

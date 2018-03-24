@@ -20,6 +20,7 @@
 #include "StateDatabase.h"
 #include "BZDBCache.h"
 #include "OpenGLAPI.h"
+#include "VBO_Drawing.h"
 
 // FIXME (SceneRenderer.cxx is in src/bzflag)
 #include "SceneRenderer.h"
@@ -102,23 +103,10 @@ void            LaserSceneNode::addRenderNodes(
 // LaserSceneNode::LaserRenderNode
 //
 
-glm::vec2 LaserSceneNode::LaserRenderNode::geom[6];
-
 LaserSceneNode::LaserRenderNode::LaserRenderNode(
     const LaserSceneNode* _sceneNode) :
     sceneNode(_sceneNode)
 {
-    // initialize geometry if first instance
-    static bool init = false;
-    if (!init)
-    {
-        init = true;
-        for (int i = 0; i < 6; i++)
-        {
-            const float angle = 2.0 * M_PI * double(i) / 6.0;
-            geom[i] = LaserRadius * glm::vec2(-cosf(angle), sinf(angle));
-        }
-    }
 }
 
 LaserSceneNode::LaserRenderNode::~LaserRenderNode()
@@ -137,10 +125,16 @@ void LaserSceneNode::LaserRenderNode::render()
     if (blackFog)
         glSetFogColor(glm::vec4(0.0f));
 
+    glPushMatrix();
+    const auto &sphere = getPosition();
+    glTranslate(sphere);
+    glRotatef(sceneNode->azimuth, 0.0f, 0.0f, 1.0f);
+    glRotatef(sceneNode->elevation, 0.0f, 1.0f, 0.0f);
     if (RENDERER.useQuality() >= 3)
         renderGeoLaser();
     else
         renderFlatLaser();
+    glPopMatrix();
 
     if (blackFog)
         glSetFogColor(RENDERER.getFogColor());
@@ -149,63 +143,66 @@ void LaserSceneNode::LaserRenderNode::render()
 void LaserSceneNode::LaserRenderNode::renderGeoLaser()
 {
     const float len = sceneNode->length;
-    const auto &sphere = getPosition();
-    glPushMatrix();
-    glTranslate(sphere);
-    glRotatef(sceneNode->azimuth, 0.0f, 0.0f, 1.0f);
-    glRotatef(sceneNode->elevation, 0.0f, 1.0f, 0.0f);
-    glRotatef(90, 0.0f, 1.0f, 0.0f);
 
     glDisable(GL_TEXTURE_2D);
-
-    GLUquadric *q = gluNewQuadric();
 
     auto coreColor = sceneNode->centerColor;
     auto mainColor = sceneNode->color;
 
-    myColor4f(coreColor.r, coreColor.g, coreColor.b, 0.85f);
-    gluCylinder(q, 0.0625f, 0.0625f, len, 10, 1);
+    coreColor.a     = 0.85f;
+    mainColor.a     = 0.125f;
+
+    if (!colorOverride)
+        glColor(coreColor);
+    glPushMatrix();
+    glScalef(len, 0.0625f, 0.0625f);
+    DRAWER.cylinderX10();
+    glPopMatrix();
     addTriangleCount(20);
 
-    myColor4f(mainColor.r, mainColor.g, mainColor.b, 0.125f);
-    gluCylinder(q, 0.1f, 0.1f, len, 16, 1);
+    if (!colorOverride)
+        glColor(mainColor);
+    glPushMatrix();
+    glScalef(len, 0.1f, 0.1f);
+    DRAWER.cylinderX16();
+    glPopMatrix();
     addTriangleCount(32);
 
-    gluCylinder(q, 0.2f, 0.2f, len, 24, 1);
+    glPushMatrix();
+    glScalef(len, 0.2f, 0.2f);
+    DRAWER.cylinderX24();
+    glPopMatrix();
     addTriangleCount(48);
 
-    gluCylinder(q, 0.4f, 0.4f, len, 32, 1);
+    glPushMatrix();
+    glScalef(len, 0.4f, 0.4f);
+    DRAWER.cylinderX32();
+    glPopMatrix();
     addTriangleCount(64);
 
+    glScalef(0.5f, 0.5f, 0.5f);
     if (sceneNode->first)
     {
-        gluSphere(q, 0.5f, 32, 32);
+        DRAWER.sphere(32);
         addTriangleCount(32 * 32 * 2);
     }
     else
     {
-        gluSphere(q, 0.5f, 12, 12);
+        DRAWER.sphere(12);
         addTriangleCount(12 * 12 * 2);
     }
 
-    gluDeleteQuadric(q);
-
     glEnable(GL_TEXTURE_2D);
-    glPopMatrix();
 }
 
 
 void LaserSceneNode::LaserRenderNode::renderFlatLaser()
 {
     const float len = sceneNode->length;
-    const auto &sphere = getPosition();
-    glPushMatrix();
-    glTranslate(sphere);
-    glRotatef(sceneNode->azimuth, 0.0f, 0.0f, 1.0f);
-    glRotatef(sceneNode->elevation, 0.0f, 1.0f, 0.0f);
 
     if (sceneNode->texturing)
     {
+        glScalef(len, 1.0f, 1.0f);
         myColor3f(1.0f, 1.0f, 1.0f);
         glBegin(GL_TRIANGLE_FAN);
         glTexCoord2f(0.5f,  0.5f);
@@ -218,27 +215,9 @@ void LaserSceneNode::LaserRenderNode::renderFlatLaser()
         glVertex3f(  0.0f,  0.0f,  1.0f);
         glEnd(); // 6 verts -> 4 tris
 
-        glBegin(GL_TRIANGLE_STRIP);
-        glTexCoord2f(0.0f,  0.0f);
-        glVertex3f(  0.0f,  0.0f,  1.0f);
-        glTexCoord2f(0.0f,  1.0f);
-        glVertex3f(   len,  0.0f,  1.0f);
-        glTexCoord2f(1.0f,  0.0f);
-        glVertex3f(  0.0f,  0.0f, -1.0f);
-        glTexCoord2f(1.0f,  1.0f);
-        glVertex3f(   len,  0.0f, -1.0f);
-        glEnd();
-
-        glBegin(GL_TRIANGLE_STRIP);
-        glTexCoord2f(0.0f,  0.0f);
-        glVertex3f(  0.0f,  1.0f,  0.0f);
-        glTexCoord2f(0.0f,  1.0f);
-        glVertex3f(   len,  1.0f,  0.0f);
-        glTexCoord2f(1.0f,  0.0f);
-        glVertex3f(  0.0f, -1.0f,  0.0f);
-        glTexCoord2f(1.0f,  1.0f);
-        glVertex3f(   len, -1.0f,  0.0f);
-        glEnd(); // 8 verts -> 4 tris
+        DRAWER.diamondTexturedXZ();
+        DRAWER.diamondTexturedXY();
+        // 8 verts -> 4 tris
 
         addTriangleCount(8);
     }
@@ -246,33 +225,20 @@ void LaserSceneNode::LaserRenderNode::renderFlatLaser()
     else
     {
         // draw beam
-        myColor4f(1.0f, 0.25f, 0.0f, 0.85f);
-        glBegin(GL_TRIANGLE_STRIP);
-        {
-            for (int i = 0; i < 6; i++)
-            {
-                glVertex(glm::vec3(0.0f, geom[i]));
-                glVertex(glm::vec3(len,  geom[i]));
-            }
-            glVertex(glm::vec3(0.0f, geom[0]));
-            glVertex(glm::vec3(len,  geom[0]));
-        }
-        glEnd(); // 14 verts -> 12 tris
+        if (!colorOverride)
+            glColor4f(1.0f, 0.25f, 0.0f, 0.85f);
+        glScalef(len, LaserRadius, LaserRadius);
+        DRAWER.beam();
+        // 14 verts -> 12 tris
 
         // also draw a line down the middle (so the beam is visible even
         // if very far away).  this will also give the beam an extra bright
         // center.
-        glBegin(GL_LINES);
-        {
-            glVertex3f(  0.0f, 0.0f, 0.0f);
-            glVertex3f(   len, 0.0f, 0.0f);
-        }
-        glEnd(); // count 1 line as 1 tri
+        DRAWER.asimmetricLineX();
+        // count 1 line as 1 tri
 
         addTriangleCount(13);
     }
-
-    glPopMatrix();
 }
 
 // Local Variables: ***
