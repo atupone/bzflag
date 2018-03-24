@@ -1,5 +1,5 @@
 /* bzflag
- * Copyright (c) 1993-2023 Tim Riker
+ * Copyright (c) 2019-2019 Tim Riker
  *
  * This package is free software;  you can redistribute it and/or
  * modify it under the terms of the license found in the file
@@ -12,40 +12,41 @@
 
 #pragma once
 
-// 1st
-#include "common.h"
+// inherits from
+#include "VBO_Handler.h"
 
-// System headers
+// system interface headers
 #include <vector>
 
 // common interface headers
 #include "bzfgl.h"
-#include "MeshDrawInfo.h"
-#include "Vertex_Chunk.h"
-#include "Element_Chunk.h"
 
-class MeshDrawMgr
+// This class is for the ELement (Indirect drawing)
+class VBO_Element: public VBO_Handler
 {
 public:
-    MeshDrawMgr(const MeshDrawInfo* drawInfo);
-    ~MeshDrawMgr() = default;
+    VBO_Element();
+    ~VBO_Element() = default;
 
-    void executeSet(int lod, int set, bool useNormals, bool useTexcoords);
+    // Increase the size
+    void resize();
+
+    void init() override;
+    void destroy() override;
+    std::string vboName() override;
+
+    void elementData(
+        int index,
+        int size,
+        const GLuint element[]);
 
 private:
-    void rawExecuteCommands(int lod, int set);
+    GLuint elems;
 
-    void makeLists();
+    std::vector<GLuint> hostedElements;
 
-private:
-    const MeshDrawInfo* drawInfo;
-
-    Vertex_Chunk vboVertexChunk;
-
-    using LodList = std::vector<Element_Chunk>;
-    std::vector<LodList> lodLists;
+    bool vbosReady;
 };
-
 
 // Local Variables: ***
 // mode: C++ ***

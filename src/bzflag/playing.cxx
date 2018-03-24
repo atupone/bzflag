@@ -7265,8 +7265,6 @@ static void     playingLoop()
             sendRobotUpdates();
 #endif
 
-        FlagSceneNode::freeFlag();
-
         cURLManager::perform();
 
         // check if we are waiting for initial texture downloading
@@ -7331,6 +7329,8 @@ static void     playingLoop()
         doMessages();
 
     } // end main client loop
+
+    FlagSceneNode::freeFlag();
 }
 
 
