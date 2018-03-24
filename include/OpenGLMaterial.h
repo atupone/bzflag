@@ -81,6 +81,7 @@ private:
             GLfloat shininess);
         static void freeContext(void*);
         static void initContext(void*);
+        static int listCount;
     public:
         int     refCount;
         Rep*        prev;

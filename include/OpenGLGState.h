@@ -98,8 +98,6 @@ public:
 private:
     static void     initGLState();
     static bool     initGLExtensions();
-    static void     freeStipple(void*);
-    static void     initStipple(void*);
 
     class ContextInitializer
     {
@@ -130,8 +128,7 @@ private:
 
 private:
     OpenGLGStateRep*    rep;
-    static GLuint   stipples;
-    static unsigned int maxSamples;
+    static int maxSamples;
 public:
     static bool executingFreeFuncs;
     static bool executingInitFuncs;
