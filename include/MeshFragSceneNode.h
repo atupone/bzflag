@@ -23,6 +23,7 @@
 
 // Global headers
 #include "BzMaterial.h"
+#include "Vertex_Chunk.h"
 
 //
 // NOTES:
@@ -68,19 +69,12 @@ protected:
         const glm::vec3 &getPosition() const override;
 
     private:
-        void drawV() const; // draw with just vertices
-        void drawVT() const; // draw with texcoords
-        void drawVN() const; // draw with normals
-        void drawVTN() const; // draw with texcoords and normals
+        void drawVTN(); // draw with texcoords and normals
 
         void initDisplayList();
-        void freeDisplayList();
-        static void initContext(void *data);
-        static void freeContext(void *data);
-
     private:
         int style;
-        GLuint list;
+        Vertex_Chunk vboChunk;
         MeshFragSceneNode &sceneNode;
     };
 

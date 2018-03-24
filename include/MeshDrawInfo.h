@@ -91,6 +91,7 @@ public:
     const glm::vec3* getVertices() const;
     const glm::vec3* getNormals() const;
     const glm::vec2* getTexcoords() const;
+    int getCornerCount() const;
 
     int getRadarCount() const;
     const DrawLod* getRadarLods() const;
@@ -216,6 +217,10 @@ inline const glm::vec3* MeshDrawInfo::getNormals() const
 inline const glm::vec2* MeshDrawInfo::getTexcoords() const
 {
     return texcoords.data();
+}
+inline int MeshDrawInfo::getCornerCount() const
+{
+    return cornerCount;
 }
 inline int MeshDrawInfo::getRadarCount() const
 {
