@@ -21,6 +21,7 @@
 #include "Bundle.h"
 #include "TextureManager.h"
 #include "FontManager.h"
+#include "VBO_Drawing.h"
 
 // local implementation headers
 #include "HUDui.h"
@@ -240,16 +241,17 @@ void            HUDuiControl::renderFocus()
         float imageXShift = 0.5f;
         float imageYShift = -fh2 * 0.2f;
         float outputSize = fh2;
-        glBegin(GL_TRIANGLE_STRIP);
-        glTexCoord2f(u, v);
-        glVertex2f(x + imageXShift - outputSize, y + imageYShift);
-        glTexCoord2f(u + du, v);
-        glVertex2f(x + imageXShift, y + imageYShift);
-        glTexCoord2f(u, v + dv);
-        glVertex2f(x + imageXShift - outputSize, y + outputSize + imageYShift);
-        glTexCoord2f(u + du, v + dv);
-        glVertex2f(x + imageXShift, y + outputSize + imageYShift);
-        glEnd();
+        glPushMatrix();
+        glTranslatef(x + imageXShift - outputSize, y + imageYShift, 0.0f);
+        glScalef(outputSize, outputSize, 0.0f);
+        glMatrixMode(GL_TEXTURE_2D);
+        glPushMatrix();
+        glTranslatef(u, v, 0.0f);
+        glScalef(du, dv, 0.0f);
+        DRAWER.asimmetricTexturedRect();
+        glPopMatrix();
+        glMatrixMode(GL_MODELVIEW);
+        glPopMatrix();
 
         TimeKeeper nowTime = TimeKeeper::getCurrent();
         if (nowTime - lastTime > 0.07f)
@@ -262,19 +264,15 @@ void            HUDuiControl::renderFocus()
     {
         fh2 = floorf(0.5f * fontHeight);
         gstate->setState();
+        glPushMatrix();
+        glTranslatef(x - fh2 - fontHeight, y, 0.0f);
+        glScalef(fontHeight - 1.0f, 0.5f * (fontHeight - 1.0f), 0.0f);
         glColor3f(1.0f, 1.0f, 1.0f);
-        glBegin(GL_TRIANGLES);
-        glVertex2f(x - fh2 - fontHeight, y + fontHeight - 1.0f);
-        glVertex2f(x - fh2 - fontHeight, y);
-        glVertex2f(x - fh2 - 1.0f, y + 0.5f * (fontHeight - 1.0f));
-        glEnd();
+        DRAWER.isoscelesTriangleXYFilled();
 
         glColor3f(0.0f, 0.0f, 0.0f);
-        glBegin(GL_LINE_LOOP);
-        glVertex2f(x - fh2 - fontHeight, y + fontHeight - 1.0f);
-        glVertex2f(x - fh2 - fontHeight, y);
-        glVertex2f(x - fh2 - 1.0f, y + 0.5f * (fontHeight - 1.0f));
-        glEnd();
+        DRAWER.isoscelesTriangleXYOutline();
+        glPopMatrix();
     }
 }
 

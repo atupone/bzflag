@@ -13,10 +13,9 @@
 #ifndef _FONT_MANAGER_H_
 #define _FONT_MANAGER_H_
 
-// Inherits from
-#include "Singleton.h"
+// 1st
+#include "common.h"
 
-// System interfaces
 #include <map>
 #include <string>
 #include <vector>
