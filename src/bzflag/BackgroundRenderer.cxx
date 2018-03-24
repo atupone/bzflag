@@ -1125,10 +1125,6 @@ void BackgroundRenderer::drawGroundShadows(
     // disable color updates
     SceneNode::setColorOverride(true);
 
-    // disable the unused arrays
-    glDisableClientState(GL_NORMAL_ARRAY);
-    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-
     if (BZDBCache::stencilShadows)
     {
         OpenGLGState::resetState();
@@ -1172,10 +1168,6 @@ void BackgroundRenderer::drawGroundShadows(
     SceneNode::setColorOverride(false);
 
     OpenGLGState::resetState();
-
-    // re-enable the arrays
-    glEnableClientState(GL_NORMAL_ARRAY);
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
     glPopMatrix();
 }
