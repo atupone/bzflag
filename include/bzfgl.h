@@ -62,7 +62,6 @@ extern int __beginendCount;
  */
 //#define DEBUG_GL_MATRIX_STACKS
 #ifdef DEBUG
-#  define glNewList(list,mode)          bzNewList((list), (mode))
 #  define glGenLists(count)         bzGenLists((count))
 #  define glGenTextures(count, textures)    bzGenTextures((count), (textures))
 #  ifdef DEBUG_GL_MATRIX_STACKS
