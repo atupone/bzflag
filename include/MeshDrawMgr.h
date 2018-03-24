@@ -21,28 +21,28 @@
 // common interface headers
 #include "bzfgl.h"
 #include "MeshDrawInfo.h"
+#include "Vertex_Chunk.h"
+#include "Element_Chunk.h"
 
 class MeshDrawMgr
 {
 public:
     MeshDrawMgr(const MeshDrawInfo* drawInfo);
-    ~MeshDrawMgr();
+    ~MeshDrawMgr() = default;
 
     void executeSet(int lod, int set, bool useNormals, bool useTexcoords);
-    void executeSetGeometry(int lod, int set);
 
 private:
     void rawExecuteCommands(int lod, int set);
 
     void makeLists();
-    void freeLists();
-    static void initContext(void* data);
-    static void freeContext(void* data);
 
 private:
     const MeshDrawInfo* drawInfo;
 
-    using LodList = std::vector<int>;
+    Vertex_Chunk vboVertexChunk;
+
+    using LodList = std::vector<Element_Chunk>;
     std::vector<LodList> lodLists;
 };
 
