@@ -1283,62 +1283,18 @@ void OpenGLGState::initGLState()
 // utility to check if an OpenGL extension is supported on this system
 bool OpenGLGState::initGLExtensions()
 {
-  const char * extensions = (const char*) glGetString(GL_EXTENSIONS);
-  if (!extensions)
-    return false;
-
-  std::stringstream extensionsStream;
-  extensionsStream.str(extensions);
 
   hasAnisotropicFiltering = false;
 
-  while (!extensionsStream.eof()) {
-    std::string thisExtension;
-    extensionsStream >> thisExtension;
-
-    if (thisExtension == "GL_EXT_texture_filter_anisotropic")
+  if (GLEW_EXT_texture_filter_anisotropic) {
       hasAnisotropicFiltering = true;
   }
 
-  extensionsStream.clear();
-  extensionsStream.str(extensions);
-
-  while (!extensionsStream.eof()) {
-    std::string thisExtension;
-    extensionsStream >> thisExtension;
-
-    if (thisExtension == "GL_ARB_framebuffer_object") {
+  if (GLEW_ARB_framebuffer_object) {
       GLint sampleCount = 1;
       glGetIntegerv(GL_MAX_SAMPLES, &sampleCount);
       maxSamples = sampleCount;
-
-      // make sure all the functions are good (macOS should have them built-in)
-#ifndef __APPLE__
-      if(glIsRenderbuffer == NULL ||
-	 glIsRenderbuffer == NULL ||
-	 glBindRenderbuffer == NULL ||
-	 glDeleteRenderbuffers == NULL ||
-	 glGenRenderbuffers == NULL ||
-	 glRenderbufferStorage == NULL ||
-	 glRenderbufferStorageMultisample == NULL ||
-	 glGetRenderbufferParameteriv == NULL ||
-	 glIsFramebuffer == NULL ||
-	 glBindFramebuffer == NULL ||
-	 glDeleteFramebuffers == NULL ||
-	 glGenFramebuffers == NULL ||
-	 glCheckFramebufferStatus == NULL ||
-	 glFramebufferTexture1D == NULL ||
-	 glFramebufferTexture2D == NULL ||
-	 glFramebufferTexture3D == NULL ||
-	 glFramebufferTextureLayer == NULL ||
-	 glFramebufferRenderbuffer == NULL ||
-	 glGetFramebufferAttachmentParameteriv == NULL ||
-	 glBlitFramebuffer == NULL ||
-	 glGenerateMipmap == NULL)
-	maxSamples = 1;
-#endif
     }
-  }
 
   return false;
 }
