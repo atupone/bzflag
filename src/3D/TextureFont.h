@@ -13,15 +13,19 @@
 #ifndef _TEXTURE_FONT_H_
 #define _TEXTURE_FONT_H_
 
-#include "bzfgl.h"
+// Inherits from
 #include "ImageFont.h"
+
+/* common interface headers */
+#include "bzfgl.h"
 #include "OpenGLGState.h"
+#include "Vertex_Chunk.h"
 
 class TextureFont : public ImageFont
 {
 public:
     TextureFont();
-    virtual ~TextureFont();
+    ~TextureFont() = default;
 
     virtual void build();
     virtual bool isBuilt() const
@@ -37,7 +41,7 @@ public:
 private:
     void preLoadLists();
 
-    unsigned int  listIDs[MAX_TEXTURE_FONT_CHARS];
+    Vertex_Chunk listIDs[MAX_TEXTURE_FONT_CHARS];
 
     int         textureID;
     OpenGLGState gstate;
