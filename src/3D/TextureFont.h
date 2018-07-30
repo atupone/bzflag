@@ -16,15 +16,16 @@
 // Inherits from
 #include "ImageFont.h"
 
-// Common headers
+/* common interface headers */
 #include "bzfgl.h"
 #include "OpenGLGState.h"
+#include "Vertex_Chunk.h"
 
 class TextureFont final : public ImageFont
 {
 public:
     TextureFont();
-    virtual ~TextureFont();
+    ~TextureFont() = default;
 
     void build() override;
     bool isBuilt() const override
@@ -40,7 +41,7 @@ public:
 private:
     void preLoadLists();
 
-    unsigned int  listIDs[MAX_TEXTURE_FONT_CHARS];
+    Vertex_Chunk listIDs[MAX_TEXTURE_FONT_CHARS];
 
     int         textureID;
     OpenGLGState gstate;
