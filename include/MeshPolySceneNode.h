@@ -21,6 +21,9 @@
 // Inherits from
 #include "WallSceneNode.h"
 
+// Common include
+#include "Vertex_Chunk.h"
+
 class MeshPolySceneNode : public WallSceneNode
 {
 public:
@@ -52,7 +55,8 @@ protected:
                  const std::vector<glm::vec3> &normals,
                  const std::vector<glm::vec2> &texcoords,
                  const glm::vec3 *normal);
-        ~Geometry();
+        ~Geometry() = default;
+
         void setStyle(int _style)
         {
             style = _style;
@@ -63,11 +67,6 @@ protected:
         int getVertexCount() const;
         const glm::vec3 getPosition() const override;
     private:
-        void drawV() const; // draw with just vertices
-        void drawVT() const; // draw with texcoords
-        void drawVN() const; // draw with normals
-        void drawVTN() const; // draw with texcoords and normals
-    private:
         MeshPolySceneNode* sceneNode;
         int style;
         const glm::vec3 *normal;
@@ -75,6 +74,8 @@ protected:
         std::vector<glm::vec3> vertices;
         std::vector<glm::vec3> normals;
         std::vector<glm::vec2> texcoords;
+    private:
+        Vertex_Chunk vboIndex;
     };
 
 private:
