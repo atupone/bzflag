@@ -20,7 +20,10 @@
 // Inherits from
 #include "WallSceneNode.h"
 
-class TriWallSceneNode final : public WallSceneNode
+// Common include
+#include "Vertex_Chunk.h"
+
+class TriWallSceneNode : public WallSceneNode
 {
 public:
     TriWallSceneNode(const glm::vec3 &base,
@@ -65,16 +68,13 @@ protected:
         const glm::vec3 &getVertex(int i) const;
         const glm::vec3 getPosition() const override;
     private:
-        void        drawV() const;
-        void        drawVT() const;
-    private:
         WallSceneNode*  wall;
         int     style;
-        int     de;
         const glm::vec3 normal;
+        Vertex_Chunk vboIndex;
+        Vertex_Chunk vboIndexS;
     public:
         std::vector<glm::vec3> vertex;
-        std::vector<glm::vec2> uv;
         int      triangles;
     };
 
