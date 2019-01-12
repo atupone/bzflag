@@ -20,6 +20,9 @@
 // Inherits from
 #include "SceneNode.h"
 
+// Common headers
+#include "Vertex_Chunk.h"
+
 class EighthDimSceneNode : public SceneNode
 {
 public:
@@ -46,10 +49,12 @@ protected:
         void        setPolygon(int index, const glm::vec3 vertex[3]);
         const glm::vec3 getPosition() const override;
     private:
+        void fillVBO();
         const EighthDimSceneNode* sceneNode;
         int     numPolygons;
+        Vertex_Chunk vboIndex;
         glm::vec4   *color;
-        glm::vec3   (*poly)[3];
+        glm::vec3   *poly;
     };
 
 private:

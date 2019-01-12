@@ -21,7 +21,10 @@
 // Inherits from
 #include "EighthDimSceneNode.h"
 
-class EighthDPyrSceneNode final : public EighthDimSceneNode
+// Common include
+#include "Vertex_Chunk.h"
+
+class EighthDPyrSceneNode : public EighthDimSceneNode
 {
 public:
     EighthDPyrSceneNode(const glm::vec3 &pos,
@@ -38,12 +41,14 @@ protected:
         EighthDPyrRenderNode(const EighthDPyrSceneNode*,
                              const glm::vec3 &pos,
                              const glm::vec3 &size, float rotation);
-        ~EighthDPyrRenderNode();
+        ~EighthDPyrRenderNode() = default;
+
         void        render() override;
         const glm::vec3 getPosition() const override;
     private:
         const EighthDPyrSceneNode* sceneNode;
         glm::vec3 corner[5];
+        Vertex_Chunk vboIndex;
     };
 
 private:
