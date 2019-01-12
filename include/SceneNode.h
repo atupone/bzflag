@@ -47,8 +47,6 @@
 #define __stdcall
 #endif
 
-#define myColor4f(r, g, b, a)   SceneNode::glColor4f(r, g, b, a)
-
 class ViewFrustum;
 class SceneRenderer;
 
@@ -93,11 +91,6 @@ public:
 
 
     static void     setColorOverride(bool = true);
-
-    static void     glColor4f(GLfloat r, GLfloat g, GLfloat b, GLfloat a)
-    {
-        if (!colorOverride) ::glColor4f(r, g, b, a);
-    };
 
     static void     glVertex3fv(const GLfloat *pos)
     {
