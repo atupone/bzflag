@@ -21,6 +21,9 @@
 // Inherits from
 #include "EighthDimSceneNode.h"
 
+// Common include
+#include "Vertex_Chunk.h"
+
 class EighthDBoxSceneNode : public EighthDimSceneNode
 {
 public:
@@ -38,12 +41,14 @@ protected:
         EighthDBoxRenderNode(const EighthDBoxSceneNode*,
                              const glm::vec3 &pos,
                              const glm::vec3 &size, float rotation);
-        ~EighthDBoxRenderNode();
+        ~EighthDBoxRenderNode() = default;
+
         void        render() override;
         const glm::vec3 getPosition() const override;
     private:
         const EighthDBoxSceneNode* sceneNode;
         glm::vec3 corner[8];
+        Vertex_Chunk vboIndex;
     };
 
 private:
