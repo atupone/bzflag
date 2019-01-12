@@ -39,91 +39,30 @@ MeshPolySceneNode::Geometry::Geometry(
     const glm::vec3 *_normal) :
     vertices(_vertices), normals(_normals), texcoords(_texcoords)
 {
+    if (normals.empty())
+        vboIndex = Vertex_Chunk(Vertex_Chunk::VT, vertices.size());
+    else
+        vboIndex = Vertex_Chunk(Vertex_Chunk::VTN, vertices.size());
     sceneNode = _node;
     normal = _normal;
     style = 0;
+    vboIndex.textureData(texcoords);
+    vboIndex.normalData(normals);
+    vboIndex.vertexData(vertices);
     return;
 }
 
-
-MeshPolySceneNode::Geometry::~Geometry()
-{
-    // do nothing
-    return;
-}
-
-inline void MeshPolySceneNode::Geometry::drawV() const
-{
-    glBegin(GL_TRIANGLE_FAN);
-    for (const auto &v : vertices)
-        glVertex3fv(v);
-    glEnd();
-    return;
-}
-
-
-inline void MeshPolySceneNode::Geometry::drawVT() const
-{
-    const int count = vertices.size();
-    glBegin(GL_TRIANGLE_FAN);
-    for (int i = 0; i < count; i++)
-    {
-        glTexCoord2fv(texcoords[i]);
-        glVertex3fv(vertices[i]);
-    }
-    glEnd();
-    return;
-}
-
-
-inline void MeshPolySceneNode::Geometry::drawVN() const
-{
-    const int count = vertices.size();
-    glBegin(GL_TRIANGLE_FAN);
-    for (int i = 0; i < count; i++)
-    {
-        glNormal3fv(normals[i]);
-        glVertex3fv(vertices[i]);
-    }
-    glEnd();
-    return;
-}
-
-
-inline void MeshPolySceneNode::Geometry::drawVTN() const
-{
-    const int count = vertices.size();
-    glBegin(GL_TRIANGLE_FAN);
-    for (int i = 0; i < count; i++)
-    {
-        glTexCoord2fv(texcoords[i]);
-        glNormal3fv(normals[i]);
-        glVertex3fv(vertices[i]);
-    }
-    glEnd();
-    return;
-}
 
 
 void MeshPolySceneNode::Geometry::render()
 {
     sceneNode->setColor();
 
-    if (!normals.empty())
-    {
-        if (style >= 2)
-            drawVTN();
-        else
-            drawVN();
-    }
-    else
-    {
+    if (normals.empty())
         glNormal3f(normal->x, normal->y, normal->z);
-        if (style >= 2)
-            drawVT();
-        else
-            drawV();
-    }
+
+    vboIndex.enableArrays(style >= 2, true, false);
+    vboIndex.glDrawArrays(GL_TRIANGLE_FAN);
 
     addTriangleCount(vertices.size() - 2);
     return;
@@ -132,7 +71,7 @@ void MeshPolySceneNode::Geometry::render()
 
 void MeshPolySceneNode::Geometry::renderShadow()
 {
-    drawV();
+    vboIndex.draw(GL_TRIANGLE_FAN, true);
     addTriangleCount(vertices.size() - 2);
     return;
 }
