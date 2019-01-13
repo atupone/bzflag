@@ -22,6 +22,7 @@
 #include "BZDBCache.h"
 #include "TextureManager.h"
 #include "VBO_Drawing.h"
+#include "Singleton.h"
 
 // local implementation headers
 #include "ViewFrustum.h"
@@ -30,6 +31,436 @@
 #include "SceneRenderer.h"
 
 #include "TimeKeeper.h"
+
+const float maxRad = 0.16f;
+const float boosterLen = 0.2f;
+const float finRadius = 0.16f;
+const float finCapSize = 0.15f;
+const float finForeDelta = 0.02f;
+const float noseRad = 0.086f;
+const float noseLen = 0.1f;
+const float bevelLen = 0.02f;
+const float waistRad = 0.125f;
+const float engineLen = 0.08f;
+const float FlareSpread = 0.08f;
+const float CoreFraction = 0.4f;
+
+#define BOLTDRAWER (BoltDrawer::instance())
+
+class BoltDrawer: public Singleton<BoltDrawer>
+{
+public:
+    void drawFin();
+    void drawFlare();
+    void nosecone();
+    void body();
+    void booster1();
+    void booster2();
+    void engine();
+    void hemisphere1(int slices);
+    void hemisphere2(int slices);
+    void shaft(int slices);
+protected:
+    friend class Singleton<BoltDrawer>;
+private:
+    BoltDrawer();
+    virtual ~BoltDrawer() = default;
+
+    Vertex_Chunk buildFin();
+    Vertex_Chunk buildFlare();
+    Vertex_Chunk buildEmy1(int slices);
+    Vertex_Chunk buildEmy2(int slices);
+
+    int segment2Pos(int segment);
+    Vertex_Chunk drawCylinder(
+        float baseRadius, float topRadius, float height, int slices);
+    void drawCylinder(
+        float baseRadius, float topRadius, float height, int slices,
+        std::vector<glm::vec3> &vertices, std::vector<glm::vec3> &normals);
+    const int segments[4] = {16, 25, 32, 48};
+
+    Vertex_Chunk finIndex;
+    Vertex_Chunk noseconeIndex;
+    Vertex_Chunk bodyIndex;
+    Vertex_Chunk booster1Index;
+    Vertex_Chunk booster2Index;
+    Vertex_Chunk engineIndex;
+    Vertex_Chunk hemy1Index[4];
+    Vertex_Chunk hemy2Index[4];
+    Vertex_Chunk shaftIndex[4];
+    Vertex_Chunk flareIndex;
+
+    // parametrics
+    const float engineRad = 0.1f;
+};
+
+BoltDrawer::BoltDrawer()
+{
+    finIndex    = buildFin();
+    flareIndex  = buildFlare();
+    int slices = 8;
+    noseconeIndex = drawCylinder(maxRad,    noseRad,  noseLen,   slices);
+    bodyIndex     = drawCylinder(waistRad,  maxRad,   bevelLen,  slices);
+    booster1Index = drawCylinder(maxRad,    waistRad, bevelLen,  slices);
+    booster2Index = drawCylinder(waistRad,  maxRad,   bevelLen,  slices);
+    engineIndex   = drawCylinder(engineRad, waistRad, engineLen, slices);
+
+    for (int i = 0; i < 4; i++)
+    {
+        slices = segments[i];
+        hemy1Index[i] = buildEmy1(slices);
+        hemy2Index[i] = buildEmy2(slices);
+        shaftIndex[i] = drawCylinder(1.0f, 1.0f, 1.0f, slices);
+    }
+}
+
+Vertex_Chunk BoltDrawer::buildFin()
+{
+    const float finalRadius = maxRad     + finRadius;
+    const float finFore     = boosterLen - finForeDelta;
+    const float finCap      = finFore    - finCapSize;
+    std::vector<glm::vec3> finNormal;
+    std::vector<glm::vec3> finVertex;
+
+    finNormal.push_back(glm::vec3(1.0f, 0.0f, 0.0f));
+    finVertex.push_back(glm::vec3(0.0f, maxRad, 0.0f));
+    finNormal.push_back(glm::vec3(1.0f, 0.0f, 0.0f));
+    finVertex.push_back(glm::vec3(0.0f, maxRad, boosterLen));
+    finNormal.push_back(glm::vec3(1.0f, 0.0f, 0.0f));
+    finVertex.push_back(glm::vec3(0.0f, finalRadius, finCap));
+    finNormal.push_back(glm::vec3(1.0f, 0.0f, 0.0f));
+    finVertex.push_back(glm::vec3(0.0f, finalRadius, finFore));
+
+    finNormal.push_back(glm::vec3(-1.0f, 0.0f, 0.0f));
+    finVertex.push_back(glm::vec3(0.0f, finalRadius, finCap));
+    finNormal.push_back(glm::vec3(-1.0f, 0.0f, 0.0f));
+    finVertex.push_back(glm::vec3(0.0f, finalRadius, finFore));
+    finNormal.push_back(glm::vec3(-1.0f, 0.0f, 0.0f));
+    finVertex.push_back(glm::vec3(0.0f, maxRad, 0.0f));
+    finNormal.push_back(glm::vec3(-1.0f, 0.0f, 0.0f));
+    finVertex.push_back(glm::vec3(0.0f, maxRad, boosterLen));
+
+    // Degraded triangles
+    finNormal.push_back(glm::vec3(-1.0f, 0.0f, 0.0f));
+    finVertex.push_back(glm::vec3( 0.0f,   maxRad, boosterLen));
+    finNormal.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
+    finVertex.push_back(glm::vec3(-maxRad, 0.0f,   0.0f));
+
+    finNormal.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
+    finVertex.push_back(glm::vec3(-maxRad,      0.0f, 0.0f));
+    finNormal.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
+    finVertex.push_back(glm::vec3(-maxRad,      0.0f, boosterLen));
+    finNormal.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
+    finVertex.push_back(glm::vec3(-finalRadius, 0.0f, finCap));
+    finNormal.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
+    finVertex.push_back(glm::vec3(-finalRadius, 0.0f, finFore));
+
+    finNormal.push_back(glm::vec3(0.0f, -1.0f, 0.0f));
+    finVertex.push_back(glm::vec3(-finalRadius, 0.0f, finCap));
+    finNormal.push_back(glm::vec3(0.0f, -1.0f, 0.0f));
+    finVertex.push_back(glm::vec3(-finalRadius, 0.0f, finFore));
+    finNormal.push_back(glm::vec3(0.0f, -1.0f, 0.0f));
+    finVertex.push_back(glm::vec3(-maxRad,      0.0f, 0.0f));
+    finNormal.push_back(glm::vec3(0.0f, -1.0f, 0.0f));
+    finVertex.push_back(glm::vec3(-maxRad,      0.0f, boosterLen));
+
+    // Degraded triangles
+    finNormal.push_back(glm::vec3(0.0f, -1.0f, 0.0f));
+    finVertex.push_back(glm::vec3(-maxRad, 0.0f, boosterLen));
+    finNormal.push_back(glm::vec3(0.0f, -1.0f, 0.0f));
+    finVertex.push_back(glm::vec3( maxRad, 0.0f, 0.0f));
+
+    finNormal.push_back(glm::vec3(0.0f, -1.0f, 0.0f));
+    finVertex.push_back(glm::vec3(maxRad,      0.0f, 0.0f));
+    finNormal.push_back(glm::vec3(0.0f, -1.0f, 0.0f));
+    finVertex.push_back(glm::vec3(maxRad,      0.0f, boosterLen));
+    finNormal.push_back(glm::vec3(0.0f, -1.0f, 0.0f));
+    finVertex.push_back(glm::vec3(finalRadius, 0.0f, finCap));
+    finNormal.push_back(glm::vec3(0.0f, -1.0f, 0.0f));
+    finVertex.push_back(glm::vec3(finalRadius, 0.0f, finFore));
+
+    finNormal.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
+    finVertex.push_back(glm::vec3(finalRadius, 0.0f, finCap));
+    finNormal.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
+    finVertex.push_back(glm::vec3(finalRadius, 0.0f, finFore));
+    finNormal.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
+    finVertex.push_back(glm::vec3(maxRad,      0.0f, 0.0f));
+    finNormal.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
+    finVertex.push_back(glm::vec3(maxRad,      0.0f, boosterLen));
+
+    // Degraded triangles
+    finNormal.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
+    finVertex.push_back(glm::vec3(maxRad, 0.0f,    boosterLen));
+    finNormal.push_back(glm::vec3(-1.0f, 0.0f, 0.0f));
+    finVertex.push_back(glm::vec3(0.0f,   -maxRad, 0.0f));
+
+    finNormal.push_back(glm::vec3(-1.0f, 0.0f, 0.0f));
+    finVertex.push_back(glm::vec3(0.0f,  -maxRad,      0.0f));
+    finNormal.push_back(glm::vec3(-1.0f, 0.0f, 0.0f));
+    finVertex.push_back(glm::vec3(0.0f,  -maxRad,      boosterLen));
+    finNormal.push_back(glm::vec3(-1.0f, 0.0f, 0.0f));
+    finVertex.push_back(glm::vec3(0.0f,  -finalRadius, finCap));
+    finNormal.push_back(glm::vec3(-1.0f, 0.0f, 0.0f));
+    finVertex.push_back(glm::vec3(0.0f,  -finalRadius, finFore));
+
+    finNormal.push_back(glm::vec3(1.0f, 0.0f, 0.0f));
+    finVertex.push_back(glm::vec3(0.0f,  -finalRadius, finCap));
+    finNormal.push_back(glm::vec3(1.0f, 0.0f, 0.0f));
+    finVertex.push_back(glm::vec3(0.0f,  -finalRadius, finFore));
+    finNormal.push_back(glm::vec3(1.0f, 0.0f, 0.0f));
+    finVertex.push_back(glm::vec3(0.0f,  -maxRad,     0.0f));
+    finNormal.push_back(glm::vec3(1.0f, 0.0f, 0.0f));
+    finVertex.push_back(glm::vec3(0.0f,  -maxRad,      boosterLen));
+
+    Vertex_Chunk vboIndex = Vertex_Chunk(Vertex_Chunk::VN, finVertex.size());
+    vboIndex.normalData(finNormal);
+    vboIndex.vertexData(finVertex);
+
+    return vboIndex;
+}
+
+Vertex_Chunk BoltDrawer::buildFlare()
+{
+    Vertex_Chunk vboIndex;
+    glm::vec3    vertex[4];
+    const float fs = FlareSpread;
+
+    vertex[0] = glm::vec3(CoreFraction,  0.0f,        0.0f);
+    vertex[1] = glm::vec3(cosf(fs),     -sin(fs),     0.0f);
+    vertex[2] = glm::vec3(vertex[1].x,  -vertex[1].y, 0.0f);
+    vertex[3] = glm::vec3(2.0f,          0.0f,        0.0f);
+    vboIndex = Vertex_Chunk(Vertex_Chunk::V, 4);
+    vboIndex.vertexData(vertex);
+    return vboIndex;
+}
+
+Vertex_Chunk BoltDrawer::drawCylinder(
+    float baseRadius, float topRadius, float height, int slices)
+{
+    Vertex_Chunk vboIndex;
+    std::vector<glm::vec3> normal;
+    std::vector<glm::vec3> vertex;
+
+    drawCylinder(baseRadius, topRadius, height, slices, vertex, normal);
+    vboIndex = Vertex_Chunk(Vertex_Chunk::VN, vertex.size());
+    vboIndex.normalData(normal);
+    vboIndex.vertexData(vertex);
+    return vboIndex;
+}
+
+
+void BoltDrawer::drawCylinder(
+    float baseRadius, float topRadius, float height, int slices,
+    std::vector<glm::vec3> &vertex, std::vector<glm::vec3> &normal)
+{
+    /* Compute length (needed for normal calculations) */
+    float deltaRadius = baseRadius - topRadius;
+    float length = sqrt(deltaRadius * deltaRadius + height * height);
+
+    float zNormal  = deltaRadius / length;
+    float xyNormalRatio = height / length;
+
+    auto normalV = glm::vec3(0.0f, xyNormalRatio, zNormal);
+    normal.push_back(normalV);
+    normal.push_back(normalV);
+    vertex.push_back(glm::vec3(0.0f, baseRadius,    0.0f));
+    vertex.push_back(glm::vec3(0.0f, topRadius,     height));
+    for (int i = 1; i < slices; i++)
+    {
+        float angle = (float)(2 * M_PI * i / slices);
+        float sinCache = sin(angle);
+        float cosCache = cos(angle);
+        normalV = glm::vec3(xyNormalRatio * sinCache, xyNormalRatio * cosCache, zNormal);
+
+        normal.push_back(normalV);
+        normal.push_back(normalV);
+        vertex.push_back(glm::vec3(baseRadius    * sinCache, baseRadius    * cosCache, 0.0f));
+        vertex.push_back(glm::vec3(topRadius     * sinCache, topRadius     * cosCache, height));
+    }
+    normalV = glm::vec3(0.0f, xyNormalRatio, zNormal);
+    normal.push_back(normalV);
+    normal.push_back(normalV);
+    vertex.push_back(glm::vec3(0.0f, baseRadius,    0.0f));
+    vertex.push_back(glm::vec3(0.0f, topRadius,     height));
+}
+
+void BoltDrawer::nosecone()
+{
+    noseconeIndex.draw(GL_TRIANGLE_STRIP);
+}
+
+void BoltDrawer::body()
+{
+    bodyIndex.draw(GL_TRIANGLE_STRIP);
+}
+
+void BoltDrawer::booster1()
+{
+    booster1Index.draw(GL_TRIANGLE_STRIP);
+}
+
+void BoltDrawer::booster2()
+{
+    booster2Index.draw(GL_TRIANGLE_STRIP);
+}
+
+void BoltDrawer::engine()
+{
+    engineIndex.draw(GL_TRIANGLE_STRIP);
+}
+
+int BoltDrawer::segment2Pos(int slices)
+{
+    int i;
+    if (slices == 16)
+        i = 0;
+    else if (slices == 25)
+        i = 1;
+    else if (slices == 32)
+        i = 2;
+    else if (slices == 48)
+        i = 3;
+    else
+        abort();
+    return i;
+}
+
+Vertex_Chunk BoltDrawer::buildEmy1(int slices)
+{
+    std::vector<glm::vec3> normal;
+    std::vector<glm::vec3> vertex;
+    Vertex_Chunk vboIndex;
+
+    drawCylinder(0.0f, 0.43589f, 0.1f, slices, vertex, normal);
+    // Add degenerate triangle
+    vertex.push_back(vertex.back());
+    normal.push_back(normal.back());
+    vertex.push_back(vertex.back());
+    normal.push_back(normal.back());
+    auto lastSize = vertex.size();
+
+    drawCylinder(0.43589f, 0.66144f, 0.15f, slices, vertex, normal);
+    // translate
+    for (auto j = lastSize; j < vertex.size(); j++)
+        vertex[j].z += 0.1f;
+
+    vertex[lastSize - 1] = vertex[lastSize];
+    normal[lastSize - 1] = normal[lastSize];
+
+    // Add degenerate triangle
+    vertex.push_back(vertex.back());
+    normal.push_back(normal.back());
+    vertex.push_back(vertex.back());
+    normal.push_back(normal.back());
+    lastSize = vertex.size();
+    drawCylinder(0.66144f, 0.86603f, 0.25f, slices, vertex, normal);
+    // translate
+    for (auto j = lastSize; j < vertex.size(); j++)
+        vertex[j].z += 0.25f;
+
+    vertex[lastSize - 1] = vertex[lastSize];
+    normal[lastSize - 1] = normal[lastSize];
+
+    // Add degenerate triangle
+    vertex.push_back(vertex.back());
+    normal.push_back(normal.back());
+    vertex.push_back(vertex.back());
+    normal.push_back(normal.back());
+    lastSize = vertex.size();
+    drawCylinder(0.86603f, 1.0f, 0.5f, slices, vertex, normal);
+    // translate
+    for (auto j = lastSize; j < vertex.size(); j++)
+        vertex[j].z += 0.5f;
+
+    vertex[lastSize - 1] = vertex[lastSize];
+    normal[lastSize - 1] = normal[lastSize];
+
+    vboIndex = Vertex_Chunk(Vertex_Chunk::VN, vertex.size());
+    vboIndex.normalData(normal);
+    vboIndex.vertexData(vertex);
+
+    return vboIndex;
+}
+
+void BoltDrawer::hemisphere1(int slices)
+{
+    int i = segment2Pos(slices);
+
+    // 4 parts of the first hemisphere
+    hemy1Index[i].draw(GL_TRIANGLE_STRIP);
+}
+
+Vertex_Chunk BoltDrawer::buildEmy2(int slices)
+{
+    std::vector<glm::vec3> normal;
+    std::vector<glm::vec3> vertex;
+    Vertex_Chunk vboIndex;
+
+    drawCylinder(1.0f, 0.86603f, 0.5f, slices, vertex, normal);
+    // Add degenerate triangle
+    vertex.push_back(vertex.back());
+    normal.push_back(normal.back());
+    vertex.push_back(vertex.back());
+    normal.push_back(normal.back());
+    auto lastSize = vertex.size();
+
+    drawCylinder(0.86603f, 0.66144f, 0.25f, slices, vertex, normal);
+    // translate
+    for (auto j = lastSize; j < vertex.size(); j++)
+        vertex[j].z += 0.5f;
+
+    vertex[lastSize - 1] = vertex[lastSize];
+    normal[lastSize - 1] = normal[lastSize];
+
+    // Add degenerate triangle
+    vertex.push_back(vertex.back());
+    normal.push_back(normal.back());
+    vertex.push_back(vertex.back());
+    normal.push_back(normal.back());
+    lastSize = vertex.size();
+    drawCylinder(0.66144f, 0.43589f, 0.15f, slices, vertex, normal);
+    // translate
+    for (auto j = lastSize; j < vertex.size(); j++)
+        vertex[j].z += 0.75f;
+
+    vertex[lastSize - 1] = vertex[lastSize];
+    normal[lastSize - 1] = normal[lastSize];
+
+    // Add degenerate triangle
+    vertex.push_back(vertex.back());
+    normal.push_back(normal.back());
+    vertex.push_back(vertex.back());
+    normal.push_back(normal.back());
+    lastSize = vertex.size();
+    drawCylinder(0.43589f, 0.0f, 0.1f, slices, vertex, normal);
+    // translate
+    for (auto j = lastSize; j < vertex.size(); j++)
+        vertex[j].z += 0.9f;
+
+    vertex[lastSize - 1] = vertex[lastSize];
+    normal[lastSize - 1] = normal[lastSize];
+
+    vboIndex = Vertex_Chunk(Vertex_Chunk::VN, vertex.size());
+    vboIndex.normalData(normal);
+    vboIndex.vertexData(vertex);
+
+    return vboIndex;
+}
+
+void BoltDrawer::hemisphere2(int slices)
+{
+    int i = segment2Pos(slices);
+
+    // 4 parts of the last hemisphere
+    hemy2Index[i].draw(GL_TRIANGLE_STRIP);
+}
+
+void BoltDrawer::shaft(int slices)
+{
+    int i = segment2Pos(slices);
+
+    shaftIndex[i].draw(GL_TRIANGLE_STRIP);
+}
 
 BoltSceneNode::BoltSceneNode(const glm::vec3 &pos, const glm::vec3 &vel, bool super) :
     isSuper(super),
@@ -79,16 +510,16 @@ void            BoltSceneNode::setSize(float radius)
 }
 void            BoltSceneNode::setTextureColor(GLfloat r, GLfloat g, GLfloat b, GLfloat a)
 {
-    color = glm::vec3(r, g, b);
+    color = glm::vec4(r, g, b, a);
     light.setColor(1.5f * r, 1.5f * g, 1.5f * b);
-    renderNode.setTextureColor(glm::vec4(color, a));
+    renderNode.setTextureColor(color);
 }
 
 void            BoltSceneNode::setColor(GLfloat r, GLfloat g, GLfloat b, GLfloat a)
 {
-    color = glm::vec3(r, g, b);
+    color = glm::vec4(r, g, b, a);
     light.setColor(1.5f * r, 1.5f * g, 1.5f * b);
-    renderNode.setColor(glm::vec4(color, a));
+    renderNode.setColor(color);
 }
 
 void            BoltSceneNode::setTeamColor(const glm::vec3 &c)
@@ -174,21 +605,19 @@ void            BoltSceneNode::addRenderNodes(
 // BoltSceneNode::BoltRenderNode
 //
 
-const GLfloat       BoltSceneNode::BoltRenderNode::CoreFraction = 0.4f;
-const GLfloat       BoltSceneNode::BoltRenderNode::FlareSize = 1.0f;
-const GLfloat       BoltSceneNode::BoltRenderNode::FlareSpread = 0.08f;
-glm::vec2       BoltSceneNode::BoltRenderNode::core[9];
-glm::vec2       BoltSceneNode::BoltRenderNode::corona[8];
-const glm::vec2 BoltSceneNode::BoltRenderNode::ring[8] =
+const GLfloat   FlareSize = 1.0f;
+glm::vec3       core[8];
+glm::vec3       corona[8];
+const glm::vec3 ring[8] =
 {
-    { 1.0f, 0.0f },
-    { (float)M_SQRT1_2, (float)M_SQRT1_2 },
-    { 0.0f, 1.0f },
-    { (float)-M_SQRT1_2, (float)M_SQRT1_2 },
-    { -1.0f, 0.0f },
-    { (float)-M_SQRT1_2, (float)-M_SQRT1_2 },
-    { 0.0f, -1.0f },
-    { (float)M_SQRT1_2, (float)-M_SQRT1_2 }
+    { 1.0f, 0.0f, 0.0f },
+    { (float)M_SQRT1_2, (float)M_SQRT1_2, 0.0f },
+    { 0.0f, 1.0f, 0.0f },
+    { (float)-M_SQRT1_2, (float)M_SQRT1_2, 0.0f },
+    { -1.0f, 0.0f, 0.0f },
+    { (float)-M_SQRT1_2, (float)-M_SQRT1_2, 0.0f },
+    { 0.0f, -1.0f, 0.0f },
+    { (float)M_SQRT1_2, (float)-M_SQRT1_2, 0.0f }
 };
 
 BoltSceneNode::BoltRenderNode::BoltRenderNode(
@@ -201,10 +630,10 @@ BoltSceneNode::BoltRenderNode::BoltRenderNode(
     if (!init)
     {
         init = true;
-        core[0] = glm::vec2(0.0f);
+        core[0] = glm::vec3(0.0f);
         for (int i = 0; i < 8; i++)
         {
-            core[i+1] = CoreFraction * ring[i];
+            core[i] = CoreFraction * ring[i];
             corona[i] = ring[i];
         }
     }
@@ -255,25 +684,49 @@ void            BoltSceneNode::BoltRenderNode::setColor(
         coronaColor.a = 0.5f;
         flareColor.a  = 0.667f;
     }
+
+    // compute corona & core vbo
+    glm::vec3 vertex[18];
+    glm::vec4 colors[18];
+    int j = 0;
+
+    for (auto i = 0; i < 8; i++)
+    {
+        colors[j] = mainColor;
+        vertex[j++] = core[i];
+        colors[j] = outerColor;
+        vertex[j++] = corona[i];
+    }
+    colors[j] = mainColor;
+    vertex[j++] = core[0];
+    colors[j] = outerColor;
+    vertex[j++] = corona[0];
+    coronaIndex = Vertex_Chunk(Vertex_Chunk::VC, 18);
+    coronaIndex.colorData(colors);
+    coronaIndex.vertexData(vertex);
+
+    colors[0] = innerColor;
+    vertex[0] = glm::vec3(0.0f);
+    for (auto i = 0; i < 8; i++)
+    {
+        colors[i + 1] = mainColor;
+        vertex[i + 1] = core[i];
+    }
+    colors[9] = mainColor;
+    vertex[9] = core[0];
+    coreIndex = Vertex_Chunk(Vertex_Chunk::VC, 10);
+    coreIndex.colorData(colors);
+    coreIndex.vertexData(vertex);
 }
 
-void drawFin ( float maxRad, float finRadius, float boosterLen, float finForeDelta, float finCapSize)
+void BoltDrawer::drawFin()
 {
-    glBegin(GL_TRIANGLE_STRIP);
-    glNormal3f(1,0,0);
-    glVertex3f(0,maxRad,0);
-    glVertex3f(0,maxRad,boosterLen);
-    glVertex3f(0,maxRad+finRadius,boosterLen-finForeDelta-finCapSize);
-    glVertex3f(0,maxRad+finRadius,boosterLen-finForeDelta);
-    glEnd();
+    finIndex.draw(GL_TRIANGLE_STRIP);
+}
 
-    glBegin(GL_TRIANGLE_STRIP);
-    glNormal3f(-1,0,0);
-    glVertex3f(0,maxRad+finRadius,boosterLen-finForeDelta-finCapSize);
-    glVertex3f(0,maxRad+finRadius,boosterLen-finForeDelta);
-    glVertex3f(0,maxRad,0);
-    glVertex3f(0,maxRad,boosterLen);
-    glEnd();
+void BoltDrawer::drawFlare()
+{
+    flareIndex.draw(GL_TRIANGLE_STRIP);
 }
 
 void BoltSceneNode::BoltRenderNode::renderGeoGMBolt()
@@ -282,28 +735,16 @@ void BoltSceneNode::BoltRenderNode::renderGeoGMBolt()
     float gmMissleSize = BZDBCache::gmSize;
 
     // parametrics
-    float maxRad = gmMissleSize * 0.16f;
-    float noseRad = gmMissleSize * 0.086f;
-    float waistRad = gmMissleSize * 0.125f;
-    float engineRad = gmMissleSize * 0.1f;
+    float bodyLen = 0.44f;
+    float waistLen = 0.16f;
 
-    float noseLen = gmMissleSize * 0.1f;
-    float bodyLen = gmMissleSize * 0.44f;
-    float bevelLen = gmMissleSize * 0.02f;
-    float waistLen = gmMissleSize * 0.16f;
-    float boosterLen = gmMissleSize * 0.2f;
-    float engineLen = gmMissleSize * 0.08f;
-
-    float finRadius = gmMissleSize * 0.16f;
-    float finCapSize = gmMissleSize * 0.15f;
-    float finForeDelta = gmMissleSize * 0.02f;
-
+#ifdef DEBUG_RENDERING
     int slices = 8;
+#endif
 
     float rotSpeed = 90.0f;
 
     glDepthMask(GL_TRUE);
-    glPushMatrix();
     glRotatef(sceneNode->azimuth, 0.0f, 0.0f, 1.0f);
     glRotatef(sceneNode->elevation, 0.0f, 1.0f, 0.0f);
     glRotatef(90, 0.0f, 1.0f, 0.0f);
@@ -317,11 +758,10 @@ void BoltSceneNode::BoltRenderNode::renderGeoGMBolt()
     glm::vec4 bodyColor(1,1,1,1);
 
     glPushMatrix();
-
-    GLUquadric *q = gluNewQuadric();
+    glScalef(gmMissleSize, gmMissleSize, gmMissleSize);
 
     glColor4f(noseColor.r,noseColor.g,noseColor.b,1.0f);
-    glTranslatef(0, 0, gmMissleSize);
+    glTranslatef(0, 0, 1.0f);
     glRotatef((float)TimeKeeper::getCurrent().getSeconds() * rotSpeed,0,0,1);
 
     // nosecone
@@ -330,7 +770,7 @@ void BoltSceneNode::BoltRenderNode::renderGeoGMBolt()
     DRAWER.disk8();
     glPopMatrix();
     glTranslatef(0, 0, -noseLen);
-    gluCylinder(q,maxRad,noseRad,noseLen,slices,1);
+    BOLTDRAWER.nosecone();
     addTriangleCount(slices * 2);
 
     // body
@@ -343,7 +783,7 @@ void BoltSceneNode::BoltRenderNode::renderGeoGMBolt()
     addTriangleCount(slices);
 
     glTranslatef(0, 0, -bevelLen);
-    gluCylinder(q,waistRad,maxRad,bevelLen,slices,1);
+    BOLTDRAWER.body();
     addTriangleCount(slices);
 
     // waist
@@ -358,7 +798,7 @@ void BoltSceneNode::BoltRenderNode::renderGeoGMBolt()
     // booster
     myColor4f(bodyColor.r, bodyColor.g, bodyColor.b, 1.0f);
     glTranslatef(0, 0, -bevelLen);
-    gluCylinder(q,maxRad,waistRad,bevelLen,slices,1);
+    BOLTDRAWER.booster1();
     addTriangleCount(slices);
 
     glTranslatef(0, 0, -boosterLen);
@@ -369,33 +809,25 @@ void BoltSceneNode::BoltRenderNode::renderGeoGMBolt()
     addTriangleCount(slices);
 
     glTranslatef(0, 0, -bevelLen);
-    gluCylinder(q,waistRad,maxRad,bevelLen,slices,1);
+    BOLTDRAWER.booster2();
     addTriangleCount(slices);
 
     // engine
     myColor4f(coneColor.r, coneColor.g, coneColor.b, 1.0f);
     glTranslatef(0, 0, -engineLen);
-    gluCylinder(q,engineRad,waistRad,engineLen,slices,1);
+    BOLTDRAWER.engine();
     addTriangleCount(slices);
 
     // fins
     myColor4f(finColor.r, finColor.g, finColor.b, 1.0f);
     glTranslatef(0, 0, engineLen + bevelLen);
 
-    for ( int i = 0; i < 4; i++)
-    {
-        glRotatef(i*90.0f,0,0,1);
-        drawFin ( maxRad, finRadius, boosterLen, finForeDelta, finCapSize);
-    }
+    BOLTDRAWER.drawFin();
 
     glPopMatrix();
-
-    gluDeleteQuadric(q);
 
     glEnable(GL_TEXTURE_2D);
     // glDisable(GL_LIGHTING);
-
-    glPopMatrix();
 
     glDepthMask(GL_FALSE);
 }
@@ -408,7 +840,6 @@ void BoltSceneNode::BoltRenderNode::renderGeoBolt()
     float baseRadius = 0.225f;
 
     float len = sceneNode->length * lenMod;
-    glPushMatrix();
     glRotatef(sceneNode->azimuth, 0.0f, 0.0f, 1.0f);
     glRotatef(sceneNode->elevation, 0.0f, 1.0f, 0.0f);
     glRotatef(90, 0.0f, 1.0f, 0.0f);
@@ -426,12 +857,13 @@ void BoltSceneNode::BoltRenderNode::renderGeoBolt()
     auto coreColor = glm::max(c * coreBleed, minimumChannelVal);
 
     myColor4f(coreColor.r, coreColor.g, coreColor.b, 0.85f * alphaMod);
+    glPushMatrix();
     renderGeoPill(baseRadius,len,16);
+    glPopMatrix();
 
     float radInc = 1.5f * baseRadius - baseRadius;
     glPushMatrix();
     glTranslatef(0, 0, -radInc * 0.5f);
-
     myColor4f(c.r, c.g, c.b, 0.5f);
     renderGeoPill(1.5f * baseRadius, len + radInc, 25);
     glPopMatrix();
@@ -451,73 +883,36 @@ void BoltSceneNode::BoltRenderNode::renderGeoBolt()
     glPopMatrix();
 
     glEnable(GL_TEXTURE_2D);
-
-    glPopMatrix();
 }
 
 
 void BoltSceneNode::BoltRenderNode::renderGeoPill(float radius, float len,
-        int segments, float endRad)
+        int segments)
 {
-    glPushMatrix();
+    glScalef(radius, radius, radius);
 
-    float assRadius = radius;
-    if (endRad >= 0)
-        assRadius = endRad;
+    // 4 parts of the first hemisphere
+    BOLTDRAWER.hemisphere1(segments);
+    addTriangleCount(4 * segments);
 
-    float lenMinusRads = len - (radius+assRadius);
-
-    GLUquadric *q = gluNewQuadric();
-    if (assRadius > 0)
-    {
-        // 4 parts of the first hemisphere
-        gluCylinder(q,0,assRadius*0.43589,assRadius*0.1f,segments,1);
-        addTriangleCount(segments);
-        glTranslatef(0,0,assRadius*0.1f);
-
-        gluCylinder(q,assRadius*0.43589,assRadius*0.66144,assRadius*0.15f,segments,1);
-        addTriangleCount(segments);
-        glTranslatef(0,0,assRadius*0.15f);
-
-        gluCylinder(q,assRadius*0.66144f,assRadius*0.86603f,assRadius*0.25f,segments,1);
-        addTriangleCount(segments);
-        glTranslatef(0,0,assRadius*0.25f);
-
-        gluCylinder(q,assRadius*0.86603,assRadius,assRadius*0.5f,segments,1);
-        addTriangleCount(segments);
-        glTranslatef(0,0,assRadius*0.5f);
-    }
+    glTranslatef(0.0f, 0.0f, 1.0f);
 
     // the "shaft"
-    if (lenMinusRads > 0)
+    if (len > 2.0f * radius)
     {
-        gluCylinder(q,assRadius,radius,lenMinusRads,segments,1);
+        float lenMinusRads = len / radius - 2.0f;
+
+        glPushMatrix();
+        glScalef(1.0f, 1.0f, lenMinusRads);
+        BOLTDRAWER.shaft(segments);
+        glPopMatrix();
         addTriangleCount(segments);
-        glTranslatef(0,0,lenMinusRads);
+        glTranslatef(0.0f, 0.0f, lenMinusRads);
     }
 
-    if (radius > 0)
-    {
-        // 4 parts of the last hemisphere
-        gluCylinder(q,radius,radius*0.86603,radius*0.5f,segments,1);
-        addTriangleCount(segments);
-        glTranslatef(0,0,radius*0.5f);
-
-        gluCylinder(q,radius*0.86603f,radius*0.66144f,radius*0.25f,segments,1);
-        addTriangleCount(segments);
-        glTranslatef(0,0,radius*0.25f);
-
-        gluCylinder(q,radius*0.66144,radius*0.43589,radius*0.15f,segments,1);
-        addTriangleCount(segments);
-        glTranslatef(0,0,radius*0.15f);
-
-        gluCylinder(q,radius*0.43589,0,radius*0.1f,segments,1);
-        addTriangleCount(segments);
-        glTranslatef(0,0,radius*0.1f);
-    }
-
-    gluDeleteQuadric(q);
-    glPopMatrix();
+    // 4 parts of the last hemisphere
+    BOLTDRAWER.hemisphere2(segments);
+    addTriangleCount(4 * segments);
 }
 
 void            BoltSceneNode::BoltRenderNode::render()
@@ -537,33 +932,21 @@ void            BoltSceneNode::BoltRenderNode::render()
     glPushMatrix();
     glTranslatef(pos.x, pos.y, pos.z);
 
-    bool drawBillboardShot = false;
-    if (experimental)
-    {
-        if (sceneNode->isSuper)
-            renderGeoBolt();
-        else
-        {
-            if (sceneNode->drawFlares)
-            {
-                if (BZDBCache::shotLength > 0)
-                    renderGeoGMBolt();
-                drawBillboardShot = true;
-            }
-            else
-                drawBillboardShot = true;
-        }
-    }
+    if (experimental && sceneNode->isSuper)
+        renderGeoBolt();
     else
-        drawBillboardShot = true;
-
-    if (drawBillboardShot)
     {
-        RENDERER.getViewFrustum().executeBillboard();
-        glScalef(radius, radius, radius);
-        // draw some flares
         if (sceneNode->drawFlares)
         {
+            if (experimental && (BZDBCache::shotLength > 0))
+            {
+                glPushMatrix();
+                renderGeoGMBolt();
+                glPopMatrix();
+            }
+            RENDERER.getViewFrustum().executeBillboard();
+            glScalef(radius, radius, radius);
+            // draw some flares
             if (!RENDERER.isSameFrame())
             {
                 numFlares = 3 + int(3.0f * (float)bzfrand());
@@ -585,20 +968,21 @@ void            BoltSceneNode::BoltRenderNode::render()
                 // the bias completely, but moves it towards the equator, which is
                 // really where i want it anyway cos the flares are more noticeable
                 // there.
-                const float c = FlareSize * cosf(phi[i]);
-                const float s = FlareSize * sinf(phi[i]);
                 const float ti = theta[i];
-                const float fs = FlareSpread;
-                glBegin(GL_TRIANGLE_STRIP);
-                glVertex3f(0.0f, 0.0f, CoreFraction);
-                glVertex3f(c * cosf(ti - fs),   c * sinf(ti - fs),   s);
-                glVertex3f(c * cosf(ti + fs),   c * sinf(ti + fs),   s);
-                glVertex3f(c * cosf(ti) * 2.0f, c * sinf(ti) * 2.0f, s * 2.0f);
-                glEnd();
+                glPushMatrix();
+                glRotatef(ti * 180.0 / M_PI,     0.0f, 0.0f, 1.0f);
+                glRotatef(phi[i] * 180.0 / M_PI, 0.0f, 1.0f, 1.0f);
+                BOLTDRAWER.drawFlare();
+                glPopMatrix();
             }
             if (sceneNode->texturing) glEnable(GL_TEXTURE_2D);
 
             addTriangleCount(numFlares * 2);
+        }
+        else
+        {
+            RENDERER.getViewFrustum().executeBillboard();
+            glScalef(radius, radius, radius);
         }
 
         if (sceneNode->texturing)
@@ -684,60 +1068,12 @@ void            BoltSceneNode::BoltRenderNode::render()
         else
         {
             // draw corona
-            glBegin(GL_TRIANGLE_STRIP);
-            myColor4fv(mainColor);
-            glVertex2f(core[1].x, core[1].y);
-            myColor4fv(outerColor);
-            glVertex2f(corona[0].x, corona[0].y);
-            myColor4fv(mainColor);
-            glVertex2f(core[2].x, core[2].y);
-            myColor4fv(outerColor);
-            glVertex2f(corona[1].x, corona[1].y);
-            myColor4fv(mainColor);
-            glVertex2f(core[3].x, core[3].y);
-            myColor4fv(outerColor);
-            glVertex2f(corona[2].x, corona[2].y);
-            myColor4fv(mainColor);
-            glVertex2f(core[4].x, core[4].y);
-            myColor4fv(outerColor);
-            glVertex2f(corona[3].x, corona[3].y);
-            myColor4fv(mainColor);
-            glVertex2f(core[5].x, core[5].y);
-            myColor4fv(outerColor);
-            glVertex2f(corona[4].x, corona[4].y);
-            myColor4fv(mainColor);
-            glVertex2f(core[6].x, core[6].y);
-            myColor4fv(outerColor);
-            glVertex2f(corona[5].x, corona[5].y);
-            myColor4fv(mainColor);
-            glVertex2f(core[7].x, core[7].y);
-            myColor4fv(outerColor);
-            glVertex2f(corona[6].x, corona[6].y);
-            myColor4fv(mainColor);
-            glVertex2f(core[8].x, core[8].y);
-            myColor4fv(outerColor);
-            glVertex2f(corona[7].x, corona[7].y);
-            myColor4fv(mainColor);
-            glVertex2f(core[1].x, core[1].y);
-            myColor4fv(outerColor);
-            glVertex2f(corona[0].x, corona[0].y);
-            glEnd(); // 18 verts -> 16 tris
+            coronaIndex.draw(GL_TRIANGLE_STRIP, colorOverride);
+            // 18 verts -> 16 tris
 
             // draw core
-            glBegin(GL_TRIANGLE_FAN);
-            myColor4fv(innerColor);
-            glVertex2f(core[0].x, core[0].y);
-            myColor4fv(mainColor);
-            glVertex2f(core[1].x, core[1].y);
-            glVertex2f(core[2].x, core[2].y);
-            glVertex2f(core[3].x, core[3].y);
-            glVertex2f(core[4].x, core[4].y);
-            glVertex2f(core[5].x, core[5].y);
-            glVertex2f(core[6].x, core[6].y);
-            glVertex2f(core[7].x, core[7].y);
-            glVertex2f(core[8].x, core[8].y);
-            glVertex2f(core[1].x, core[1].y);
-            glEnd(); // 10 verts -> 8 tris
+            coreIndex.draw(GL_TRIANGLE_FAN, colorOverride);
+            // 10 verts -> 8 tris
 
             addTriangleCount(24);
         }
