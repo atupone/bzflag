@@ -23,6 +23,7 @@
 #include "TimeKeeper.h"
 #include "HUDuiTypeIn.h"
 #include "Flag.h"
+#include "Vertex_Chunk.h"
 
 /* local interface headers */
 #include "FlashClock.h"
@@ -153,7 +154,7 @@ protected:
                                  const glm::vec2 &viewPos);
     void      drawMarkersInView(int centerX, int centerY, const LocalPlayer* myTank);
 
-    void      makeCrack(glm::vec2 crackpattern[HUDNumCracks][(1 << HUDCrackLevels) + 1], int n, int l, float a);
+    void      makeCrack(glm::vec3 crackpattern[HUDNumCracks][(1 << HUDCrackLevels) + 1], int n, int l, float a);
     std::string   makeHelpString(const char* help) const;
 
 private:
@@ -248,7 +249,7 @@ private:
     bool      showOptions;
     bool      showCompose;
 
-    glm::vec2 cracks[HUDNumCracks][(1 << HUDCrackLevels) + 1];
+    glm::vec3 cracks[HUDNumCracks][(1 << HUDCrackLevels) + 1];
     TimeKeeper        crackStartTime;
     bool      showCracks;
 
@@ -274,6 +275,17 @@ private:
     unsigned int      lastTimeChange;
     int           triangleCount;
     int           radarTriangleCount;
+    Vertex_Chunk  redCrossIndex;
+    Vertex_Chunk  crackIndex;
+    int           currentCrackLevel;
+    Vertex_Chunk  wayPointTri;
+    Vertex_Chunk  wayPointOut;
+    Vertex_Chunk  leftLockon;
+    Vertex_Chunk  rightLockon;
+    Vertex_Chunk  tickMarkVBOIndex;
+    Vertex_Chunk  visibleMarkerVBOIndex;
+    Vertex_Chunk  rightMarkerVBOIndex;
+    Vertex_Chunk  leftMarkerVBOIndex;
 };
 
 

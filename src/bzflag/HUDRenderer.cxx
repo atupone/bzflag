@@ -72,8 +72,17 @@ HUDRenderer::HUDRenderer(const BzfDisplay* _display,
     dater(false),
     lastTimeChange((unsigned long)time(NULL)),
     triangleCount(0),
-    radarTriangleCount(0)
+    radarTriangleCount(0),
+    currentCrackLevel(-1),
+    tickMarkVBOIndex(Vertex_Chunk::V, 4),
+    visibleMarkerVBOIndex(Vertex_Chunk::V, 4),
+    rightMarkerVBOIndex(Vertex_Chunk::V, 3),
+    leftMarkerVBOIndex(Vertex_Chunk::V, 3)
 {
+    float lockonSize = 40;
+    float rad = lockonSize * 0.25f;
+    float segmentation = 360.0f/32.0f;
+
     if (BZDB.eval("timedate") == 0) //we just want the time
         dater = false;
     else if (BZDB.eval("timedate") == 1) //just the date
@@ -105,11 +114,73 @@ HUDRenderer::HUDRenderer(const BzfDisplay* _display,
     composeTypeIn->setMaxLength(MessageLen - 1);
     composeTypeIn->showFocus(false);
 
+    std::vector<glm::vec3> v;
+    v.push_back(glm::vec3(-rad,  rad, 0.03f));
+    v.push_back(glm::vec3( rad, -rad, 0.02f));
+    for (float t = 0; t < 360; t += segmentation)
+    {
+        const float s = (t - segmentation);
+        const float tRads = t * DEG2RADf;
+        const float sRads = s * DEG2RADf;
+        v.push_back(glm::vec3(sinf(sRads) * rad, cosf(sRads) * rad, 0.02f));
+        v.push_back(glm::vec3(sinf(tRads) * rad, cosf(tRads) * rad, 0.02f));
+    }
+    redCrossIndex = Vertex_Chunk(Vertex_Chunk::V, v.size());
+    redCrossIndex.vertexData(v);
+
+    glm::vec3 vertex[4];
+    wayPointTri = Vertex_Chunk(Vertex_Chunk::V, 3);
+    wayPointOut = Vertex_Chunk(Vertex_Chunk::V, 3);
+    vertex[0] = glm::vec3( 0.0f, 0.0f, 0.0f);
+    vertex[1] = glm::vec3( 1.0f, 1.0f, 0.0f);
+    vertex[2] = glm::vec3(-1.0f, 1.0f, 0.0f);
+    wayPointTri.vertexData(vertex);
+    vertex[1].z = 0.01f;
+    vertex[2].z = 0.01f;
+    wayPointOut.vertexData(vertex);
+
+    const float lockonInset = 15;
+    const float lockonDeclination = 15;
+
+    leftLockon = Vertex_Chunk(Vertex_Chunk::V, 4);
+    vertex[0] = glm::vec3(-lockonInset,  lockonSize - lockonDeclination, 0.0f);
+    vertex[1] = glm::vec3(-lockonSize,   lockonSize,                     0.0f);
+    vertex[2] = glm::vec3(-lockonSize,  -lockonSize,                     0.0f);
+    vertex[3] = glm::vec3(-lockonInset, -lockonSize + lockonDeclination, 0.0f);
+    leftLockon.vertexData(vertex);
+
+    rightLockon = Vertex_Chunk(Vertex_Chunk::V, 4);
+    vertex[0] = glm::vec3(lockonInset,  lockonSize - lockonDeclination, 0.0f);
+    vertex[1] = glm::vec3(lockonSize,   lockonSize,                     0.0f);
+    vertex[2] = glm::vec3(lockonSize,  -lockonSize,                     0.0f);
+    vertex[3] = glm::vec3(lockonInset, -lockonSize + lockonDeclination, 0.0f);
+    rightLockon.vertexData(vertex);
+
     // create scoreboard renderer
     scoreboard = new ScoreboardRenderer();
 
     // initialize fonts
     resize(true);
+
+    vertex[0] = glm::vec3(0, 0, 0);
+    vertex[1] = glm::vec3(0, 4, 0);
+    vertex[2] = glm::vec3(1, 0, 0);
+    vertex[3] = glm::vec3(1, 8, 0);
+    tickMarkVBOIndex.vertexData(vertex);
+    // Markers
+    vertex[0] = glm::vec3( 0.0f, 0.0f, 0);
+    vertex[1] = glm::vec3( 4.0f, 4.0f, 0);
+    vertex[2] = glm::vec3(-4.0f, 4.0f, 0);
+    vertex[3] = glm::vec3( 0.0f, 8.0f, 0);
+    visibleMarkerVBOIndex.vertexData(vertex);
+    vertex[0] = glm::vec3(0.0f, 0.0f, 0);
+    vertex[1] = glm::vec3(4.0f, 4.0f, 0);
+    vertex[2] = glm::vec3(0.0f, 8.0f, 0);
+    rightMarkerVBOIndex.vertexData(vertex);
+    vertex[0] = glm::vec3( 0.0f, 0.0f, 0);
+    vertex[1] = glm::vec3( 0.0f, 8.0f, 0);
+    vertex[2] = glm::vec3(-4.0f, 4.0f, 0);
+    leftMarkerVBOIndex.vertexData(vertex);
 }
 
 HUDRenderer::~HUDRenderer()
@@ -487,8 +558,8 @@ void            HUDRenderer::initCracks()
     {
         const float d = 0.90f * float(maxMotionSize) * ((float)bzfrand() + 0.90f);
         const float a = (float)(2.0 * M_PI * (double(i) + bzfrand()) / double(HUDNumCracks));
-        cracks[i][0] = glm::vec2(0.0f);
-        cracks[i][1] = d * glm::vec2(cosf(a), sinf(a));
+        cracks[i][0] = glm::vec3(0.0f);
+        cracks[i][1] = d * glm::vec3(cosf(a), sinf(a), 0.0f);
         makeCrack(cracks, i, 1, a);
     }
 }
@@ -629,19 +700,19 @@ std::string     HUDRenderer::makeHelpString(const char* help) const
     return msg;
 }
 
-void            HUDRenderer::makeCrack(glm::vec2 crackpattern[HUDNumCracks][(1 << HUDCrackLevels) + 1], int n, int l,
+void            HUDRenderer::makeCrack(glm::vec3 crackpattern[HUDNumCracks][(1 << HUDCrackLevels) + 1], int n, int l,
                                        float a)
 {
     if (l >= (1 << (HUDCrackLevels - 1))) return;
     float d = 0.5f * float(maxMotionSize) *
               ((float)bzfrand() + 0.5f) * powf(0.5f, 0.69f * logf(float(l)));
     float newAngle = (float)(a + M_PI * bzfrand() / double(HUDNumCracks));
-    crackpattern[n][2*l] = crackpattern[n][l] + d * glm::vec2(cosf(newAngle), sinf(newAngle));
+    crackpattern[n][2*l] = crackpattern[n][l] + d * glm::vec3(cosf(newAngle), sinf(newAngle), 0.0f);
     makeCrack(crackpattern, n, 2*l, newAngle);
     d = 0.5f * float(maxMotionSize) *
         ((float)bzfrand() + 0.5f) * powf(0.5f, 0.69f * logf(float(l)));
     newAngle = (float)(a - M_PI * bzfrand() / double(HUDNumCracks));
-    crackpattern[n][2*l+1] = crackpattern[n][l] + d * glm::vec2(cosf(newAngle), sinf(newAngle));
+    crackpattern[n][2*l+1] = crackpattern[n][l] + d * glm::vec3(cosf(newAngle), sinf(newAngle), 0.0f);
     makeCrack(crackpattern, n, 2*l+1, newAngle);
 }
 
@@ -662,11 +733,6 @@ void            HUDRenderer::hudColor4f(
         glColor4f(dimFactor * r, dimFactor * g, dimFactor * b, a);
     else
         glColor4f(r, g, b, a);
-}
-
-static void glVertex2fv(const glm::vec2 &p)
-{
-    ::glVertex2f(p.x, p.y);
 }
 
 static void glColor3fv(const glm::vec3 &c)
@@ -714,54 +780,15 @@ void            HUDRenderer::hudColor4fv(const glm::vec4 &c)
 
 void            HUDRenderer::drawGeometry()
 {
-    float lockonSize = 40;
-
-    float segmentation = 360.0f/32.0f;
-    float rad = lockonSize * 0.25f;
-
     // white outline
     hudColor4f( 1,1,1, 0.85f );
     glLineWidth(4.0f);
-    glBegin(GL_LINES);
-    glVertex3f(-rad,rad,0.03f);
-    glVertex3f(rad,-rad,0.02f);
-    // glVertex3f(-lockonSize*xFactor,lockonSize,0.02f);
-    // glVertex3f(lockonSize*xFactor,0,0.02f);
-    glEnd();
-
-    glBegin(GL_LINES);
-    for (float t = 0; t < 360; t += segmentation)
-    {
-        const float s = (t - segmentation);
-        const float tRads = t * DEG2RADf;
-        const float sRads = s * DEG2RADf;
-        glVertex3f(sinf(sRads) * rad, cosf(sRads) * rad, 0.02f);
-        glVertex3f(sinf(tRads) * rad, cosf(tRads) * rad, 0.02f);
-    }
-    glEnd();
+    redCrossIndex.draw(GL_LINES);
 
     // red X
     hudColor4f( 1,0,0, 0.85f );
     glLineWidth(2.0f);
-    glBegin(GL_LINES);
-    glVertex3f(-rad,rad,0.03f);
-    glVertex3f(rad,-rad,0.02f);
-    // glVertex3f(-lockonSize*xFactor,lockonSize,0.03f);
-    //  glVertex3f(lockonSize*xFactor,0,0.02f);
-    glEnd();
-
-    glBegin(GL_LINES);
-    for (float t = 0; t < 360; t += segmentation)
-    {
-        const float s = (t - segmentation);
-        const float tRads = t * DEG2RADf;
-        const float sRads = s * DEG2RADf;
-        glVertex3f(sinf(sRads) * rad, cosf(sRads) * rad, 0.02f);
-        glVertex3f(sinf(tRads) * rad, cosf(tRads) * rad, 0.02f);
-    }
-    glEnd();
-
-    glLineWidth(2.0f);
+    redCrossIndex.draw(GL_LINES);
 }
 
 void            HUDRenderer::render(SceneRenderer& renderer)
@@ -1144,30 +1171,36 @@ void            HUDRenderer::renderCracks()
     if (delta > 1.0)
         delta = 1.0;
     int maxLevels = (int) (HUDCrackLevels * delta);
+    if (maxLevels != currentCrackLevel)
+    {
+        std::vector<glm::vec3> v;
+        for (int i = 0; i < HUDNumCracks; i++)
+        {
+            v.push_back(glm::vec3(cracks[i][0]));
+            v.push_back(glm::vec3(cracks[i][1]));
+            for (int j = 0; j < maxLevels-1; j++)
+            {
+                const int num = 1 << j;
+                for (int k = 0; k < num; k++)
+                {
+                    v.push_back(glm::vec3(cracks[i][num + k]));
+                    v.push_back(glm::vec3(cracks[i][2 * (num + k)]));
+                    v.push_back(glm::vec3(cracks[i][num + k]));
+                    v.push_back(glm::vec3(cracks[i][2 * (num + k) + 1]));
+                }
+            }
+        }
+        crackIndex = Vertex_Chunk(Vertex_Chunk::V, v.size());
+        crackIndex.vertexData(v);
+        currentCrackLevel = maxLevels;
+    }
 
     glPushMatrix();
     glTranslatef(GLfloat(window.getWidth() >> 1),
                  GLfloat(window.getViewHeight() >> 1), 0.0f);
     glLineWidth(3.0);
     hudColor3f(1.0f, 1.0f, 1.0f);
-    glBegin(GL_LINES);
-    for (int i = 0; i < HUDNumCracks; i++)
-    {
-        glVertex2fv(cracks[i][0]);
-        glVertex2fv(cracks[i][1]);
-        for (int j = 0; j < maxLevels-1; j++)
-        {
-            const int num = 1 << j;
-            for (int k = 0; k < num; k++)
-            {
-                glVertex2fv(cracks[i][num + k]);
-                glVertex2fv(cracks[i][2 * (num + k)]);
-                glVertex2fv(cracks[i][num + k]);
-                glVertex2fv(cracks[i][2 * (num + k) + 1]);
-            }
-        }
-    }
-    glEnd();
+    crackIndex.draw(GL_LINES);
     glLineWidth(1.0);
     glPopMatrix();
 }
@@ -1301,17 +1334,11 @@ void HUDRenderer::drawWaypointMarker(const EnhancedHUDMarker &marker,
     if (map[0] == -halfWidth && map[1] == halfHeight) // upper left
         glRotatef(180+45,0,0,1);
 
-    glBegin(GL_TRIANGLES);
-    glVertex2f(0,0);
-    glVertex2f(triangleSize,triangleSize);
-    glVertex2f(-triangleSize,triangleSize);
-    glEnd();
-
-    glBegin(GL_LINE_STRIP);
-    glVertex3f(0,0,0.01f);
-    glVertex3f(triangleSize,triangleSize,0.01f);
-    glVertex3f(-triangleSize,triangleSize,0.01f);
-    glEnd();
+    glPushMatrix();
+    glScalef(triangleSize, triangleSize, 1.0f);
+    wayPointTri.draw(GL_TRIANGLES);
+    wayPointOut.draw(GL_LINE_STRIP);
+    glPopMatrix();
 
     if (marker.friendly)
         drawGeometry();
@@ -1351,24 +1378,11 @@ void HUDRenderer::drawLockonMarker(const EnhancedHUDMarker &marker,
     glPushMatrix();
 
     float lockonSize = 40;
-    float lockonInset = 15;
-    float lockonDeclination = 15;
 
     glLineWidth(3.0f);
 
-    glBegin(GL_LINE_STRIP);
-    glVertex2f(-lockonInset,lockonSize-lockonDeclination);
-    glVertex2f(-lockonSize,lockonSize);
-    glVertex2f(-lockonSize,-lockonSize);
-    glVertex2f(-lockonInset,-lockonSize+lockonDeclination);
-    glEnd();
-
-    glBegin(GL_LINE_STRIP);
-    glVertex2f(lockonInset,lockonSize-lockonDeclination);
-    glVertex2f(lockonSize,lockonSize);
-    glVertex2f(lockonSize,-lockonSize);
-    glVertex2f(lockonInset,-lockonSize+lockonDeclination);
-    glEnd();
+    leftLockon.draw(GL_LINE_STRIP);
+    rightLockon.draw(GL_LINE_STRIP);
 
     if (marker.friendly)
         drawGeometry();
@@ -1411,23 +1425,18 @@ void            HUDRenderer::renderBox(SceneRenderer&)
 
     // draw targeting box
     hudColor3fv(hudColor);
-    glBegin(GL_LINE_LOOP);
-    {
-        glVertex2i(centerx - noMotionSize, centery - noMotionSize);
-        glVertex2i(centerx + noMotionSize, centery - noMotionSize);
-        glVertex2i(centerx + noMotionSize, centery + noMotionSize);
-        glVertex2i(centerx - noMotionSize, centery + noMotionSize);
-    }
-    glEnd();
-    glBegin(GL_LINE_LOOP);
-    {
-        glVertex2i(centerx - maxMotionSize, centery - maxMotionSize);
-        glVertex2i(centerx + maxMotionSize, centery - maxMotionSize);
-        glVertex2i(centerx + maxMotionSize, centery + maxMotionSize);
-        glVertex2i(centerx - maxMotionSize, centery + maxMotionSize);
-    }
-    glEnd();
+    glPushMatrix();
+    glTranslatef((float)centerx, (float)centery, 0.0f);
+    float scaling = noMotionSize;
+    glScalef(scaling, scaling, scaling);
+    DRAWER.simmetricSquareLoop();
+    scaling = maxMotionSize / noMotionSize;
+    glScalef(scaling, scaling, scaling);
+    DRAWER.simmetricSquareLoop();
+    glPopMatrix();
 
+    glPushMatrix();
+    glTranslatef((float)centerx, (float)centery + maxMotionSize, 0.0f);
     // draw heading strip
     if (true /* always draw heading strip */)
     {
@@ -1436,10 +1445,10 @@ void            HUDRenderer::renderBox(SceneRenderer&)
                   2 * maxMotionSize, 25 + (int)(headingFontSize + 0.5f));
 
         // draw heading mark
-        glBegin(GL_LINES);
-        glVertex2i(centerx, centery + maxMotionSize);
-        glVertex2i(centerx, centery + maxMotionSize - 5);
-        glEnd();
+        glPushMatrix();
+        glScalef(0.0f, -5.0f, 0.0f);
+        DRAWER.asimmetricLineY();
+        glPopMatrix();
 
         // figure out which marker is closest to center
         int baseMark = int(heading) / 10;
@@ -1458,19 +1467,14 @@ void            HUDRenderer::renderBox(SceneRenderer&)
         GLfloat basex = maxMotionSize * (heading - 10.0f * float(minMark)) /
                         headingOffset;
         if (!smooth) basex = floorf(basex);
-        glTranslatef((float)centerx - basex, (float)(centery + maxMotionSize), 0.0f);
         x = smooth ? 0.0f : -0.5f;
-        glBegin(GL_LINES);
+        glTranslatef(- basex + x, 0.0f, 0.0f);
+        glScalef(headingMarkSpacing, 1.0f, 0.0f);
         for (i = minMark; i <= maxMark; i++)
         {
-            glVertex2i((int)x, 0);
-            glVertex2i((int)x, 8);
-            x += headingMarkSpacing;
-            glVertex2i((int)x, 0);
-            glVertex2i((int)x, 4);
-            x += headingMarkSpacing;
+            tickMarkVBOIndex.draw(GL_LINES);
+            glTranslatef(2.0f, 0.0f, 0.0f);
         }
-        glEnd();
 
         // back to our regular rendering mode
         if (smooth)
@@ -1481,8 +1485,8 @@ void            HUDRenderer::renderBox(SceneRenderer&)
         glPopMatrix();
 
         bool smoothLabel = smooth;
-        x = (float)centerx - basex;
-        y = 7.0f + (float)(centery + maxMotionSize);
+        x = -basex;
+        y = 7.0f;
         if (smoothLabel)
         {
             x -= 0.5f;
@@ -1496,7 +1500,7 @@ void            HUDRenderer::renderBox(SceneRenderer&)
         }
         if (smoothLabel)
         {
-            x = (float)centerx - basex + 0.5f;
+            x = -basex + 0.5f;
             basex -= floorf(basex);
             hudColor4f(hudColor[0], hudColor[1], hudColor[2], 1.0f - basex);
             for (i = minMark; i <= maxMark; i++)
@@ -1511,47 +1515,37 @@ void            HUDRenderer::renderBox(SceneRenderer&)
         // draw markers (give 'em a little more space on the sides)
         glScissor(ox + centerx - maxMotionSize - 8, oy + height - viewHeight + centery + maxMotionSize,
                   2 * maxMotionSize + 16, 10);
-        glPushMatrix();
-        glTranslatef((float)centerx, (float)(centery + maxMotionSize), 0.0f);
         for (MarkerList::const_iterator it = markers.begin(); it != markers.end(); ++it)
         {
             const HUDMarker &m = *it;
             const float relAngle = fmodf(360.0f + m.heading - heading, 360.0f);
             hudColor3fv(m.color);
+            glPushMatrix();
             if (relAngle <= headingOffset || relAngle >= 360.0f - headingOffset)
             {
                 // on the visible part of tape
                 GLfloat mx = maxMotionSize / headingOffset *
                              ((relAngle < 180.0f) ? relAngle : relAngle - 360.0f);
-                glBegin(GL_TRIANGLE_STRIP);
-                glVertex2f(mx, 0.0f);
-                glVertex2f(mx + 4.0f, 4.0f);
-                glVertex2f(mx - 4.0f, 4.0f);
-                glVertex2f(mx, 8.0f);
-                glEnd();
+                glTranslatef(mx, 0, 0);
+                visibleMarkerVBOIndex.draw(GL_TRIANGLE_STRIP);
             }
             else if (relAngle <= 180.0)
             {
                 // off to the right
-                glBegin(GL_TRIANGLES);
-                glVertex2f((float)maxMotionSize, 0.0f);
-                glVertex2f((float)maxMotionSize + 4.0f, 4.0f);
-                glVertex2f((float)maxMotionSize, 8.0f);
-                glEnd();
+                glTranslatef((float)maxMotionSize, 0.0f, 0.0f);
+                rightMarkerVBOIndex.draw(GL_TRIANGLES);
             }
             else
             {
                 // off to the left
-                glBegin(GL_TRIANGLES);
-                glVertex2f(-(float)maxMotionSize, 0.0f);
-                glVertex2f(-(float)maxMotionSize, 8.0f);
-                glVertex2f(-(float)maxMotionSize - 4.0f, 4.0f);
-                glEnd();
+                glTranslatef(-(float)maxMotionSize, 0.0f, 0.0f);
+                leftMarkerVBOIndex.draw(GL_TRIANGLES);
             }
+            glPopMatrix();
         }
         markers.clear();
-        glPopMatrix();
     }
+    glPopMatrix();
 
     // draw altitude strip
     if (altitudeTape)
@@ -1562,10 +1556,11 @@ void            HUDRenderer::renderBox(SceneRenderer&)
 
         // draw altitude mark
         hudColor3fv(hudColor);
-        glBegin(GL_LINES);
-        glVertex2i(centerx + maxMotionSize, centery);
-        glVertex2i(centerx + maxMotionSize - 5, centery);
-        glEnd();
+        glPushMatrix();
+        glTranslatef((float)(centerx + maxMotionSize), (float)centery, 0.0f);
+        glScalef(-5.0f, 0.0f, 0.0f);
+        DRAWER.asimmetricLineX();
+        glPopMatrix();
 
         // figure out which marker is closest to center
         int baseMark = int(altitude) / 5;
@@ -1588,17 +1583,15 @@ void            HUDRenderer::renderBox(SceneRenderer&)
         GLfloat basey = maxMotionSize * (altitude - 5.0f * float(minMark)) /
                         altitudeOffset;
         if (!smooth) basey = floorf(basey);
-        glTranslatef((float)(centerx + maxMotionSize),
-                     (float)centery - basey, 0.0f);
         y = smooth ? 0.0f : -0.5f;
-        glBegin(GL_LINES);
+        glTranslatef((float)(centerx + maxMotionSize),
+                     (float)centery - basey + y, 0.0f);
+        glScalef(8.0f, 1.0f, 0.0f);
         for (i = minMark; i <= maxMark; i++)
         {
-            glVertex2i(0, (int)y);
-            glVertex2i(8, (int)y);
-            y += altitudeMarkSpacing;
+            DRAWER.asimmetricLineX();
+            glTranslatef(0.0f, altitudeMarkSpacing, 0.0f);
         }
-        glEnd();
 
         // back to our regular rendering mode
         if (smooth)
