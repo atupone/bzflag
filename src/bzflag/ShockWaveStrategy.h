@@ -35,7 +35,7 @@ public:
     float       checkHit(const BaseLocalPlayer*, float[3]) const override;
     bool        isStoppedByHit() const override;
     void        addShot(SceneDatabase*, bool colorblind) override;
-    void        radarRender() const override;
+    void        radarRender() override;
 
 private:
     float       radius;

@@ -23,6 +23,7 @@
 #include "SceneDatabase.h"
 #include "TimeKeeper.h"
 #include "LaserSceneNode.h"
+#include "Vertex_Chunk.h"
 
 /* local interface headers */
 #include "BaseLocalPlayer.h"
@@ -37,9 +38,9 @@ public:
     ~SegmentedShotStrategy();
 
     void        update(float dt) override;
-    float       checkHit(const BaseLocalPlayer*, float[3]) const override final;
+    float       checkHit(const BaseLocalPlayer*, float[3]) const override;
     void        addShot(SceneDatabase*, bool colorblind) override;
-    void        radarRender() const override;
+    void        radarRender() override;
     TeamColor   team;
 
 protected:
@@ -92,12 +93,13 @@ public:
     void        update(float dt) override;
     bool        isStoppedByHit() const override;
     void        addShot(SceneDatabase*, bool colorblind) override;
-    void        radarRender() const override;
+    void        radarRender() override;
 
 private:
     float       cumTime;
     float       endTime;
     LaserSceneNode**    thiefNodes;
+    Vertex_Chunk radarChunk;
 };
 
 class MachineGunStrategy : public SegmentedShotStrategy
@@ -116,12 +118,13 @@ public:
     void        update(float dt) override;
     bool        isStoppedByHit() const override;
     void        addShot(SceneDatabase*, bool colorblind) override;
-    void        radarRender() const override;
+    void        radarRender() override;
 
 private:
     float       cumTime;
     float       endTime;
     LaserSceneNode**    laserNodes;
+    Vertex_Chunk radarChunk;
 };
 
 class RicochetStrategy : public SegmentedShotStrategy

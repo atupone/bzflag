@@ -41,7 +41,7 @@ public:
     void        readUpdate(uint16_t, const void*) override;
     void        addShot(SceneDatabase*, bool colorblind) override;
     void        expire() override;
-    void        radarRender() const override;
+    void        radarRender() override;
 
 private:
     float       checkBuildings(const Ray& ray);
