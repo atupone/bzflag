@@ -130,7 +130,7 @@ void ShockWaveStrategy::addShot(SceneDatabase* scene, bool)
     scene->addDynamicNode(shockNode);
 }
 
-void ShockWaveStrategy::radarRender() const
+void ShockWaveStrategy::radarRender()
 {
     // draw circle of current radius
     const float* shotPos = getPath().getPosition();
