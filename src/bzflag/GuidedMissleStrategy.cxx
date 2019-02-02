@@ -495,7 +495,7 @@ void GuidedMissileStrategy::expire()
     }
 }
 
-void GuidedMissileStrategy::radarRender() const
+void GuidedMissileStrategy::radarRender()
 {
     const float *orig = getPath().getPosition();
     const float length = BZDBCache::linedRadarShots;
