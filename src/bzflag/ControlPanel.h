@@ -23,6 +23,7 @@
 
 //common headers
 #include "bzfgl.h"
+#include "Vertex_Chunk.h"
 
 // local headers
 #include "MainWindow.h"
@@ -89,6 +90,8 @@ private:
     static void     exposeCallback(void*);
     static void     bzdbCallback(const std::string& name, void* data);
 
+    void computeConsoleOutline();
+
     enum MessageModes
     {
         MessageAllTabs = -2,
@@ -129,7 +132,8 @@ private:
     float       lineHeight;
     bool        unRead[MessageModeCount];
     bool        paused;
-
+    Vertex_Chunk consoleOutline;
+    bool         prevTabsOnRight;
 };
 
 inline void ControlPanel::setDimming(float newDimming)
