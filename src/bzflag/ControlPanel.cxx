@@ -210,7 +210,8 @@ ControlPanel::ControlPanel(MainWindow& _mainWindow, SceneRenderer& _renderer) :
     du(0),
     dv(0),
     messageMode(MessageAll),
-    paused(false)
+    paused(false),
+    prevTabsOnRight(true)
 {
     setControlColor();
 
@@ -328,6 +329,11 @@ void            ControlPanel::render(SceneRenderer& _renderer)
     const int tabStyle = BZDB.evalInt("showtabs");
     const bool showTabs = (tabStyle > 0);
     tabsOnRight = (tabStyle == 2);
+    if (tabsOnRight != prevTabsOnRight)
+    {
+        computeConsoleOutline();
+        prevTabsOnRight = tabsOnRight;
+    }
 
     glMatrixMode(GL_PROJECTION);
     window.setProjectionPlay();
@@ -589,61 +595,18 @@ void            ControlPanel::render(SceneRenderer& _renderer)
 
     // nice border
     glColor4f(teamColor[0], teamColor[1], teamColor[2],outlineOpacity );
-    glBegin(GL_LINE_LOOP);
+    glPushMatrix();
+    glTranslatef(x + messageAreaPixels[0] - 1, y + messageAreaPixels[1] - 1, 0.0f);
+    if (_renderer.getPanelOpacity() == 1.0f || !showTabs)
     {
-        long xpos;
-        long ypos;
-
-        // bottom left
-        xpos = x + messageAreaPixels[0] - 1;
-        ypos = y + messageAreaPixels[1] - 1;
-        glVertex2f((float) xpos, (float) ypos);
-
-        // bottom right
-        xpos += messageAreaPixels[2] + 1;
-        glVertex2f((float) xpos, (float) ypos);
-
-        // top right
-        ypos += messageAreaPixels[3] + 1;
-        glVertex2f((float) xpos, (float) ypos);
-
-        // over to panel on left
-        if (!tabsOnRight)
-        {
-            xpos = x + messageAreaPixels[0] + totalTabWidth;
-            glVertex2f((float) xpos, (float) ypos);
-        }
-
-        // across the top from right to left
-        for (int tab = (int)tabs->size() - 1; tab >= 0; tab--)
-        {
-
-            if (messageMode == MessageModes(tab))
-            {
-                ypos += ay;
-                glVertex2f((float) xpos, (float) ypos);
-
-                xpos -= long(tabTextWidth[tab]) + 1;
-                glVertex2f((float) xpos, (float) ypos);
-
-                ypos -= ay;
-                glVertex2f((float) xpos, (float) ypos);
-            }
-            else
-            {
-                xpos -= long(tabTextWidth[tab]);
-                glVertex2f((float) xpos, (float) ypos);
-            }
-        }
-
-        // over from panel on right
-        //    if (tabsOnRight) {
-        xpos = x + messageAreaPixels[0] - 1;
-        glVertex2f((float) xpos, (float) ypos);
-        //    }
-
+        glScalef((float)(messageAreaPixels[2] + 1),
+                 (float)(messageAreaPixels[3] + 1),
+                 0.0f);
+        DRAWER.asimmetricSquareLoop();
     }
-    glEnd();
+    else
+        consoleOutline.draw(GL_LINE_LOOP);
+    glPopMatrix();
 
     glDisable(GL_BLEND);
 
@@ -653,6 +616,61 @@ void            ControlPanel::render(SceneRenderer& _renderer)
 
     fm.setOpacity(1.0f);
 }
+
+
+void ControlPanel::computeConsoleOutline()
+{
+    // tabsOnRight
+    int ay = int(lineHeight + 4);
+
+    std::vector<glm::vec3> vertices;
+    long xpos;
+    long ypos;
+
+    // bottom left
+    vertices.push_back(glm::vec3(0.0f, 0.0f, 0.0f));
+
+    // bottom right
+    xpos = messageAreaPixels[2] + 1;
+    vertices.push_back(glm::vec3((float)xpos, 0.0f, 0.0f));
+
+    // top right
+    ypos = messageAreaPixels[3] + 1;
+    vertices.push_back(glm::vec3((float)xpos, (float)ypos, 0.0f));
+
+    // over to panel on left
+    if (!tabsOnRight)
+        xpos = totalTabWidth + 1;
+
+    // across the top from right to left
+    int tab;
+    for (tab = (int)tabs->size() - 1; tab >= 0; tab--)
+    {
+        if (messageMode == MessageModes(tab))
+            break;
+        xpos -= long(tabTextWidth[tab]);
+    }
+    if (tab >= 0)
+    {
+        vertices.push_back(glm::vec3((float)xpos, (float)ypos, 0.0f));
+
+        ypos += ay;
+        vertices.push_back(glm::vec3((float)xpos, (float)ypos, 0.0f));
+
+        xpos -= long(tabTextWidth[tab]) + 1;
+        vertices.push_back(glm::vec3((float)xpos, (float)ypos, 0.0f));
+
+        ypos -= ay;
+        vertices.push_back(glm::vec3((float)xpos, (float)ypos, 0.0f));
+    }
+
+    xpos = 0;
+    vertices.push_back(glm::vec3((float)xpos, (float)ypos, 0.0f));
+
+    consoleOutline = Vertex_Chunk(Vertex_Chunk::V, vertices.size());
+    consoleOutline.vertexData(vertices);
+}
+
 
 void            ControlPanel::resize()
 {
@@ -755,6 +773,8 @@ void            ControlPanel::resize()
             messages[i][j].breakLines(messageAreaPixels[2] - 2 * margin, fontFace, fontSize);
     }
 
+    computeConsoleOutline();
+
     // note that we've been resized at least once
     resized = true;
     invalidate();
@@ -841,6 +861,7 @@ void            ControlPanel::setMessagesMode(int _messageMode)
             unRead[i] = false;
     else if (messageMode >= MessageChat)
         unRead[messageMode] = false;
+    computeConsoleOutline();
     invalidate();
 }
 
