@@ -24,6 +24,7 @@
 #include "playing.h"
 #include "OpenGLAPI.h"
 #include "VBO_Drawing.h"
+#include "PlayingShader.h"
 
 class StdSpawnEffect : public BasicEffect
 {
@@ -1619,157 +1620,181 @@ static glm::vec2 RadialToCartesian(float angle)
     return pos;
 }
 
+static void prepareRingXYVBO(Vertex_Chunk &ringXY)
+{
+    const int segments = 32;
+
+    float nextAng = 0.0f;
+    auto nextPos  = glm::vec2(0.0f, 1.0f);
+
+    std::vector<glm::vec3> vertex;
+    std::vector<glm::vec2> textur;
+
+    int i = 0;
+    while (1)
+    {
+        auto thispos = nextPos;
+        nextAng     += 360.0f / segments;
+        nextPos      = RadialToCartesian(nextAng);
+
+        if (i) // if not first
+        {
+            // Degenerate triangle
+            textur.push_back(glm::vec2(0.0f, 0.0f));
+            vertex.push_back(glm::vec3(thispos[0], thispos[1], 0.0f));
+        }
+
+        // the "inside"
+        textur.push_back(glm::vec2(0.0f, 0.0f));
+        vertex.push_back(glm::vec3(thispos[0], thispos[1], 0.0f));
+
+        textur.push_back(glm::vec2(1.0f, 0.0f));
+        vertex.push_back(glm::vec3(nextPos[0], nextPos[1], 0.0f));
+
+        textur.push_back(glm::vec2(0.0f, 1.0f));
+        vertex.push_back(glm::vec3(thispos[0], thispos[1], 1.0f));
+
+        textur.push_back(glm::vec2(1.0f, 1.0f));
+        vertex.push_back(glm::vec3(nextPos[0], nextPos[1], 1.0f));
+
+        // Degenerate triangle
+        textur.push_back(glm::vec2(1.0f, 1.0f));
+        vertex.push_back(glm::vec3(nextPos[0], nextPos[1], 1.0f));
+        textur.push_back(glm::vec2(0.0f, 1.0f));
+        vertex.push_back(glm::vec3(thispos[0], thispos[1], 1.0f));
+
+        // the "outside"
+        textur.push_back(glm::vec2(0.0f, 1.0f));
+        vertex.push_back(glm::vec3(thispos[0], thispos[1], 1.0f));
+
+        textur.push_back(glm::vec2(1.0f, 1.0f));
+        vertex.push_back(glm::vec3(nextPos[0], nextPos[1], 1.0f));
+
+        textur.push_back(glm::vec2(0.0f, 0.0f));
+        vertex.push_back(glm::vec3(thispos[0], thispos[1], 0.0f));
+
+        textur.push_back(glm::vec2(1.0f, 0.0f));
+        vertex.push_back(glm::vec3(nextPos[0], nextPos[1], 0.0f));
+
+        i++;
+        if (i >= segments)
+            break;
+        // Degenerate triangle
+        textur.push_back(glm::vec2(0.0f, 0.0f));
+        vertex.push_back(glm::vec3(nextPos[0], nextPos[1], 0.0f));
+    }
+    ringXY = Vertex_Chunk(Vertex_Chunk::VT, vertex.size());
+    ringXY.textureData(textur);
+    ringXY.vertexData(vertex);
+}
+
+
 static void drawRingXY(float rad, float z, float topsideOffset, float bottomUV,
                        float topUV)
 {
-    const int segments = 32;
-    auto nextNormal = glm::vec2(0.0f, 1.0f);
-    auto nextPos    = nextNormal * rad;
-    auto nextPos2   = nextNormal * (rad + topsideOffset);
-    static Vertex_Chunk ringXY(Vertex_Chunk::VTN, segments * 8);
+    static bool         vboInited = false;
+    static Vertex_Chunk ringXY;
 
-    glm::vec3 n[segments * 8];
-    glm::vec2 t[segments * 8];
-    glm::vec3 v[segments * 8];
-
-    unsigned int j = 0;
-
-    for ( int i = 0; i < segments; i ++)
+    if (!vboInited)
     {
-        float nextAng = 360.0f / segments * (i + 1);
-        if ( i+1 >= segments )
-            nextAng = 0;
-
-        const auto thispos    = nextPos;
-        const auto thisNormal = nextNormal;
-        nextNormal = RadialToCartesian(nextAng);
-        nextPos    = nextNormal * rad;
-
-        const auto thispos2 = nextPos2;
-        nextPos2 = nextNormal * (rad + topsideOffset);
-
-        // the "inside"
-        n[j] = glm::vec3(-thisNormal, 0.0f);
-        t[j] = glm::vec2(0, bottomUV);
-        v[j] = glm::vec3(thispos, 0.0f);
-        j++;
-
-        n[j] = glm::vec3(-nextNormal, 0.0f);
-        t[j] = glm::vec2(1, bottomUV);
-        v[j] = glm::vec3(nextPos, 0.0f);
-        j++;
-
-        n[j] = glm::vec3(-thisNormal, 0.0f);
-        t[j] = glm::vec2(0, topUV);
-        v[j] = glm::vec3(thispos2, z);
-        j++;
-
-        n[j] = glm::vec3(-nextNormal, 0.0f);
-        t[j] = glm::vec2(1, topUV);
-        v[j] = glm::vec3(nextPos2, z);
-        j++;
-
-        // the "outside"
-        n[j] = glm::vec3(thisNormal, 0.0f);
-        t[j] = glm::vec2(0, topUV);
-        v[j] = glm::vec3(thispos2, z);
-        j++;
-
-        n[j] = glm::vec3(nextNormal, 0.0f);
-        t[j] = glm::vec2(1, topUV);
-        v[j] = glm::vec3(nextPos2, z);
-        j++;
-
-        n[j] = glm::vec3(thisNormal, 0.0f);
-        t[j] = glm::vec2(0, bottomUV);
-        v[j] = glm::vec3(thispos, 0.0f);
-        j++;
-
-        n[j] = glm::vec3(nextNormal, 0.0f);
-        t[j] = glm::vec2(1, bottomUV);
-        v[j] = glm::vec3(nextPos, 0.0f);
-        j++;
+        prepareRingXYVBO(ringXY);
+        vboInited = true;
     }
-    ringXY.normalData(n);
-    ringXY.textureData(t);
-    ringXY.vertexData(v);
+
+    SHADER.setModel(SHADER.ModelRingXY);
+    SHADER.setRingXYParam(rad, topsideOffset, bottomUV, topUV, z);
     ringXY.draw(GL_TRIANGLE_STRIP);
+    SHADER.setModel(SHADER.ModelFixedPipe);
 }
 
-static float clampedZ(float z, float offset)
+static void prepareRingYZVBO(Vertex_Chunk &ringYZ, int segments)
 {
-    if ( z +offset > 0.0f)
-        return z;
-    return -offset;
+    float nextAng = 0.0f;
+    auto nextPos  = glm::vec2(0.0f, 1.0f);
+    int i = 0;
+
+    std::vector<glm::vec3> vertex;
+    std::vector<glm::vec2> textur;
+
+    while (1)
+    {
+        nextAng     += 360.0f/segments;
+        auto thispos = nextPos;
+        nextPos      = RadialToCartesian(nextAng);
+
+        // Degenerate triangle
+        if (i)
+        {
+            vertex.push_back(glm::vec3(0.0f, thispos[1], thispos[0]));
+            textur.push_back(glm::vec2(0.0f, 0.0f));
+        }
+
+        // the "inside"
+        textur.push_back(glm::vec2(0.0f, 0.0f));
+        vertex.push_back(glm::vec3(0.0f, thispos[1], thispos[0]));
+
+        textur.push_back(glm::vec2(1.0f, 0.0f));
+        vertex.push_back(glm::vec3(0.0f, nextPos[1], nextPos[0]));
+
+        textur.push_back(glm::vec2(0.0f, 0.0f));
+        vertex.push_back(glm::vec3(1.0f, thispos[1], thispos[0]));
+
+        textur.push_back(glm::vec2(1.0f, 0.0f));
+        vertex.push_back(glm::vec3(1.0f, nextPos[1], nextPos[0]));
+
+        // Degenerate triangle
+        textur.push_back(glm::vec2(1.0f, 0.0f));
+        vertex.push_back(glm::vec3(1.0f, nextPos[1], nextPos[0]));
+        textur.push_back(glm::vec2(0.0f, 0.0f));
+        vertex.push_back(glm::vec3(1.0f, thispos[1], thispos[0]));
+
+        // the "outside"
+        textur.push_back(glm::vec2(0.0f, 0.0f));
+        vertex.push_back(glm::vec3(1.0f, thispos[1], thispos[0]));
+
+        textur.push_back(glm::vec2(1.0f, 0.0f));
+        vertex.push_back(glm::vec3(1.0f, nextPos[1], nextPos[0]));
+
+        textur.push_back(glm::vec2(0.0f, 0.0f));
+        vertex.push_back(glm::vec3(0.0f, thispos[1], thispos[0]));
+
+        textur.push_back(glm::vec2(1.0f, 0.0f));
+        vertex.push_back(glm::vec3(0.0f, nextPos[1], nextPos[0]));
+
+        i++;
+        if (i >= segments)
+            break;
+        textur.push_back(glm::vec2(1.0f, 0.0f));
+        vertex.push_back(glm::vec3(0.0f, nextPos[1], nextPos[0]));
+    }
+    ringYZ = Vertex_Chunk(Vertex_Chunk::VT, vertex.size());
+    ringYZ.textureData(textur);
+    ringYZ.vertexData(vertex);
 }
 
 static void drawRingYZ(float rad, float z, float topsideOffset, float bottomUV,
                        float ZOffset, float topUV, int segments)
 {
-    float nextAng = 0.0f;
-    auto nextNormal = glm::vec2(0.0f, 1.0f);
-    auto nextPos    = nextNormal * rad;
-    auto nextPos2   = nextNormal * (rad + topsideOffset);
+    static bool         vboInited = false;
+    static Vertex_Chunk ringYZ6;
+    static Vertex_Chunk ringYZ32;
 
-    std::vector<glm::vec3> n;
-    std::vector<glm::vec2> t;
-    std::vector<glm::vec3> v;
-
-    for ( int i = 0; i < segments; i ++)
+    if (!vboInited)
     {
-        nextAng = 360.0f/segments * (i+1);
-        if ( i+1 >= segments )
-            nextAng = 0;
-
-        const auto thispos    = nextPos;
-        const auto thisNormal = nextNormal;
-        nextNormal = RadialToCartesian(nextAng);
-        nextPos    = nextNormal * rad;
-        nextPos.x = clampedZ(nextPos.x, ZOffset);
-
-        const auto thispos2 = nextPos2;
-        nextPos2   = nextNormal * (rad + topsideOffset);
-        nextPos2.x = clampedZ(nextPos2.x, ZOffset);
-
-        // the "inside"
-        n.push_back(glm::vec3(-thisNormal, 0.0f));
-        t.push_back(glm::vec2(0,bottomUV));
-        v.push_back(glm::vec3(0, thispos.y, thispos.x));
-
-        n.push_back(glm::vec3(-nextNormal, 0.0f));
-        t.push_back(glm::vec2(1,bottomUV));
-        v.push_back(glm::vec3(0, nextPos.y, nextPos.x));
-
-        n.push_back(glm::vec3(-thisNormal, 0.0f));
-        t.push_back(glm::vec2(0,topUV));
-        v.push_back(glm::vec3(z, thispos2.y, thispos2.x));
-
-        n.push_back(glm::vec3(-nextNormal, 0.0f));
-        t.push_back(glm::vec2(1,topUV));
-        v.push_back(glm::vec3(z, nextPos2.y, nextPos2.x));
-
-        // the "outside"
-        n.push_back(glm::vec3(thisNormal, 0.0f));
-        t.push_back(glm::vec2(0,topUV));
-        v.push_back(glm::vec3(z, thispos2.y, thispos2.x));
-
-        n.push_back(glm::vec3(nextNormal, 0.0f));
-        t.push_back(glm::vec2(1,topUV));
-        v.push_back(glm::vec3(z, nextPos2.y, nextPos2.x));
-
-        n.push_back(glm::vec3(thisNormal, 0.0f));
-        t.push_back(glm::vec2(0,bottomUV));
-        v.push_back(glm::vec3(0, thispos.y, thispos.x));
-
-        n.push_back(glm::vec3(nextNormal, 0.0f));
-        t.push_back(glm::vec2(1,bottomUV));
-        v.push_back(glm::vec3(0, nextPos.y, nextPos.x));
+        prepareRingYZVBO(ringYZ6,   6);
+        prepareRingYZVBO(ringYZ32, 32);
+        vboInited = true;
     }
-    Vertex_Chunk ringYZ(Vertex_Chunk::VTN, v.size());
-    ringYZ.normalData(n);
-    ringYZ.textureData(t);
-    ringYZ.vertexData(v);
-    ringYZ.draw(GL_TRIANGLE_STRIP);
+
+    SHADER.setModel(SHADER.ModelRingYZ);
+    SHADER.setRingYZParam(rad, topsideOffset, bottomUV, topUV, z, ZOffset);
+    if (segments == 6)
+        ringYZ6.draw(GL_TRIANGLE_STRIP);
+    else if (segments == 32)
+        ringYZ32.draw(GL_TRIANGLE_STRIP);
+    else
+        abort();
+    SHADER.setModel(SHADER.ModelFixedPipe);
 }
 
 
