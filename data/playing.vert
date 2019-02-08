@@ -25,6 +25,9 @@ uniform int   model;
 uniform vec4  rainLineColor[2];
 uniform float rainLinealphaMod;
 
+uniform vec4 ringParam2;
+uniform vec4 ringParam;
+
 vec3 ecPosition3;
 vec3 normal;
 vec3 eye;
@@ -185,15 +188,69 @@ void lineRain()
     gl_Position = ftransform();
 }
 
+void drawRingXY()
+{
+    float range         = ringParam.x;
+    vec4 vertex         = gl_Vertex;
+    vec4 texCoord       = gl_MultiTexCoord0;
+
+    texCoord.t = ringParam.z;
+    if (vertex.z > 0.0)
+    {
+        range     += ringParam.y;
+        vertex.z   = ringParam2.y;
+        texCoord.t = ringParam.w;
+    }
+
+    vertex.xy = range * vertex.xy;
+
+    // Transform vertex to eye coordinates
+    vec4 ecPosition  = gl_ModelViewMatrix * vertex;
+
+    normal = gl_NormalMatrix * vec3(0.0, 0.0, 1.0);
+    setOutput(ecPosition, texCoord, gl_Color);
+}
+
+void drawRingYZ()
+{
+    float range         = ringParam.x;
+    vec4 vertex         = gl_Vertex;
+    vec4 texCoord       = gl_MultiTexCoord0;
+
+    texCoord.t = ringParam.z;
+    if (vertex.x > 0.0)
+    {
+        range     += ringParam.y;
+        vertex.x   = ringParam2.y;
+        texCoord.t = ringParam.w;
+    }
+
+    vertex.yz = range * vertex.yz;
+
+    vertex.z = max(vertex.z, -ringParam2.z);
+
+    // Transform vertex to eye coordinates
+    vec4 ecPosition  = gl_ModelViewMatrix * vertex;
+
+    normal = gl_NormalMatrix * vec3(0.0, 0.0, 1.0);
+    setOutput(ecPosition, texCoord, gl_Color);
+}
+
 void main(void)
 {
     const int ModelFixedPipe = 0;
     const int ModelLineRain  = 1;
+    const int ModelRingXY    = 2;
+    const int ModelRingYZ    = 3;
 
     if (model == ModelFixedPipe)
         fixedPipeline();
     else if (model == ModelLineRain)
         lineRain();
+    else if (model == ModelRingXY)
+        drawRingXY();
+    else if (model == ModelRingYZ)
+        drawRingYZ();
 }
 
 

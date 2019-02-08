@@ -49,6 +49,10 @@ void PlayingShader::init()
 
     lineRainColorUniform    = getUniformLocation("rainLineColor");
     lineRainAlphaModUniform = getUniformLocation("rainLinealphaMod");
+
+    ringParamUniform        = getUniformLocation("ringParam");
+    ringParam2Uniform       = getUniformLocation("ringParam2");
+
     glGetIntegerv(GL_MAX_LIGHTS, &maxLights);
     if (maxLights > 128)
         maxLights = 128;
@@ -136,6 +140,31 @@ void PlayingShader::setReplaceTexture(bool on)
 void PlayingShader::setModel(int model)
 {
     setUniform(modelUniform, model);
+}
+
+void PlayingShader::setRingXYParam(float rad,
+                                   float topsideOffset,
+                                   float bottomUV,
+                                   float topUV,
+                                   float z)
+{
+    auto ringParam  = glm::vec4(rad, topsideOffset, bottomUV, topUV);
+    auto ringParam2 = glm::vec4(0.0f, z, 0.0f, 0.0f);
+    setUniform(ringParamUniform, ringParam);
+    setUniform(ringParam2Uniform, ringParam2);
+}
+
+void PlayingShader::setRingYZParam(float rad,
+                                   float topsideOffset,
+                                   float bottomUV,
+                                   float topUV,
+                                   float z,
+                                   float ZOffset)
+{
+    auto ringParam  = glm::vec4(rad, topsideOffset, bottomUV, topUV);
+    auto ringParam2 = glm::vec4(1.0f, z, ZOffset, 0.0f);
+    setUniform(ringParamUniform,  ringParam);
+    setUniform(ringParam2Uniform, ringParam2);
 }
 
 void PlayingShader::setLineRainColor(glm::vec4 color[2])
