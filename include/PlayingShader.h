@@ -47,6 +47,21 @@ public:
 
     const int ModelFixedPipe = 0;
     const int ModelLineRain  = 1;
+    const int ModelRingXY    = 2;
+    const int ModelRingYZ    = 3;
+
+    void setRingXYParam(float rad,
+                        float topsideOffset,
+                        float bottomUV,
+                        float topUV,
+                        float z);
+    void setRingYZParam(float rad,
+                        float topsideOffset,
+                        float bottomUV,
+                        float topUV,
+                        float z,
+                        float ZOffset);
+
 protected:
     friend class Singleton<PlayingShader>;
 
@@ -72,6 +87,9 @@ private:
 
     GLint lineRainColorUniform;
     GLint lineRainAlphaModUniform;
+
+    GLint ringParamUniform;
+    GLint ringParam2Uniform;
 
     GLint   lightEnabled[128];
     GLint   maxLights;
