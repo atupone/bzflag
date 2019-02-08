@@ -20,6 +20,7 @@
 #include "Flag.h"
 #include "playing.h"
 #include "VBO_Drawing.h"
+#include "PlayingShader.h"
 
 class StdSpawnEffect : public BasicEffect
 {
@@ -251,9 +252,8 @@ static void drawRingYZ(float rad, float z, float topsideOffset = 0,
                        float bottomUV = 0, float ZOffset = 0,
                        float topUV = 1.0f, int segments = 32);
 static void drawRingXY(float rad, float z, float topsideOffset = 0,
-                       float bottomUV = 0, float topUV = 1.0f,
-                       int segments = 32);
-static void RadialToCartesian(float angle, float rad, float *pos);
+                       float bottomUV = 0, float topUV = 1.0f);
+static glm::vec2 RadialToCartesian(float angle, float rad);
 
 #define deg2Rad 0.017453292519943295769236907684886f
 
@@ -1709,160 +1709,189 @@ void StdShotTeleportEffect::draw(const SceneRenderer &)
 
 //******************************** geo utiliys********************************
 
-static void RadialToCartesian(float angle, float rad, float *pos)
+static glm::vec2 RadialToCartesian(float angle, float rad)
 {
-    pos[0] = sinf(angle*deg2Rad)*rad;
-    pos[1] = cosf(angle*deg2Rad)*rad;
+    glm::vec2 pos;
+    pos.x = sinf(angle*deg2Rad)*rad;
+    pos.y = cosf(angle*deg2Rad)*rad;
+    return pos;
 }
 
-static void drawRingXY(float rad, float z, float topsideOffset, float bottomUV,
-                       float topUV, int segments )
+static void prepareRingXYVBO(Vertex_Chunk &ringXY)
 {
-    for ( int i = 0; i < segments; i ++)
+    const int segments = 32;
+
+    float nextAng = 0.0f;
+    auto nextPos  = glm::vec2(0.0f, 1.0f);
+
+    std::vector<glm::vec3> vertex;
+    std::vector<glm::vec2> textur;
+
+    int i = 0;
+    while (1)
     {
-        float thisAng = 360.0f/segments * i;
-        float nextAng = 360.0f/segments * (i+1);
-        if ( i+1 >= segments )
-            nextAng = 0;
+        auto thispos = nextPos;
+        nextAng     += 360.0f / segments;
+        nextPos      = RadialToCartesian(nextAng, 1.0f);
 
-        float thispos[2];
-        float nextPos[2];
-
-        float thispos2[2];
-        float nextPos2[2];
-
-        float thisNormal[3] = {0};
-        float nextNormal[3] = {0};
-
-        RadialToCartesian(thisAng,rad,thispos);
-        RadialToCartesian(thisAng,1,thisNormal);
-        RadialToCartesian(nextAng,rad,nextPos);
-        RadialToCartesian(nextAng,1,nextNormal);
-
-        RadialToCartesian(thisAng,rad+topsideOffset,thispos2);
-        RadialToCartesian(nextAng,rad+topsideOffset,nextPos2);
+        if (i) // if not first
+        {
+            // Degenerate triangle
+            textur.push_back(glm::vec2(0.0f, 0.0f));
+            vertex.push_back(glm::vec3(thispos[0], thispos[1], 0.0f));
+        }
 
         // the "inside"
-        glBegin(GL_TRIANGLE_STRIP);
+        textur.push_back(glm::vec2(0.0f, 0.0f));
+        vertex.push_back(glm::vec3(thispos[0], thispos[1], 0.0f));
 
-        glNormal3f(-thisNormal[0],-thisNormal[1],-thisNormal[2]);
-        glTexCoord2f(0,bottomUV);
-        glVertex3f(thispos[0],thispos[1],0);
+        textur.push_back(glm::vec2(1.0f, 0.0f));
+        vertex.push_back(glm::vec3(nextPos[0], nextPos[1], 0.0f));
 
-        glNormal3f(-nextNormal[0],-nextNormal[1],-nextNormal[2]);
-        glTexCoord2f(1,bottomUV);
-        glVertex3f(nextPos[0],nextPos[1],0);
+        textur.push_back(glm::vec2(0.0f, 1.0f));
+        vertex.push_back(glm::vec3(thispos[0], thispos[1], 1.0f));
 
-        glNormal3f(-thisNormal[0],-thisNormal[1],-thisNormal[2]);
-        glTexCoord2f(0,topUV);
-        glVertex3f(thispos2[0],thispos2[1],z);
+        textur.push_back(glm::vec2(1.0f, 1.0f));
+        vertex.push_back(glm::vec3(nextPos[0], nextPos[1], 1.0f));
 
-        glNormal3f(-nextNormal[0],-nextNormal[1],-nextNormal[2]);
-        glTexCoord2f(1,topUV);
-        glVertex3f(nextPos2[0],nextPos2[1],z);
-
-        glEnd();
+        // Degenerate triangle
+        textur.push_back(glm::vec2(1.0f, 1.0f));
+        vertex.push_back(glm::vec3(nextPos[0], nextPos[1], 1.0f));
+        textur.push_back(glm::vec2(0.0f, 1.0f));
+        vertex.push_back(glm::vec3(thispos[0], thispos[1], 1.0f));
 
         // the "outside"
-        glBegin(GL_TRIANGLE_STRIP);
+        textur.push_back(glm::vec2(0.0f, 1.0f));
+        vertex.push_back(glm::vec3(thispos[0], thispos[1], 1.0f));
 
-        glNormal3f(thisNormal[0],thisNormal[1],thisNormal[2]);
-        glTexCoord2f(0,topUV);
-        glVertex3f(thispos2[0],thispos2[1],z);
+        textur.push_back(glm::vec2(1.0f, 1.0f));
+        vertex.push_back(glm::vec3(nextPos[0], nextPos[1], 1.0f));
 
-        glNormal3f(nextNormal[0],nextNormal[1],nextNormal[2]);
-        glTexCoord2f(1,topUV);
-        glVertex3f(nextPos2[0],nextPos2[1],z);
+        textur.push_back(glm::vec2(0.0f, 0.0f));
+        vertex.push_back(glm::vec3(thispos[0], thispos[1], 0.0f));
 
-        glNormal3f(thisNormal[0],thisNormal[1],thisNormal[2]);
-        glTexCoord2f(0,bottomUV);
-        glVertex3f(thispos[0],thispos[1],0);
+        textur.push_back(glm::vec2(1.0f, 0.0f));
+        vertex.push_back(glm::vec3(nextPos[0], nextPos[1], 0.0f));
 
-        glNormal3f(nextNormal[0],nextNormal[1],nextNormal[2]);
-        glTexCoord2f(1,bottomUV);
-        glVertex3f(nextPos[0],nextPos[1],0);
-
-        glEnd();
-
+        i++;
+        if (i >= segments)
+            break;
+        // Degenerate triangle
+        textur.push_back(glm::vec2(0.0f, 0.0f));
+        vertex.push_back(glm::vec3(nextPos[0], nextPos[1], 0.0f));
     }
+    ringXY = Vertex_Chunk(Vertex_Chunk::VT, vertex.size());
+    ringXY.textureData(textur);
+    ringXY.vertexData(vertex);
 }
 
-static float clampedZ(float z, float offset)
+
+static void drawRingXY(float rad, float z, float topsideOffset, float bottomUV,
+                       float topUV)
 {
-    if ( z +offset > 0.0f)
-        return z;
-    return -offset;
+    static bool         vboInited = false;
+    static Vertex_Chunk ringXY;
+
+    if (!vboInited)
+    {
+        prepareRingXYVBO(ringXY);
+        vboInited = true;
+    }
+
+    SHADER.setModel(SHADER.ModelRingXY);
+    SHADER.setRingXYParam(rad, topsideOffset, bottomUV, topUV, z);
+    ringXY.draw(GL_TRIANGLE_STRIP);
+    SHADER.setModel(SHADER.ModelFixedPipe);
+}
+
+static void prepareRingYZVBO(Vertex_Chunk &ringYZ, int segments)
+{
+    float nextAng = 0.0f;
+    auto nextPos  = glm::vec2(0.0f, 1.0f);
+    int i = 0;
+
+    std::vector<glm::vec3> vertex;
+    std::vector<glm::vec2> textur;
+
+    while (1)
+    {
+        nextAng     += 360.0f/segments;
+        auto thispos = nextPos;
+        nextPos      = RadialToCartesian(nextAng, 1.0f);
+
+        // Degenerate triangle
+        if (i)
+        {
+            vertex.push_back(glm::vec3(0.0f, thispos[1], thispos[0]));
+            textur.push_back(glm::vec2(0.0f, 0.0f));
+        }
+
+        // the "inside"
+        textur.push_back(glm::vec2(0.0f, 0.0f));
+        vertex.push_back(glm::vec3(0.0f, thispos[1], thispos[0]));
+
+        textur.push_back(glm::vec2(1.0f, 0.0f));
+        vertex.push_back(glm::vec3(0.0f, nextPos[1], nextPos[0]));
+
+        textur.push_back(glm::vec2(0.0f, 0.0f));
+        vertex.push_back(glm::vec3(1.0f, thispos[1], thispos[0]));
+
+        textur.push_back(glm::vec2(1.0f, 0.0f));
+        vertex.push_back(glm::vec3(1.0f, nextPos[1], nextPos[0]));
+
+        // Degenerate triangle
+        textur.push_back(glm::vec2(1.0f, 0.0f));
+        vertex.push_back(glm::vec3(1.0f, nextPos[1], nextPos[0]));
+        textur.push_back(glm::vec2(0.0f, 0.0f));
+        vertex.push_back(glm::vec3(1.0f, thispos[1], thispos[0]));
+
+        // the "outside"
+        textur.push_back(glm::vec2(0.0f, 0.0f));
+        vertex.push_back(glm::vec3(1.0f, thispos[1], thispos[0]));
+
+        textur.push_back(glm::vec2(1.0f, 0.0f));
+        vertex.push_back(glm::vec3(1.0f, nextPos[1], nextPos[0]));
+
+        textur.push_back(glm::vec2(0.0f, 0.0f));
+        vertex.push_back(glm::vec3(0.0f, thispos[1], thispos[0]));
+
+        textur.push_back(glm::vec2(1.0f, 0.0f));
+        vertex.push_back(glm::vec3(0.0f, nextPos[1], nextPos[0]));
+
+        i++;
+        if (i >= segments)
+            break;
+        textur.push_back(glm::vec2(1.0f, 0.0f));
+        vertex.push_back(glm::vec3(0.0f, nextPos[1], nextPos[0]));
+    }
+    ringYZ = Vertex_Chunk(Vertex_Chunk::VT, vertex.size());
+    ringYZ.textureData(textur);
+    ringYZ.vertexData(vertex);
 }
 
 static void drawRingYZ(float rad, float z, float topsideOffset, float bottomUV,
                        float ZOffset, float topUV, int segments)
 {
-    for ( int i = 0; i < segments; i ++)
+    static bool         vboInited = false;
+    static Vertex_Chunk ringYZ6;
+    static Vertex_Chunk ringYZ32;
+
+    if (!vboInited)
     {
-        float thisAng = 360.0f/segments * i;
-        float nextAng = 360.0f/segments * (i+1);
-        if ( i+1 >= segments )
-            nextAng = 0;
-
-        float thispos[2];
-        float nextPos[2];
-
-        float thispos2[2];
-        float nextPos2[2];
-
-        float thisNormal[3] = {0};
-        float nextNormal[3] = {0};
-
-        RadialToCartesian(thisAng,rad,thispos);
-        RadialToCartesian(thisAng,1,thisNormal);
-        RadialToCartesian(nextAng,rad,nextPos);
-        RadialToCartesian(nextAng,1,nextNormal);
-
-        RadialToCartesian(thisAng,rad+topsideOffset,thispos2);
-        RadialToCartesian(nextAng,rad+topsideOffset,nextPos2);
-
-        // the "inside"
-        glBegin(GL_TRIANGLE_STRIP);
-
-        glNormal3f(-thisNormal[0],-thisNormal[1],-thisNormal[2]);
-        glTexCoord2f(0,bottomUV);
-        glVertex3f(0,thispos[1],clampedZ(thispos[0],ZOffset));
-
-        glNormal3f(-nextNormal[0],-nextNormal[1],-nextNormal[2]);
-        glTexCoord2f(1,bottomUV);
-        glVertex3f(0,nextPos[1],clampedZ(nextPos[0],ZOffset));
-
-        glNormal3f(-thisNormal[0],-thisNormal[1],-thisNormal[2]);
-        glTexCoord2f(0,topUV);
-        glVertex3f(z,thispos2[1],clampedZ(thispos2[0],ZOffset));
-
-        glNormal3f(-nextNormal[0],-nextNormal[1],-nextNormal[2]);
-        glTexCoord2f(1,topUV);
-        glVertex3f(z,nextPos2[1],clampedZ(nextPos2[0],ZOffset));
-
-        glEnd();
-
-        // the "outside"
-        glBegin(GL_TRIANGLE_STRIP);
-
-        glNormal3f(thisNormal[0],thisNormal[1],thisNormal[2]);
-        glTexCoord2f(0,topUV);
-        glVertex3f(z,thispos2[1],clampedZ(thispos2[0],ZOffset));
-
-        glNormal3f(nextNormal[0],nextNormal[1],nextNormal[2]);
-        glTexCoord2f(1,topUV);
-        glVertex3f(z,nextPos2[1],clampedZ(nextPos2[0],ZOffset));
-
-        glNormal3f(thisNormal[0],thisNormal[1],thisNormal[2]);
-        glTexCoord2f(0,bottomUV);
-        glVertex3f(0,thispos[1],clampedZ(thispos[0],ZOffset));
-
-        glNormal3f(nextNormal[0],nextNormal[1],nextNormal[2]);
-        glTexCoord2f(1,bottomUV);
-        glVertex3f(0,nextPos[1],clampedZ(nextPos[0],ZOffset));
-
-        glEnd();
+        prepareRingYZVBO(ringYZ6,   6);
+        prepareRingYZVBO(ringYZ32, 32);
+        vboInited = true;
     }
+
+    SHADER.setModel(SHADER.ModelRingYZ);
+    SHADER.setRingYZParam(rad, topsideOffset, bottomUV, topUV, z, ZOffset);
+    if (segments == 6)
+        ringYZ6.draw(GL_TRIANGLE_STRIP);
+    else if (segments == 32)
+        ringYZ32.draw(GL_TRIANGLE_STRIP);
+    else
+        abort();
+    SHADER.setModel(SHADER.ModelFixedPipe);
 }
 
 
