@@ -362,11 +362,7 @@ void SphereLodSceneNode::SphereLodRenderNode::render()
 
     glEnable(GL_CLIP_PLANE0);
 
-#ifdef GL_VERSION_1_2
     glEnable(GL_RESCALE_NORMAL);
-#else
-    glEnable(GL_NORMALIZE);
-#endif
 
     const bool transparent = sceneNode->transparent;
     const bool stippled = transparent && !BZDBCache::blend;
@@ -448,11 +444,7 @@ void SphereLodSceneNode::SphereLodRenderNode::render()
     }
     glPopMatrix();
 
-#ifdef GL_VERSION_1_2
     glDisable(GL_RESCALE_NORMAL);
-#else
-    glDisable(GL_NORMALIZE);
-#endif
 
     glDisable(GL_CLIP_PLANE0);
 
@@ -627,11 +619,7 @@ void            SphereBspSceneNode::SphereBspRenderNode::render()
         myStipple(sceneNode->color[3]);
     if (BZDBCache::lighting)
     {
-#ifdef GL_VERSION_1_2
         glEnable(GL_RESCALE_NORMAL);
-#else
-        glEnable(GL_NORMALIZE);
-#endif
         // draw with normals (normal is same as vertex!
         // one of the handy properties of a sphere.)
         if (highResolution)
@@ -680,11 +668,7 @@ void            SphereBspSceneNode::SphereBspRenderNode::render()
             }
             addTriangleCount(SphereLowRes * SphereLowRes * 2);
         }
-#ifdef GL_VERSION_1_2
         glDisable(GL_RESCALE_NORMAL);
-#else
-        glDisable(GL_NORMALIZE);
-#endif
     }
     else
     {

@@ -790,12 +790,6 @@ void BackgroundRenderer::setupSkybox()
     for (i = 0; i < 6; i++)
         bzmats[i]->setReference();
 
-    // setup the wrap mode
-    if (GLEW_EXT_texture_edge_clamp)
-        skyboxWrapMode = GL_CLAMP_TO_EDGE;
-    else
-        skyboxWrapMode = GL_CLAMP;
-
     // setup the corner colors
     const int cornerFaces[8][3] =
     {
@@ -848,8 +842,8 @@ void BackgroundRenderer::drawSkybox()
     if (!BZDBCache::drawGround)
     {
         tm.bind(skyboxTexID[5]); // bottom
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, skyboxWrapMode);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, skyboxWrapMode);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glBegin(GL_TRIANGLE_STRIP);
         {
             glTexCoord2fv(txcds[0]);
@@ -869,8 +863,8 @@ void BackgroundRenderer::drawSkybox()
     }
 
     tm.bind(skyboxTexID[4]); // top
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, skyboxWrapMode);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, skyboxWrapMode);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glBegin(GL_TRIANGLE_STRIP);
     {
         glTexCoord2fv(txcds[0]);
@@ -889,8 +883,8 @@ void BackgroundRenderer::drawSkybox()
     glEnd();
 
     tm.bind(skyboxTexID[0]); // left
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, skyboxWrapMode);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, skyboxWrapMode);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glBegin(GL_TRIANGLE_STRIP);
     {
         glTexCoord2fv(txcds[0]);
@@ -909,8 +903,8 @@ void BackgroundRenderer::drawSkybox()
     glEnd();
 
     tm.bind(skyboxTexID[1]); // front
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, skyboxWrapMode);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, skyboxWrapMode);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glBegin(GL_TRIANGLE_STRIP);
     {
         glTexCoord2fv(txcds[0]);
@@ -929,8 +923,8 @@ void BackgroundRenderer::drawSkybox()
     glEnd();
 
     tm.bind(skyboxTexID[2]); // right
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, skyboxWrapMode);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, skyboxWrapMode);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glBegin(GL_TRIANGLE_STRIP);
     {
         glTexCoord2fv(txcds[0]);
@@ -949,8 +943,8 @@ void BackgroundRenderer::drawSkybox()
     glEnd();
 
     tm.bind(skyboxTexID[3]); // back
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, skyboxWrapMode);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, skyboxWrapMode);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glBegin(GL_TRIANGLE_STRIP);
     {
         glTexCoord2fv(txcds[0]);
