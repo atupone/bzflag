@@ -251,6 +251,12 @@ bool SDLWindow::create(void)
     SDL_FilterEvents(&SDLWindowEventFilter, nullptr);
 #endif // __APPLE__
 
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+    SDL_GL_SetAttribute(
+        SDL_GL_CONTEXT_PROFILE_MASK,
+        SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
+
     // (re)create the window
 
     // workaround for an SDL 2 bug on Linux with the GNOME Window List extension enabled, where attempting to create a
