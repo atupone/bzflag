@@ -128,7 +128,6 @@ private:
 
     // celestial stuff
     bool        haveSkybox;
-    GLenum      skyboxWrapMode;
     int         skyboxTexID[6];
     glm::vec3   skyboxColor[8];
     bool        doStars;
