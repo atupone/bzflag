@@ -63,6 +63,7 @@
 #include "version.h"
 #include "WordFilter.h"
 #include "ZSceneDatabase.h"
+#include "VBO_Drawing.h"
 
 // local implementation headers
 #include "AutoPilot.h"
@@ -5695,16 +5696,27 @@ static void renderRoamMouse()
     glEnable(GL_LINE_SMOOTH);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    static const float color0[4] = { 0.0f, 0.0f, 0.0f, 0.1f };
-    static const float color1[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+    static const auto color0 = glm::vec4(0.0f, 0.0f, 0.0f, 0.1f);
+    static const auto color1 = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+
+    static int init = false;
+    static Vertex_Chunk roamLine = Vertex_Chunk(Vertex_Chunk::VC, 2);
+    if (!init)
+    {
+        glm::vec3 vertex[2];
+        glm::vec4 colors[2];
+        vertex[0] = glm::vec3(0.0f, 0.0f, 0.0f);
+        vertex[1] = glm::vec3(1.0f, 1.0f, 0.0f);
+        colors[0] = color0;
+        colors[1] = color1;
+        roamLine.colorData(colors);
+        roamLine.vertexData(vertex);
+    }
 
     glLineWidth(1.49f);
-    glBegin(GL_LINES);
-    glColor4fv(color0);
-    glVertex2i(xc, yc);
-    glColor4fv(color1);
-    glVertex2i(mx, my);
-    glEnd();
+    glTranslatef((float)xc, (float)yc, 0.0f);
+    glScalef((float)(mx - xc), (float)(my - yc), 0.0f);
+    roamLine.draw(GL_LINES);
 
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
@@ -6407,13 +6419,14 @@ void drawFrame(const float dt)
             glStencilFunc(GL_NEVER, 0x0, 0x0);
             glStencilOp(GL_INCR, GL_INCR, GL_INCR);
             glColor3f(1.0f, 1.0f, 1.0f);
+            glPushMatrix();
+            glScalef((float)width, 1.0f, 0.0f);
             for (int y=0; y<=height; y+=2)
             {
-                glBegin(GL_LINES);
-                glVertex2i(0, y);
-                glVertex2i(width, y);
-                glEnd();
+                DRAWER.asimmetricLineX();
+                glTranslatef(0.0f, 2.0f, 0.0f);
             }
+            glPopMatrix();
 
             // draw except where the stencil pattern is 0x1
             // do not change the stencil buffer
