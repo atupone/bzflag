@@ -40,6 +40,13 @@ public:
     void setLocalViewer(bool on);
     void setReplaceTexture(bool on);
 
+    void setModel(int model);
+
+    void setLineRainColor(glm::vec4 color[2]);
+    void setLineRainAlphaMod(float alphaMod);
+
+    const int ModelFixedPipe = 0;
+    const int ModelLineRain  = 1;
 protected:
     friend class Singleton<PlayingShader>;
 
@@ -60,6 +67,11 @@ private:
     GLint   separateColorUniform;
     GLint   sphereMapUniform;
     GLint   replaceTextureUniform;
+
+    GLint modelUniform;
+
+    GLint lineRainColorUniform;
+    GLint lineRainAlphaModUniform;
 
     GLint   lightEnabled[128];
     GLint   maxLights;

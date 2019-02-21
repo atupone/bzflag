@@ -20,6 +20,11 @@ uniform bool separateColor;
 uniform bool sphereMap;
 uniform bool localViewer;
 
+uniform int   model;
+
+uniform vec4  rainLineColor[2];
+uniform float rainLinealphaMod;
+
 vec3 ecPosition3;
 vec3 normal;
 vec3 eye;
@@ -165,9 +170,30 @@ void fixedPipeline()
     setOutput(ecPosition, texCoord, gl_Color);
 }
 
+void lineRain()
+{
+    vec4 color;
+    if (gl_Vertex.z > 0.0)
+        color = rainLineColor[1];
+    else
+        color = rainLineColor[0];
+
+    color.a = color.a + rainLinealphaMod;
+
+    gl_FrontColor = color;
+
+    gl_Position = ftransform();
+}
+
 void main(void)
 {
-    fixedPipeline();
+    const int ModelFixedPipe = 0;
+    const int ModelLineRain  = 1;
+
+    if (model == ModelFixedPipe)
+        fixedPipeline();
+    else if (model == ModelLineRain)
+        lineRain();
 }
 
 
