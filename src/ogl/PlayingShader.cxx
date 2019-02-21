@@ -46,6 +46,10 @@ void PlayingShader::init()
     repeatUniform           = getUniformLocation("repeat");
     csProcUniform           = getUniformLocation("csProc");
 
+    modelUniform            = getUniformLocation("model");
+
+    lineRainColorUniform    = getUniformLocation("rainLineColor");
+    lineRainAlphaModUniform = getUniformLocation("rainLinealphaMod");
     glGetIntegerv(GL_MAX_LIGHTS, &maxLights);
     if (maxLights > 128)
         maxLights = 128;
@@ -142,6 +146,21 @@ void PlayingShader::setColorProcessing(int csProc)
     setUniform(csProcUniform, csProc);
 }
 
+
+void PlayingShader::setModel(int model)
+{
+    setUniform(modelUniform, model);
+}
+
+void PlayingShader::setLineRainColor(glm::vec4 color[2])
+{
+    setUniform(lineRainColorUniform, 2, color);
+}
+
+void PlayingShader::setLineRainAlphaMod(float alphaMod)
+{
+    setUniform(lineRainAlphaModUniform, alphaMod);
+}
 
 // Local Variables: ***
 // mode: C++ ***

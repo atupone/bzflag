@@ -33,6 +33,7 @@ public:
     void simmetricLineY();
     void asimmetricLineX();
     void asimmetricLineY();
+    void asimmetricLineZ();
     void cross();
     void north();
     void simmetricRect();
@@ -74,6 +75,7 @@ private:
     Vertex_Chunk diamondTXYVBOChunk;
     Vertex_Chunk asimmetricLineXVBOChunk;
     Vertex_Chunk asimmetricLineYVBOChunk;
+    Vertex_Chunk asimmetricLineZVBOChunk;
     Vertex_Chunk simmetricLineXVBOChunk;
     Vertex_Chunk simmetricLineYVBOChunk;
     Vertex_Chunk crossVBOChunk;

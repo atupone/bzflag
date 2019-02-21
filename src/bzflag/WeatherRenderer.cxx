@@ -27,6 +27,7 @@
 #include "Extents.h"
 #include "OpenGLAPI.h"
 #include "VBO_Drawing.h"
+#include "PlayingShader.h"
 
 // local impl headers
 #include "RoofTops.h"
@@ -456,18 +457,17 @@ void WeatherRenderer::draw(const SceneRenderer& sr)
     if (doLineRain)   // we are doing line rain
     {
         rainGState.setState();
+        SHADER.setModel(SHADER.ModelLineRain);
+        SHADER.setLineRainColor(rainColor);
         std::vector<glm::vec4> c;
         std::vector<glm::vec3> v;
         std::vector<rain>::iterator itr = raindrops.begin();
         while (itr != raindrops.end())
         {
-            drawLineDrop(*itr, c, v);
+            drawLineDrop(*itr);
             itr++;
         }
-        Vertex_Chunk rainDrops(Vertex_Chunk::VC, v.size());
-        rainDrops.colorData(c);
-        rainDrops.vertexData(v);
-        rainDrops.draw(GL_LINES);
+        SHADER.setModel(SHADER.ModelFixedPipe);
     }
     else
     {
@@ -600,32 +600,28 @@ bool WeatherRenderer::updatePuddle(std::vector<puddle>::iterator& splash,
 }
 
 
-void WeatherRenderer::drawLineDrop(rain& drop,
-                                   std::vector<glm::vec4> &c,
-                                   std::vector<glm::vec3> &v)
+void WeatherRenderer::drawLineDrop(rain& drop)
 {
     {
         float alphaMod = 0;
 
-        if (drop.pos[2] < 5.0f)
-            alphaMod = 1.0f - (5.0f / drop.pos[2]);
+        alphaMod = drop.pos[2];
 
-        float alphaVal = rainColor[0][3] - alphaMod;
-        if (alphaVal < 0)
-            alphaVal = 0;
+        if (alphaMod < 1.0f)
+            alphaMod = 1.0f;
+        else
+        {
+            alphaMod = 5.0f / alphaMod - 1.0;
+            if (alphaMod < 0.0f)
+                alphaMod = 0;
+        }
 
-        c.push_back(glm::vec4(glm::vec3(rainColor[0]), alphaVal));
-        v.push_back(drop.pos);
-
-        alphaVal = rainColor[1][3] - alphaMod;
-        if (alphaVal < 0)
-            alphaVal = 0;
-
-        c.push_back(glm::vec4(glm::vec3(rainColor[1]), alphaVal));
-        v.push_back(
-            glm::vec3(drop.pos.x,
-                      drop.pos.y,
-                      drop.pos[2] + (rainSize[1] - (drop.speed * 0.15f))));
+        SHADER.setLineRainAlphaMod(alphaMod);
+        glPushMatrix();
+        glTranslatef(drop.pos[0], drop.pos[1], drop.pos[2]);
+        glScalef(0.0f, 0.0f, rainSize[1] - drop.speed * 0.15f);
+        DRAWER.asimmetricLineZ();
+        glPopMatrix();
     }
 }
 

@@ -100,6 +100,10 @@ VBO_Drawing::VBO_Drawing()
                                   glm::vec3(0.0f),
                                   glm::vec3(0.0f, 1.0f, 0.0f));
 
+    asimmetricLineZVBOChunk = Simple2D::buildLine(
+                                  glm::vec3(0.0f),
+                                  glm::vec3(0.0f, 0.0f, 1.0f));
+
     simmetricLineXVBOChunk = Simple2D::buildLine(
                                  glm::vec3(-1.0f, 0.0f, 0.0f),
                                  glm::vec3( 1.0f, 0.0f, 0.0f));
@@ -301,6 +305,11 @@ void VBO_Drawing::asimmetricLineX()
 void VBO_Drawing::asimmetricLineY()
 {
     asimmetricLineYVBOChunk.draw(GL_LINES);
+}
+
+void VBO_Drawing::asimmetricLineZ()
+{
+    asimmetricLineZVBOChunk.draw(GL_LINES);
 }
 
 void VBO_Drawing::simmetricLineX()

@@ -6926,6 +6926,7 @@ static void     playingLoop()
     while (!CommandsStandard::isQuit())
     {
         SHADER.push();
+        SHADER.setModel(SHADER.ModelFixedPipe);
 
         BZDBCache::update();
 

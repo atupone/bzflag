@@ -50,6 +50,13 @@ public:
     const int csColor = 1;
     const int csColTr = 2;
 
+    void setModel(int model);
+
+    void setLineRainColor(glm::vec4 color[2]);
+    void setLineRainAlphaMod(float alphaMod);
+
+    const int ModelFixedPipe = 0;
+    const int ModelLineRain  = 1;
 protected:
     friend class Singleton<PlayingShader>;
 
@@ -71,6 +78,11 @@ private:
     GLint zTankUniform;
     GLint repeatUniform;
     GLint csProcUniform;
+
+    GLint modelUniform;
+
+    GLint lineRainColorUniform;
+    GLint lineRainAlphaModUniform;
 
     GLint   lightEnabled[128];
     GLint   maxLights;
