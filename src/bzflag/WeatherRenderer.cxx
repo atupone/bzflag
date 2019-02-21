@@ -23,6 +23,7 @@
 #include "Intersect.h"
 #include "Extents.h"
 #include "VBO_Drawing.h"
+#include "PlayingShader.h"
 
 // local impl headers
 #include "RoofTops.h"
@@ -529,8 +530,8 @@ void WeatherRenderer::draw(const SceneRenderer& sr)
     if (doLineRain)   // we are doing line rain
     {
         rainGState.setState();
-        glPushMatrix();
-        glBegin(GL_LINES);
+        SHADER.setModel(SHADER.ModelLineRain);
+        SHADER.setLineRainColor(rainColor);
     }
     else
         texturedRainState.setState();
@@ -574,10 +575,7 @@ void WeatherRenderer::draw(const SceneRenderer& sr)
     }
 
     if (doLineRain)
-    {
-        glEnd();
-        glPopMatrix();
-    }
+        SHADER.setModel(SHADER.ModelFixedPipe);
 
     if (doPuddles)
     {
@@ -808,23 +806,23 @@ void WeatherRenderer::drawDrop(rain& drop, const SceneRenderer& sr)
     {
         float alphaMod = 0;
 
-        if (drop.pos[2] < 5.0f)
-            alphaMod = 1.0f - (5.0f / drop.pos[2]);
+        alphaMod = drop.pos[2];
 
-        float alphaVal = rainColor[0][3] - alphaMod;
-        if (alphaVal < 0)
-            alphaVal = 0;
+        if (alphaMod < 1.0f)
+            alphaMod = 1.0f;
+        else
+        {
+            alphaMod = 5.0f / alphaMod - 1.0;
+            if (alphaMod < 0.0f)
+                alphaMod = 0;
+        }
 
-        glColor4f(rainColor[0][0], rainColor[0][1], rainColor[0][2], alphaVal);
-        glVertex3fv(drop.pos);
-
-        alphaVal = rainColor[1][3] - alphaMod;
-        if (alphaVal < 0)
-            alphaVal = 0;
-
-        glColor4f(rainColor[1][0], rainColor[1][1], rainColor[1][2], alphaVal);
-        glVertex3f(drop.pos[0], drop.pos[1],
-                   drop.pos[2] + (rainSize[1] - (drop.speed * 0.15f)));
+        SHADER.setLineRainAlphaMod(alphaMod);
+        glPushMatrix();
+        glTranslatef(drop.pos[0], drop.pos[1], drop.pos[2]);
+        glScalef(0.0f, 0.0f, rainSize[1] - drop.speed * 0.15f);
+        DRAWER.asimmetricLineZ();
+        glPopMatrix();
     }
     else
     {

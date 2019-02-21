@@ -7747,6 +7747,7 @@ void            startPlaying(BzfDisplay* _display,
     worldDownLoader = new WorldDownLoader;
 
     SHADER.push();
+    SHADER.setModel(SHADER.ModelFixedPipe);
 
     // start game loop
     playingLoop();

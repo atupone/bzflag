@@ -59,7 +59,7 @@ protected:
     OpenGLGState                puddleState;
     std::string             rainSkin;
     std::vector<std::string>        rainTextures;
-    float                   rainColor[2][4];
+    glm::vec4               rainColor[2];
     float                   rainSize[2];
     int                 rainDensity;
     float                   rainSpeed;
