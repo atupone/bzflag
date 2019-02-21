@@ -45,6 +45,10 @@ void PlayingShader::init()
     sphereMapUniform        = getUniformLocation("sphereMap");
     replaceTextureUniform   = getUniformLocation("replaceTexture");
 
+    modelUniform            = getUniformLocation("model");
+
+    lineRainColorUniform    = getUniformLocation("rainLineColor");
+    lineRainAlphaModUniform = getUniformLocation("rainLinealphaMod");
     glGetIntegerv(GL_MAX_LIGHTS, &maxLights);
     if (maxLights > 128)
         maxLights = 128;
@@ -128,6 +132,21 @@ void PlayingShader::setReplaceTexture(bool on)
     setUniform(replaceTextureUniform, on);
 }
 
+
+void PlayingShader::setModel(int model)
+{
+    setUniform(modelUniform, model);
+}
+
+void PlayingShader::setLineRainColor(glm::vec4 color[2])
+{
+    setUniform(lineRainColorUniform, 2, color);
+}
+
+void PlayingShader::setLineRainAlphaMod(float alphaMod)
+{
+    setUniform(lineRainAlphaModUniform, alphaMod);
+}
 
 // Local Variables: ***
 // mode: C++ ***
