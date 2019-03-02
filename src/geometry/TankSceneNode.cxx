@@ -27,6 +27,7 @@
 #include "SceneRenderer.h"
 #include "BZDBCache.h"
 #include "OpenGLCommon.h"
+#include "VBO_Drawing.h"
 #include "PlayingShader.h"
 
 // local implementation headers
@@ -702,15 +703,9 @@ TankIDLSceneNode::IDLRenderNode::~IDLRenderNode()
 }
 
 
-static void glColor(const glm::vec4 &c)
-{
-    glColor4f(c.r, c.g, c.b, c.a);
-}
-
 void TankIDLSceneNode::IDLRenderNode::render()
 {
-    static const auto innerColor = glm::vec4(1.0f, 1.0f, 1.0f, 0.75f);
-    static const auto outerColor = glm::vec4(1.0f, 1.0f, 1.0f, 0.0f);
+    SHADER.setModel(SHADER.ModelIDL);
 
     // compute plane in tank's space
     const auto &sphere = sceneNode->tank->getCenter();
@@ -722,6 +717,7 @@ void TankIDLSceneNode::IDLRenderNode::render()
     // compute projection point -- one TankLength in from tankPlane
     const GLfloat pd = -1.0f * BZDBCache::tankLength - tankDist;
     auto origin = pd * tankPlane;
+    SHADER.setIDLGlobal(origin, colorOverride);
 
     glPushMatrix();
     glTranslatef(sphere[0], sphere[1], sphere[2]);
@@ -757,25 +753,15 @@ void TankIDLSceneNode::IDLRenderNode::render()
         if (crossings != 2) continue;
 
         // project points out
-        glm::vec3 project[2];
         const GLfloat dist = 2.0f + 0.3f * ((float)bzfrand() - 0.5f);
-        project[0] = glm::mix(origin, cross[0], dist);
-        project[1] = glm::mix(origin, cross[1], dist);
 
+        SHADER.setIDLLocal(cross, dist);
         // draw it
-        glBegin(GL_TRIANGLE_STRIP);
-        if (!colorOverride)
-            glColor(innerColor);
-        glVertex3fv(cross[0]);
-        glVertex3fv(cross[1]);
-        if (!colorOverride)
-            glColor(outerColor);
-        glVertex3fv(project[0]);
-        glVertex3fv(project[1]);
-        glEnd();
+        DRAWER.asimmetricRect();
     }
 
     glPopMatrix();
+    SHADER.setModel(SHADER.ModelFixedPipe);
     return;
 }
 

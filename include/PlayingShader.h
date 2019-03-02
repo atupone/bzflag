@@ -49,6 +49,7 @@ public:
     const int ModelLineRain  = 1;
     const int ModelRingXY    = 2;
     const int ModelRingYZ    = 3;
+    const int ModelIDL         = 4;
 
     void setRingXYParam(float rad,
                         float topsideOffset,
@@ -62,6 +63,8 @@ public:
                         float z,
                         float ZOffset);
 
+    void setIDLGlobal(const glm::vec3 &origin, bool colorOverride);
+    void setIDLLocal(const glm::vec3 cross[2], float dist);
 protected:
     friend class Singleton<PlayingShader>;
 
@@ -90,6 +93,9 @@ private:
 
     GLint ringParamUniform;
     GLint ringParam2Uniform;
+
+    GLint   idlGlobalParamUniform;
+    GLint   idlLocalParamUniform;
 
     GLint   lightEnabled[128];
     GLint   maxLights;

@@ -28,6 +28,9 @@ uniform float rainLinealphaMod;
 uniform vec4 ringParam2;
 uniform vec4 ringParam;
 
+uniform vec4  idlGlobalParam;
+uniform vec4  idlLocalParam[2];
+
 vec3 ecPosition3;
 vec3 normal;
 vec3 eye;
@@ -236,12 +239,36 @@ void drawRingYZ()
     setOutput(ecPosition, texCoord, gl_Color);
 }
 
+void drawIDL()
+{
+    const vec4 innerColor = vec4(1.0, 1.0, 1.0, 0.75);
+    const vec4 outerColor = vec4(1.0, 1.0, 1.0, 0.00);
+    bool colorOverride    = idlGlobalParam.w > 0.0;
+    vec3 origin           = idlGlobalParam.xyz;
+    bool proj             = gl_Vertex.y > 0.0;
+    float dist            = idlLocalParam[0].w;
+    vec3 cross[2];
+
+    cross[0] = idlLocalParam[0].xyz;
+    cross[1] = idlLocalParam[1].xyz;
+
+    vec4 vertex;
+    vertex.xyz = (gl_Vertex.x == 0.0) ? cross[0] : cross[1];
+    if (proj)
+        vertex.xyz = mix(origin, vertex.xyz, dist);
+
+    vertex.w      = 1.0;
+    gl_Position   = gl_ModelViewProjectionMatrix * vertex;
+    gl_FrontColor = colorOverride ? gl_Color : proj ? outerColor : innerColor;
+}
+
 void main(void)
 {
     const int ModelFixedPipe = 0;
     const int ModelLineRain  = 1;
     const int ModelRingXY    = 2;
     const int ModelRingYZ    = 3;
+    const int ModelIDL       = 4;
 
     if (model == ModelFixedPipe)
         fixedPipeline();
@@ -251,6 +278,8 @@ void main(void)
         drawRingXY();
     else if (model == ModelRingYZ)
         drawRingYZ();
+    else if (model == ModelIDL)
+        drawIDL();
 }
 
 

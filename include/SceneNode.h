@@ -92,16 +92,6 @@ public:
 
     static void     setColorOverride(bool = true);
 
-    static void     glVertex3fv(const GLfloat *pos)
-    {
-        ::glVertex3fv(pos);
-    };
-
-    static void     glVertex3fv(const glm::vec3 &pos)
-    {
-        ::glVertex3f(pos.x, pos.y, pos.z);
-    };
-
     static void     glTexCoord2fv(const GLfloat *coord)
     {
         ::glMultiTexCoord4f(GL_TEXTURE0, coord[0], coord[1], 0, 1);
