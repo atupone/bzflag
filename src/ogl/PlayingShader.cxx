@@ -53,6 +53,9 @@ void PlayingShader::init()
     ringParamUniform        = getUniformLocation("ringParam");
     ringParam2Uniform       = getUniformLocation("ringParam2");
 
+    idlGlobalParamUniform  = getUniformLocation("idlGlobalParam");
+    idlLocalParamUniform    = getUniformLocation("idlLocalParam");
+
     glGetIntegerv(GL_MAX_LIGHTS, &maxLights);
     if (maxLights > 128)
         maxLights = 128;
@@ -176,6 +179,21 @@ void PlayingShader::setLineRainAlphaMod(float alphaMod)
 {
     setUniform(lineRainAlphaModUniform, alphaMod);
 }
+
+void PlayingShader::setIDLGlobal(const glm::vec3 &origin, bool colorOverride)
+{
+    auto globalParam = glm::vec4(origin, colorOverride ? 1.0f : 0.0f);
+    setUniform(idlGlobalParamUniform, globalParam);
+}
+
+void PlayingShader::setIDLLocal(const glm::vec3 cross[2], float dist)
+{
+    glm::vec4 localParam[2];
+    localParam[0] = glm::vec4(cross[0], dist);
+    localParam[1] = glm::vec4(cross[1], dist);
+    setUniform(idlLocalParamUniform, 2, localParam);
+}
+
 
 // Local Variables: ***
 // mode: C++ ***
