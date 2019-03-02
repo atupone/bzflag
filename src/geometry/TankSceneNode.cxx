@@ -24,6 +24,7 @@
 #include "BZDBCache.h"
 #include "OpenGLAPI.h"
 #include "Vertex_Chunk.h"
+#include "VBO_Drawing.h"
 #include "PlayingShader.h"
 
 // local implementation headers
@@ -692,6 +693,7 @@ void TankIDLSceneNode::IDLRenderNode::render()
 {
     static const auto innerColor = glm::vec4(1.0f, 1.0f, 1.0f, 0.75f);
     static const auto outerColor = glm::vec4(1.0f, 1.0f, 1.0f, 0.0f);
+    SHADER.setModel(SHADER.ModelIDL);
 
     // compute plane in tank's space
     const auto sphere = glm::vec4(sceneNode->tank->getSphere(), 1.0f);
@@ -708,6 +710,7 @@ void TankIDLSceneNode::IDLRenderNode::render()
     // compute projection point -- one TankLength in from tankPlane
     const GLfloat pd = -1.0f * BZDBCache::tankLength - tankPlane[3];
     auto origin = pd * glm::vec3(tankPlane);
+    SHADER.setIDLGlobal(origin, colorOverride);
 
     glPushMatrix();
     glTranslate(sphere);
@@ -761,6 +764,7 @@ void TankIDLSceneNode::IDLRenderNode::render()
         project[0] = glm::mix(origin, cross[0], dist);
         project[1] = glm::mix(origin, cross[1], dist);
 
+        SHADER.setIDLLocal(cross, dist);
         // draw it
         {
             glm::vec3 v[4];
@@ -774,6 +778,7 @@ void TankIDLSceneNode::IDLRenderNode::render()
     }
 
     glPopMatrix();
+    SHADER.setModel(SHADER.ModelFixedPipe);
     return;
 }
 
