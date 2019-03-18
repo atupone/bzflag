@@ -223,8 +223,6 @@ static void drawPuddle(const TrackEntry& te);
 static void drawTreads(const TrackEntry& te);
 static bool onBuilding(const float pos[3]);
 static void updateList(TrackList& list, float dt);
-static void addEntryToList(TrackList& list,
-                           TrackEntry& te, TrackType type);
 
 
 /****************************************************************************/
@@ -297,31 +295,6 @@ AirCullStyle TrackMarks::getAirCulling()
 }
 
 
-static void addEntryToList(TrackList& list,
-                           TrackEntry& te, TrackType type)
-{
-    // push the entry
-    list.addNode(te);
-
-    // make a sceneNode for the BSP rendering, if not on the ground
-    if (!BZDBCache::zbuffer && (te.pos[2] != TextureHeightOffset))
-    {
-        const OpenGLGState* gstate = NULL;
-        if (type == TreadsTrack)
-            gstate = &treadsGState;
-        else if (type == PuddleTrack)
-            gstate = &puddleGState;
-        else if (type == SmokeTrack)
-            gstate = &smokeGState;
-        else
-            return;
-        TrackEntry* copy = list.getEnd();
-        copy->sceneNode = new TrackSceneNode(copy, type, gstate);
-    }
-    return;
-}
-
-
 bool TrackMarks::addMark(const float pos[3], float scale, float angle,
                          int phydrv)
 {
@@ -379,7 +352,7 @@ bool TrackMarks::addMark(const float pos[3], float scale, float angle,
     if (type == PuddleTrack)
     {
         // Puddle track marks
-        addEntryToList(PuddleList, te, type);
+        PuddleList.addNode(te);
     }
     else
     {
@@ -388,13 +361,13 @@ bool TrackMarks::addMark(const float pos[3], float scale, float angle,
         {
             // no culling required
             te.sides = BothTreads;
-            addEntryToList(TreadsGroundList, te, type);
+            TreadsGroundList.addNode(te);
         }
         else if ((AirCull & InitAirCull) == 0)
         {
             // do not cull the air marks
             te.sides = BothTreads;
-            addEntryToList(TreadsObstacleList, te, type);
+            TreadsObstacleList.addNode(te);
         }
         else
         {
@@ -416,7 +389,7 @@ bool TrackMarks::addMark(const float pos[3], float scale, float angle,
                 te.sides |= RightTread;
             // add if required
             if (te.sides != 0)
-                addEntryToList(TreadsObstacleList, te, type);
+                TreadsObstacleList.addNode(te);
             else
                 return false;
         }
@@ -608,11 +581,8 @@ void TrackMarks::renderGroundTracks()
     TrackEntry* ptr;
 
     // disable the zbuffer for drawing on the ground
-    if (BZDBCache::zbuffer)
-    {
-        glDepthMask(GL_FALSE);
-        glDisable(GL_DEPTH_TEST);
-    }
+    glDepthMask(GL_FALSE);
+    glDisable(GL_DEPTH_TEST);
 
     // draw ground treads
     treadsGState.setState();
@@ -625,11 +595,8 @@ void TrackMarks::renderGroundTracks()
         drawPuddle(*ptr);
 
     // re-enable the zbuffer
-    if (BZDBCache::zbuffer)
-    {
-        glDepthMask(GL_TRUE);
-        glEnable(GL_DEPTH_TEST);
-    }
+    glDepthMask(GL_TRUE);
+    glEnable(GL_DEPTH_TEST);
 
     return;
 }
@@ -637,11 +604,6 @@ void TrackMarks::renderGroundTracks()
 
 void TrackMarks::renderObstacleTracks()
 {
-    if (!BZDBCache::zbuffer)
-    {
-        return; // this is not for the BSP rendering
-    }
-
     TrackEntry* ptr;
 
     // disable the zbuffer writing (these are the last things drawn)
@@ -753,39 +715,6 @@ static void drawTreads(const TrackEntry& te)
             glRectf(-halfWidth, -TreadOutside, +halfWidth, -TreadInside);
     }
     glPopMatrix();
-
-    return;
-}
-
-
-void TrackMarks::addSceneNodes(SceneDatabase* scene)
-{
-    // Depth Buffer does not need to use SceneNodes
-    if (BZDBCache::zbuffer)
-        return;
-
-    // tread track marks on obstacles
-    TrackEntry* ptr;
-    for (ptr = TreadsObstacleList.getStart(); ptr != NULL; ptr = ptr->getNext())
-    {
-        const TrackEntry& te = *ptr;
-        if (te.sceneNode != NULL)
-        {
-            te.sceneNode->update();
-            scene->addDynamicNode(te.sceneNode);
-        }
-    }
-
-    // smoke track marks in the air
-    for (ptr = SmokeList.getStart(); ptr != NULL; ptr = ptr->getNext())
-    {
-        const TrackEntry& te = *ptr;
-        if (te.sceneNode != NULL)
-        {
-            te.sceneNode->update();
-            scene->addDynamicNode(te.sceneNode);
-        }
-    }
 
     return;
 }
