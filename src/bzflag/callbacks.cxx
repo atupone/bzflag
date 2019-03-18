@@ -85,24 +85,6 @@ void setColor(const std::string& name, void*)
         Team::updateShotColors();
 }
 
-void setDepthBuffer(const std::string& name, void*)
-{
-    /* if zbuffer was set and not available, unset it */
-    if (BZDB.isTrue(name))
-    {
-        GLint value;
-        glGetIntegerv(GL_DEPTH_BITS, &value);
-        if (value == 0)
-        {
-            // temporarily remove ourself
-            BZDB.removeCallback(name, setDepthBuffer, NULL);
-            BZDB.set(name, "0");
-            // add it again
-            BZDB.addCallback(name, setDepthBuffer, NULL);
-        }
-    }
-}
-
 // Local Variables: ***
 // mode: C++ ***
 // tab-width: 4 ***

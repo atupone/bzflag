@@ -28,13 +28,10 @@ public:
     ~ZSceneDatabase();
 
     // returns true if the node would have been deleted
-    bool        addStaticNode(SceneNode*, bool dontFree) override;
-    void        addDynamicNode(SceneNode*) override;
-    void        addDynamicSphere(SphereSceneNode*) override;
-    void        finalizeStatics() override;
-    void        removeDynamicNodes() override;
-    void        removeAllNodes() override;
-    bool        isOrdered() override;
+    bool        addStaticNode(SceneNode*, bool dontFree);
+    void        addDynamicNode(SceneNode*);
+    void        removeDynamicNodes();
+    void        removeAllNodes();
 
     void        updateNodeStyles() override;
     void        addLights(SceneRenderer& renderer) override;
