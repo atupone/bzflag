@@ -130,6 +130,15 @@ MP_WITH_CURSES
 # check for SDL option (enabled by default now)
 AC_ARG_WITH(SDL, AS_HELP_STRING([--without-SDL | --with-SDL={1,2}],[Do not use Simple DirectMedia Layer or force using a specific version (by default requires SDL2]), sdl_version="$withval", sdl_version="2")
 
+AC_ARG_WITH(GLES, AS_HELP_STRING([--with-GLES],[Use GLES instead of openGL]))
+if test "x$with_gles" != xyes ; then
+    AC_DEFINE(HAVE_GLES, 1, [Using OpenGL ES])
+fi
+
+# OpenGL ES requires SDL 2
+if test x$with_gles = xyes ; then
+    with_SDL2=yes
+fi
 # build the server?
 AC_ARG_ENABLE(server, AS_HELP_STRING([--disable-server],[do not compile server]))
 
@@ -452,6 +461,10 @@ if test "x$enable_UPnP" = "xyes"; then
 fi
 AC_SUBST(LIBMINIUPNPC)
 
+if test x$with_gles = xyes ; then
+    AC_CHECK_HEADER([GLES/gl.h], [], [AC_MSG_ERROR([no OpenGL ES headers were found... please install OpenGL ES headers or try a standard OpenGL build])])
+fi
+
 dnl **********************************
 dnl *** Check for types/structures ***
 dnl **********************************
@@ -578,23 +591,30 @@ case $host_os in
 	;;
 esac
 
-case $host_os in
-    darwin*)
-        AC_CHECK_HEADER([OpenGL/gl.h], [ac_cv_search_glBegin="none required"], [have_gl=no ; ac_cv_search_glBegin=no])
-        AC_CHECK_HEADER([OpenGL/glu.h], [ac_cv_search_gluScaleImage="none required"], [have_gl=no ; ac_cv_search_gluScaleImage=no])
-        AC_CHECK_HEADER([GL/glew.h], AC_SEARCH_LIBS(glewInit, [GLEW], [test $ac_cv_search_glewInit = "none required" || GLIBS="$ac_cv_search_glewInit $GLIBS"], [have_gl=no], $GLIBS), [have_gl=no ; ac_cv_search_glewInit=no])
+# detect OpenGL or OpenGL ES libraries
+if test x$with_GLES = xyes ; then
+    AC_CHECK_LIB([GLESv1_CM], [glDrawArrays], GLIBS="$GLIBS -lGLESv1_CM", [AC_MSG_ERROR([no OpenGL ES library was found... please install an OpenGL ES library or try a standard OpenGL build])])
+else
+    case $host_os in
+        darwin*)
+            AC_CHECK_HEADER([OpenGL/gl.h], [ac_cv_search_glBegin="none required"], [have_gl=no ; ac_cv_search_glBegin=no])
+            ;;
+        *)
+            AC_CHECK_HEADER([GL/gl.h], AC_SEARCH_LIBS(glBegin, [opengl32 GL GL2], [test $ac_cv_search_glBegin = "none required" || GLIBS="$ac_cv_search_glBegin $GLIBS"], [have_gl=no]), [have_gl=no ; ac_cv_search_glBegin=no])
+            ;;
+    esac
+    AC_CHECK_HEADER([GL/glew.h],
+                    AC_SEARCH_LIBS(glewInit,
+                                   [GLEW],
+                                   [test $ac_cv_search_glewInit = "none required" || GLIBS="$ac_cv_search_glewInit $GLIBS"],
+                                   [have_gl=no],
+                                   $GLIBS),
+                    [have_gl=no ; ac_cv_search_glewInit=no])
 
-        ;;
-    *)
-        AC_CHECK_HEADER([GL/gl.h], AC_SEARCH_LIBS(glBegin, [opengl32 GL GL2], [test $ac_cv_search_glBegin = "none required" || GLIBS="$ac_cv_search_glBegin $GLIBS"], [have_gl=no]), [have_gl=no ; ac_cv_search_glBegin=no])
-        AC_CHECK_HEADER([GL/glu.h], AC_SEARCH_LIBS(gluScaleImage, [glu32 GL GLU], [test $ac_cv_search_gluScaleImage = "none required" || GLIBS="$ac_cv_search_gluScaleImage $GLIBS"], [have_gl=no]), [have_gl=no ; ac_cv_search_gluScaleImage=no])
-        AC_CHECK_HEADER([GL/glew.h], AC_SEARCH_LIBS(glewInit, [GLEW], [test $ac_cv_search_glewInit = "none required" || GLIBS="$ac_cv_search_glewInit $GLIBS"], [have_gl=no]), [have_gl=no ; ac_cv_search_glewInit=no])
-        ;;
-esac
-
-if test "$have_gl" != no; then
-    if test "$ac_cv_search_glBegin" = -lGL2; then
-	AC_DEFINE(BEOS_USE_GL2, 1, [Use new GL Kit for BeOS])
+    if test "$have_gl" != no; then
+        if test "$ac_cv_search_glBegin" = -lGL2; then
+            AC_DEFINE(BEOS_USE_GL2, 1, [Use new GL Kit for BeOS])
+        fi
     fi
 fi
 
@@ -1124,10 +1144,6 @@ if test "x$enable_client" = "xno"; then
         if test "x$ac_cv_search_glBegin" = xno ; then
             build_bzflag="$build_bzflag (missing OpenGL)"
         else
-            if test "x$ac_cv_search_gluScaleImage" = xno ; then
-                build_bzflag="$build_bzflag (missing GLU)"
-            fi
-
             if test "x$ac_cv_search_glewInit" = xno ; then
                 build_bzflag="$build_bzflag (missing GLEW)"
             fi

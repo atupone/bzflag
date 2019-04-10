@@ -1086,8 +1086,10 @@ void RadarRenderer::renderBoxPyrMesh()
         item.draw(GL_TRIANGLE_STRIP);
 
     // draw mesh obstacles
+#ifndef HAVE_GLES
     if (smooth)
         glEnable(GL_POLYGON_SMOOTH);
+#endif
     if (!enhanced)
         glDisable(GL_CULL_FACE);
     if (enhanced)
@@ -1099,8 +1101,10 @@ void RadarRenderer::renderBoxPyrMesh()
 
     if (!enhanced)
         glEnable(GL_CULL_FACE);
+#ifndef HAVE_GLES
     if (smooth)
         glDisable(GL_POLYGON_SMOOTH);
+#endif
 
     // NOTE: revert from the enhanced setting
     if (enhanced && !smooth)

@@ -1016,7 +1016,8 @@ void            BoltSceneNode::BoltRenderNode::render()
                 const float startSize  = 0.6f;
                 const float startAlpha = 0.8f;
 
-                glPushAttrib(GL_TEXTURE_BIT);
+                GLint lastTextureBinding;
+                glGetIntegerv(GL_TEXTURE_BINDING_2D, &lastTextureBinding);
                 TextureManager &tm = TextureManager::instance();
                 const int texID = tm.getTextureID("shot_tail");
                 const ImageInfo& texInfo = tm.getInfo(texID);
@@ -1072,7 +1073,7 @@ void            BoltSceneNode::BoltRenderNode::render()
 
                 addTriangleCount(shotLength * 2);
                 glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-                glPopAttrib(); // revert the texture
+                glBindTexture(GL_TEXTURE_2D, (GLuint) lastTextureBinding); // revert the texture
             }
             glMatrixMode(GL_TEXTURE);
             glPopMatrix();

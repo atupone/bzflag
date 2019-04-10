@@ -639,7 +639,13 @@ void ScoreboardRenderer::drawRoamTarget(float _x0, float _y0,
         c1 = black;
     }
 
-    glPushAttrib(GL_ALL_ATTRIB_BITS);
+    GLboolean blendingWasEnabled;
+    glGetBooleanv(GL_BLEND, &blendingWasEnabled);
+    GLboolean lightingWasEnabled;
+    glGetBooleanv(GL_LIGHTING, &lightingWasEnabled);
+    GLboolean texturingWasEnabled;
+    glGetBooleanv(GL_TEXTURE_2D, &texturingWasEnabled);
+
     glDisable(GL_BLEND);
     bool oldTexturing = HUDSHADER.setTexturing(false);
     glColor4f(c0[0], c0[1], c0[2], c0[3]);
@@ -656,6 +662,11 @@ void ScoreboardRenderer::drawRoamTarget(float _x0, float _y0,
     glPopMatrix();
     HUDSHADER.setTexturing(oldTexturing);
     glPopAttrib();
+
+    if(blendingWasEnabled == GL_TRUE)
+        glEnable(GL_BLEND);
+    if(texturingWasEnabled == GL_TRUE)
+        glEnable(GL_TEXTURE_2D);
 }
 
 

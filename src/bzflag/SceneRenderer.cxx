@@ -226,13 +226,17 @@ void SceneRenderer::setQuality(int value)
         glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
         // GL_NICEST for polygon smoothing seems to make some drivers
         // cause massive slowdowns and "spikes" when drawing the radar
+#ifndef HAVE_GLES
         glHint(GL_POLYGON_SMOOTH_HINT, GL_FASTEST);
+#endif
     }
     else
     {
         glHint(GL_LINE_SMOOTH_HINT, GL_FASTEST);
         glHint(GL_POINT_SMOOTH_HINT, GL_FASTEST);
+#ifndef HAVE_GLES
         glHint(GL_POLYGON_SMOOTH_HINT, GL_FASTEST);
+#endif
     }
 
     if (useQualityValue >= 2)
@@ -887,7 +891,9 @@ void SceneRenderer::renderScene(bool UNUSED(_lastFrame), bool UNUSED(_sameFrame)
             glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
             glClear(GL_COLOR_BUFFER_BIT);
         }
+#ifndef HAVE_GLES
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+#endif
     }
 
     // prepare z buffer
@@ -979,9 +985,13 @@ void SceneRenderer::renderScene(bool UNUSED(_lastFrame), bool UNUSED(_sameFrame)
         {
             glDisable(GL_POLYGON_OFFSET_FILL);
             glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+#ifndef HAVE_GLES
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+#endif
             doRender();
+#ifndef HAVE_GLES
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+#endif
         }
 
         OpenGLGState::resetState();
@@ -1003,9 +1013,11 @@ void SceneRenderer::renderScene(bool UNUSED(_lastFrame), bool UNUSED(_sameFrame)
         // billboard texture (constant size in screen space).
     }
 
+#ifndef HAVE_GLES
     // back to original state
     if (!useHiddenLineOn && useWireframeOn)
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+#endif
     glPopMatrix();
 
     // do depth complexity
