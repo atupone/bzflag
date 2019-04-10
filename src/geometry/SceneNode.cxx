@@ -58,10 +58,14 @@ void            SceneNode::noStipple(GLfloat) {}
 void            SceneNode::setColorOverride(bool on)
 {
     colorOverride = on;
+#ifdef HAVE_GLES
+    stipple  = &noStipple;
+#else
     if (on)
         stipple  = &noStipple;
     else
         stipple  = &OpenGLGState::setStipple;
+#endif
 }
 
 void            SceneNode::setRadius(GLfloat radiusSquared)

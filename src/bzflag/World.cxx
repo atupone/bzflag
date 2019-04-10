@@ -1333,7 +1333,16 @@ static void drawInsideOutsidePoints()
     vboOutsideLine.vertexData(outsidesLine);
 
 
-    glPushAttrib(GL_DEPTH_BUFFER_BIT | GL_POINT_BIT | GL_LINE_BIT);
+    GLboolean depthTestWasEnabled;
+    glGetBooleanv(GL_DEPTH_TEST, &depthTestWasEnabled);
+    GLboolean smoothPointWasEnabled;
+    glGetBooleanv(GL_POINT_SMOOTH, &smoothPointWasEnabled);
+    GLboolean smoothLineWasEnabled;
+    glGetBooleanv(GL_LINE_SMOOTH, &smoothLineWasEnabled);
+    GLfloat previousLineWidth;
+    glGetFloatv(GL_LINE_WIDTH, &previousLineWidth);
+    GLfloat previousPointSize;
+    glGetFloatv(GL_POINT_SIZE, &previousPointSize);
 
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_POINT_SMOOTH);
@@ -1351,7 +1360,14 @@ static void drawInsideOutsidePoints()
     glColor4f(1.0f, 0.0f, 0.0f, 0.2f);
     vboOutsideLine.draw(GL_LINES);
 
-    glPopAttrib();
+    if(depthTestWasEnabled == GL_TRUE)
+        glEnable(GL_DEPTH_TEST);
+    if(smoothPointWasEnabled == GL_FALSE)
+        glDisable(GL_POINT_SMOOTH);
+    if(smoothLineWasEnabled == GL_FALSE)
+        glDisable(GL_LINE_SMOOTH);
+    glLineWidth(previousLineWidth);
+    glPointSize(previousPointSize);
 }
 
 

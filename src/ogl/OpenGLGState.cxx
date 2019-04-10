@@ -477,11 +477,13 @@ void            OpenGLGStateState::resetOpenGLState() const
         glDisable(GL_LINE_SMOOTH);
         glDisable(GL_POINT_SMOOTH);
     }
+#ifndef HAVE_GLES
     if (unsorted.hasStipple)
     {
         glDisable(GL_LINE_STIPPLE);
         glDisable(GL_POLYGON_STIPPLE);
     }
+#endif
     if (!unsorted.hasCulling || unsorted.culling != GL_BACK)
     {
         glCullFace(GL_BACK);
@@ -626,6 +628,7 @@ void            OpenGLGStateState::setOpenGLState(
             }
         }
 
+#ifndef HAVE_GLES
         // stippling
         if (unsorted.hasStipple)
         {
@@ -649,6 +652,7 @@ void            OpenGLGStateState::setOpenGLState(
                 glDisable(GL_POLYGON_STIPPLE);
             }
         }
+#endif
 
         // culling
         if (unsorted.hasCulling)
@@ -771,6 +775,7 @@ void            OpenGLGStateState::setOpenGLState(
             glDisable(GL_POINT_SMOOTH);
         }
 
+#ifndef HAVE_GLES
         // stippling
         if (unsorted.hasStipple)
         {
@@ -783,6 +788,7 @@ void            OpenGLGStateState::setOpenGLState(
             glDisable(GL_LINE_STIPPLE);
             glDisable(GL_POLYGON_STIPPLE);
         }
+#endif
 
         // texture mapping
         if (unsorted.hasCulling)
@@ -1171,6 +1177,7 @@ void            OpenGLGState::renderLists()
     SortedGState::render();
 }
 
+#ifndef HAVE_GLES
 void            OpenGLGState::setStipple(GLfloat alpha)
 {
     setStippleIndex(getStippleIndex(alpha));
@@ -1197,6 +1204,7 @@ void OpenGLGState::setStippleIndex(int index)
     glPolygonStipple(sPtr);
     glLineStipple(1, lineStipple);
 }
+#endif
 
 
 int OpenGLGState::getStippleIndex(float alpha)
@@ -1265,12 +1273,14 @@ void OpenGLGState::initContext()
         return;
     }
 
+#ifndef HAVE_GLES
     GLenum err = glewInit();
     if (GLEW_OK != err)
     {
         printf("Error: %s\n", glewGetErrorString(err));
         return;
     }
+#endif
 
     // call all of the freeing functions first
     logDebugMessage(3,"ContextInitializer::executeFreeFuncs() start\n");
@@ -1329,8 +1339,10 @@ void OpenGLGState::initGLState()
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glDisable(GL_LINE_SMOOTH);
     glDisable(GL_POINT_SMOOTH);
+#ifndef HAVE_GLES
     glDisable(GL_LINE_STIPPLE);
     glDisable(GL_POLYGON_STIPPLE);
+#endif
     glEnable(GL_CULL_FACE);
     glShadeModel(GL_FLAT);
     glDisable(GL_ALPHA_TEST);
@@ -1343,6 +1355,7 @@ void OpenGLGState::initGLState()
 bool OpenGLGState::initGLExtensions()
 {
 
+#ifndef HAVE_GLES
     hasAnisotropicFiltering = GLEW_EXT_texture_filter_anisotropic;
 
     if (GLEW_ARB_framebuffer_object)
@@ -1351,6 +1364,7 @@ bool OpenGLGState::initGLExtensions()
         glGetIntegerv(GL_MAX_SAMPLES, &sampleCount);
         maxSamples = sampleCount;
     }
+#endif
 
     return false;
 }
