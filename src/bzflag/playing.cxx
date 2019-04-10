@@ -233,7 +233,9 @@ void killGlobalAres()
 }
 static Address serverNetworkAddress = Address();
 
+#ifndef HAVE_GLES
 OpenGLFramebuffer glFramebuffer;
+#endif
 
 static AccessList   ServerAccessList("ServerAccess.txt", NULL);
 
@@ -5693,7 +5695,20 @@ static void renderRoamMouse()
     const int y2 = oy + (mainWindow->getViewHeight() / 2);
     const int yc = (sy - y2 - 1); // flip the y axis
 
-    glPushAttrib(GL_ALL_ATTRIB_BITS);
+    GLfloat scissorOldParams[4];
+    glGetFloatv(GL_SCISSOR_BOX, scissorOldParams);
+    GLint previousShadeModel;
+    glGetIntegerv(GL_SHADE_MODEL, &previousShadeModel);
+    GLboolean blendingWasEnabled;
+    glGetBooleanv(GL_BLEND, &blendingWasEnabled);
+    GLint previousBlendSourceFactor;
+    glGetIntegerv(GL_BLEND_SRC, &previousBlendSourceFactor);
+    GLint previousBlendDestinationFactor;
+    glGetIntegerv(GL_BLEND_DST, &previousBlendDestinationFactor);
+    GLboolean smoothLineWasEnabled;
+    glGetBooleanv(GL_LINE_SMOOTH, &smoothLineWasEnabled);
+    GLfloat previousLineWidth;
+    glGetFloatv(GL_LINE_WIDTH, &previousLineWidth);
 
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
@@ -5734,7 +5749,15 @@ static void renderRoamMouse()
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
 
-    glPopAttrib();
+    glScissor(scissorOldParams[0], scissorOldParams[1],
+              scissorOldParams[2], scissorOldParams[3]);
+    glShadeModel(previousShadeModel);
+    if(blendingWasEnabled == GL_FALSE)
+        glDisable(GL_BLEND);
+    glBlendFunc(previousBlendSourceFactor, previousBlendDestinationFactor);
+    if(smoothLineWasEnabled == GL_FALSE)
+        glDisable(GL_LINE_SMOOTH);
+    glLineWidth(previousLineWidth);
 }
 
 
@@ -6375,7 +6398,9 @@ void drawFrame(const float dt)
 
             // setup view for left eye
 #ifdef USE_GL_STEREO
+#ifndef HAVE_GLES
             glDrawBuffer(GL_BACK_LEFT);
+#endif
 #endif
             viewFrustum.setOffset(EyeDisplacement, FocalPlane);
 
@@ -6387,7 +6412,9 @@ void drawFrame(const float dt)
 
             // set up view for right eye
 #ifdef USE_GL_STEREO
+#ifndef HAVE_GLES
             glDrawBuffer(GL_BACK_RIGHT);
+#endif
 #else
             mainWindow->setQuadrant(MainWindow::UpperLeft);
 #endif
@@ -6401,7 +6428,9 @@ void drawFrame(const float dt)
 
             // draw common stuff
 #ifdef USE_GL_STEREO
+#ifndef HAVE_GLES
             glDrawBuffer(GL_BACK);
+#endif
             drawUI();
 #endif
 
@@ -6501,6 +6530,7 @@ void drawFrame(const float dt)
         }
         else
         {
+#ifndef HAVE_GLES
             // bind the multisample framebuffer, if enabled
             int maxSamples = OpenGLGState::getMaxSamples();
             bool useMultisampling = maxSamples > 1 && BZDB.evalInt("multisample") > 1;
@@ -6512,10 +6542,12 @@ void drawFrame(const float dt)
                 glFramebuffer.checkState(mainWindow->getWidth(), mainWindow->getHeight(), samples);
                 glBindFramebuffer(GL_FRAMEBUFFER, glFramebuffer.getFramebuffer());
             }
+#endif
 
             // normal rendering
             sceneRenderer->render();
 
+#ifndef HAVE_GLES
             // blit the multisample framebuffer (if enabled) to the main framebuffer
             if(useMultisampling)
             {
@@ -6526,6 +6558,7 @@ void drawFrame(const float dt)
                                   GL_COLOR_BUFFER_BIT, GL_NEAREST);
                 glBindFramebuffer(GL_FRAMEBUFFER, 0);
             }
+#endif
 
             // draw other stuff
             drawUI();

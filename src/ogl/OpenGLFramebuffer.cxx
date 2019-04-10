@@ -22,6 +22,7 @@
 // common headers
 #include "OpenGLGState.h"
 
+#ifndef HAVE_GLES
 void OpenGLFramebuffer::initFramebuffer()
 {
     glGenFramebuffers(1, &framebuffer);
@@ -112,7 +113,7 @@ void OpenGLFramebuffer::initContext(void* self)
     ((OpenGLFramebuffer*)self)->initFramebuffer();
     ((OpenGLFramebuffer*)self)->contextActive = true;
 }
-
+#endif
 
 /*
  * Local Variables: ***

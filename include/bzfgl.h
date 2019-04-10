@@ -17,10 +17,16 @@
 
 #include "common.h"
 
+#ifdef HAVE_GLES
+#include <GLES2/gl2.h>
+#include <GLES2/gl2ext.h>
+#else
+#define GLEW_NO_GLU
 #include <GL/glew.h>
 
 #ifndef GL_VERSION_2_1
 # error OpenGL version 2.1 functionality is required
+#endif
 #endif
 
 

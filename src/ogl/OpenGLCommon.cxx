@@ -33,25 +33,42 @@ void setFogColor(const glm::vec4 &fogColor)
 
 void ClipPlane(int id, glm::vec4 plane)
 {
+#ifdef HAVE_GLES
+    glClipPlanef(GL_CLIP_PLANE0 + id, value_ptr(plane));
+#else
     const GLdouble myPlane[] = { plane[0], plane[1], plane[2], plane[3]};
     glClipPlane(GL_CLIP_PLANE0 + id, myPlane);
+#endif
 }
 
 void Ortho(float left, float right, float bottom, float top, float nearVal, float farVal)
 {
     glLoadIdentity();
+#ifdef HAVE_GLES
+    glOrthof(left, right, bottom, top, nearVal, farVal);
+#else
     glOrtho(left, right, bottom, top, nearVal, farVal);
+#endif
 }
 
 void ClearDepth()
 {
+#ifdef HAVE_GLES
+    glClearDepthf(1.0);
+#else
     glClearDepth(1.0);
+#endif
 }
 
 void DepthRange(float depthRange, float depthRangeSize)
 {
+#ifdef HAVE_GLES
+    GLfloat x_near = (GLfloat)depthRange * depthRangeSize;
+    glDepthRangef(x_near, x_near + depthRangeSize);
+#else
     GLclampd x_near = (GLclampd)depthRange * depthRangeSize;
     glDepthRange(x_near, x_near + depthRangeSize);
+#endif
 }
 
 void LightModelLocalViewer(bool enable)
