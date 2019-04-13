@@ -355,11 +355,17 @@ void FontManager::drawString(float x, float y, float z, int faceID, float size,
                 glDisable(GL_TEXTURE_2D);
                 glEnable(GL_BLEND);
                 if (bright && underlineColor[0] >= 0)
-                    glColor4fv(underlineColor);
+                    glColor4f(underlineColor[0],
+                              underlineColor[1],
+                              underlineColor[2],
+                              underlineColor[3]);
                 else if (underlineColor[0] >= 0)
-                    glColor4fv(dimUnderlineColor);
+                    glColor4f(dimUnderlineColor[0],
+                              dimUnderlineColor[1],
+                              dimUnderlineColor[2],
+                              dimUnderlineColor[3]);
                 else if (color[0] >= 0)
-                    glColor4fv(color);
+                    glColor4f(color[0], color[1], color[2], color[3]);
                 // still have a translated matrix, these coordinates are
                 // with respect to the string just drawn
                 glScalef(width, 0.0f, 0.0f);

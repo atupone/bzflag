@@ -419,7 +419,7 @@ void Occluder::draw() const
 
         // draw the plane normal
         glBegin (GL_LINES);
-        glColor4fv (colors[0]);
+        glColor4f(colors[0][0], colors[0][1], colors[0][2], colors[0][3]);
         glVertex3fv (center);
         glVertex3fv (outwards);
         glEnd ();
@@ -438,8 +438,9 @@ void Occluder::draw() const
                 midpoint[a] = 0.5f * (vertices[v][a] + vertices[vn][a]);
                 outwards[a] = midpoint[a] - (length * planes[vn + 1][a]);
             }
+            int index = (v % 4) + 1;
             glBegin (GL_LINES);
-            glColor4fv (colors[(v % 4) + 1]);
+            glColor4f(colors[index][0], colors[index][1], colors[index][2], colors[index][3]);
             if (DrawEdges)
             {
                 glVertex3fv (vertices[v]);
@@ -459,8 +460,9 @@ void Occluder::draw() const
     {
         for (v = 0; v < vertexCount; v++)
         {
+            int index = (v % 4) + 1;
             glBegin (GL_POINTS);
-            glColor4fv (colors[(v % 4) + 1]);
+            glColor4f(colors[index][0], colors[index][1], colors[index][2], colors[index][3]);
             glVertex3fv (vertices[v]);
             glEnd();
         }
