@@ -357,7 +357,7 @@ void  SegmentedShotStrategy::radarRender()
     if (size > 0)
     {
         if (length > 0)
-            glColor3f(0.75, 0.75, 0.75);
+            glColor4f(0.75, 0.75, 0.75, 1.0f);
         // draw a sized bullet
         glPointSize((float)size);
         DRAWER.point();

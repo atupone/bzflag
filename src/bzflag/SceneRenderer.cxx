@@ -783,12 +783,15 @@ void SceneRenderer::render(bool _lastFrame, bool _sameFrame,
         {
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             glEnable(GL_BLEND);
-            glColor4fv(mirrorColor);
+            glColor4f(mirrorColor[0],
+                      mirrorColor[1],
+                      mirrorColor[2],
+                      mirrorColor[3]);
         }
         else
         {
             float stipple = mirrorColor[3];
-            glColor3fv(mirrorColor);
+            glColor4f(mirrorColor[0], mirrorColor[1], mirrorColor[2], 1.0f);
             OpenGLGState::setStipple(stipple);
             glEnable(GL_POLYGON_STIPPLE);
         }

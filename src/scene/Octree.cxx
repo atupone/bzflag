@@ -860,7 +860,7 @@ void OctreeNode::draw()
             color = yellow;
         break;
     }
-    glColor4fv(color);
+    glColor4f(color[0], color[1], color[2], color[3]);
 
     const glm::vec3 exts[2] = { extents.mins, extents.maxs };
 

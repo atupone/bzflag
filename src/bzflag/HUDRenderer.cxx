@@ -721,9 +721,9 @@ static const float dimFactor = 0.2f;
 void            HUDRenderer::hudColor3f(GLfloat r, GLfloat g, GLfloat b)
 {
     if (dim)
-        glColor3f(dimFactor * r, dimFactor * g, dimFactor * b);
+        glColor4f(dimFactor * r, dimFactor * g, dimFactor * b, 1.0f);
     else
-        glColor3f(r, g, b);
+        glColor4f(r, g, b, 1.0f);
 }
 
 void            HUDRenderer::hudColor4f(
@@ -735,22 +735,12 @@ void            HUDRenderer::hudColor4f(
         glColor4f(r, g, b, a);
 }
 
-static void glColor3fv(const glm::vec3 &c)
-{
-    ::glColor3f(c.r, c.g, c.b);
-}
-
-static void glColor4fv(const glm::vec4 &c)
-{
-    ::glColor4f(c.r, c.g, c.b, c.a);
-}
-
 void            HUDRenderer::hudColor3fv(const glm::vec3 &c)
 {
     if (dim)
-        glColor3f(dimFactor * c[0], dimFactor * c[1], dimFactor * c[2]);
+        glColor4f(dimFactor * c[0], dimFactor * c[1], dimFactor * c[2], 1.0f);
     else
-        glColor3fv(c);
+        glColor4f(c[0], c[1], c[2], 1.0f);
 }
 
 void HUDRenderer::hudColor3Afv(const glm::vec3 &c, const float a)
@@ -764,9 +754,9 @@ void HUDRenderer::hudColor3Afv(const glm::vec3 &c, const float a)
 void            HUDRenderer::hudSColor3fv(const glm::vec3 &c)
 {
     if (dim)
-        glColor3f(dimFactor * c[0], dimFactor * c[1], dimFactor * c[2]);
+        glColor4f(dimFactor * c[0], dimFactor * c[1], dimFactor * c[2], 1.0f);
     else
-        glColor3fv(c);
+        glColor4f(c[0], c[1], c[2], 1.0f);
 }
 
 void            HUDRenderer::hudColor4fv(const glm::vec4 &c)
@@ -774,7 +764,7 @@ void            HUDRenderer::hudColor4fv(const glm::vec4 &c)
     if (dim)
         glColor4f(dimFactor * c[0], dimFactor * c[1], dimFactor * c[2], c[3]);
     else
-        glColor4fv(c);
+        glColor4f(c[0], c[1], c[2], 1.0f);
 }
 
 

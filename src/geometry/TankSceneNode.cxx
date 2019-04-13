@@ -36,6 +36,7 @@
 #define _NO_LIST_ID 0xffffffff
 
 using namespace TankGeometryEnums;
+using namespace OpenGLCommon;
 
 static const float MuzzleMaxX = 4.94f;
 static const float maxExplosionVel = 40.0f;
@@ -700,6 +701,11 @@ TankIDLSceneNode::IDLRenderNode::~IDLRenderNode()
 }
 
 
+static void glColor(const glm::vec4 &c)
+{
+    glColor4f(c.r, c.g, c.b, c.a);
+}
+
 void TankIDLSceneNode::IDLRenderNode::render()
 {
     static const auto innerColor = glm::vec4(1.0f, 1.0f, 1.0f, 0.75f);
@@ -757,10 +763,12 @@ void TankIDLSceneNode::IDLRenderNode::render()
 
         // draw it
         glBegin(GL_TRIANGLE_STRIP);
-        myColor4fv(innerColor);
+        if (!colorOverride)
+            glColor(innerColor);
         glVertex3fv(cross[0]);
         glVertex3fv(cross[1]);
-        myColor4fv(outerColor);
+        if (!colorOverride)
+            glColor(outerColor);
         glVertex3fv(project[0]);
         glVertex3fv(project[1]);
         glEnd();
@@ -892,7 +900,7 @@ void TankSceneNode::TankRenderNode::render()
 
     if (sceneNode->clip && !isShadow)
     {
-        OpenGLCommon::ClipPlane(1, sceneNode->clipPlane);
+        ClipPlane(1, sceneNode->clipPlane);
         glEnable(GL_CLIP_PLANE1);
     }
 
@@ -1210,40 +1218,35 @@ void TankSceneNode::TankRenderNode::renderPart(TankPart part)
 
 void TankSceneNode::TankRenderNode::setupPartColor(TankPart part)
 {
-    const auto white = glm::vec4(1.0f);
-    auto clr = color;
-
     // do not use color modulation with tank textures
-    if (BZDBCache::texture)
-        clr = white;
+    auto clr = BZDBCache::texture ? glm::vec3(1.0f) : glm::vec3(color);
 
     switch (part)
     {
     case Body:
     {
-        myColor4f(clr[0], clr[1], clr[2], alpha);
         break;
     }
     case Barrel:
     {
-        myColor4f(0.25f, 0.25f, 0.25f, alpha);
+        clr = glm::vec3(0.25f);
         break;
     }
     case Turret:
     {
-        myColor4f(0.9f * clr[0], 0.9f * clr[1], 0.9f * clr[2], alpha);
+        clr *= 0.9f;
         break;
     }
     case LeftCasing:
     case RightCasing:
     {
-        myColor4f(0.7f * clr[0], 0.7f * clr[1], 0.7f * clr[2], alpha);
+        clr *= 0.7f;
         break;
     }
     case LeftTread:
     case RightTread:
     {
-        myColor4f(0.3f * clr[0], 0.3f * clr[1], 0.3f * clr[2], alpha);
+        clr *= 0.3f;
         break;
     }
     case LeftWheel0:
@@ -1255,7 +1258,7 @@ void TankSceneNode::TankRenderNode::setupPartColor(TankPart part)
     case RightWheel2:
     case RightWheel3:
     {
-        myColor4f(0.4f * clr[0], 0.4f * clr[1], 0.4f * clr[2], alpha);
+        clr *= 0.4f;
         break;
     }
     default:   // avoid warnings about unused enumerated values
@@ -1263,6 +1266,8 @@ void TankSceneNode::TankRenderNode::setupPartColor(TankPart part)
         break;
     }
     }
+
+    glColor4f(clr.r, clr.g, clr.b, alpha);
     return;
 }
 
@@ -1360,7 +1365,8 @@ void TankSceneNode::TankRenderNode::renderJumpJets()
     if (!sceneNode->jumpJetsOn)
         return;
 
-    myColor4f(1.0f, 1.0f, 1.0f, 0.5f);
+    if (!colorOverride)
+        glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
 
     // use a clip plane, because the ground has no depth
     glEnable(GL_CLIP_PLANE0);

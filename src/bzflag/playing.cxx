@@ -6332,7 +6332,7 @@ void drawFrame(const float dt)
             // drawn, but increment the value in the stencil buffer.
             glStencilFunc(GL_NEVER, 0x0, 0x0);
             glStencilOp(GL_INCR, GL_INCR, GL_INCR);
-            glColor3f(1.0f, 1.0f, 1.0f);
+            glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
             glPushMatrix();
             glScalef((float)width, 1.0f, 0.0f);
             for (int y=0; y<=height; y+=2)

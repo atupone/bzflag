@@ -1262,7 +1262,10 @@ static void drawLines (int count, float (*vertices)[3], int color)
         color = 0;
     else if (color >= colorCount)
         color = colorCount - 1;
-    glColor4fv (colors[color]);
+    glColor4f(colors[color][0],
+              colors[color][1],
+              colors[color][2],
+              colors[color][3]);
 
     glBegin (GL_LINE_STRIP);
     for (int i = 0; i < count; i++)
