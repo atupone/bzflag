@@ -23,6 +23,7 @@
 #include "TextureManager.h"
 #include "VBO_Drawing.h"
 #include "Singleton.h"
+#include "OpenGLCommon.h"
 
 // local implementation headers
 #include "ViewFrustum.h"
@@ -31,6 +32,8 @@
 #include "SceneRenderer.h"
 
 #include "TimeKeeper.h"
+
+using namespace OpenGLCommon;
 
 const float maxRad = 0.16f;
 const float boosterLen = 0.2f;
@@ -774,7 +777,8 @@ void BoltSceneNode::BoltRenderNode::renderGeoGMBolt()
     addTriangleCount(slices * 2);
 
     // body
-    myColor4f(bodyColor.r, bodyColor.g, bodyColor.b, bodyColor.a);
+    if (!colorOverride)
+        glColor4f(bodyColor.r, bodyColor.g, bodyColor.b, bodyColor.a);
     glTranslatef(0, 0, -bodyLen);
     glPushMatrix();
     glScalef(maxRad, maxRad, bodyLen);
@@ -787,7 +791,8 @@ void BoltSceneNode::BoltRenderNode::renderGeoGMBolt()
     addTriangleCount(slices);
 
     // waist
-    myColor4f(coneColor.r, coneColor.g, coneColor.b, coneColor.a);
+    if (!colorOverride)
+        glColor4f(coneColor.r, coneColor.g, coneColor.b, coneColor.a);
     glTranslatef(0, 0, -waistLen);
     glPushMatrix();
     glScalef(waistRad, waistRad, waistLen);
@@ -796,7 +801,8 @@ void BoltSceneNode::BoltRenderNode::renderGeoGMBolt()
     addTriangleCount(slices);
 
     // booster
-    myColor4f(bodyColor.r, bodyColor.g, bodyColor.b, 1.0f);
+    if (!colorOverride)
+        glColor4f(bodyColor.r, bodyColor.g, bodyColor.b, 1.0f);
     glTranslatef(0, 0, -bevelLen);
     BOLTDRAWER.booster1();
     addTriangleCount(slices);
@@ -813,13 +819,15 @@ void BoltSceneNode::BoltRenderNode::renderGeoGMBolt()
     addTriangleCount(slices);
 
     // engine
-    myColor4f(coneColor.r, coneColor.g, coneColor.b, 1.0f);
+    if (!colorOverride)
+        glColor4f(coneColor.r, coneColor.g, coneColor.b, 1.0f);
     glTranslatef(0, 0, -engineLen);
     BOLTDRAWER.engine();
     addTriangleCount(slices);
 
     // fins
-    myColor4f(finColor.r, finColor.g, finColor.b, 1.0f);
+    if (!colorOverride)
+        glColor4f(finColor.r, finColor.g, finColor.b, 1.0f);
     glTranslatef(0, 0, engineLen + bevelLen);
 
     BOLTDRAWER.drawFin();
@@ -856,7 +864,8 @@ void BoltSceneNode::BoltRenderNode::renderGeoBolt()
     const auto c = sceneNode->color;
     auto coreColor = glm::max(c * coreBleed, minimumChannelVal);
 
-    myColor4f(coreColor.r, coreColor.g, coreColor.b, 0.85f * alphaMod);
+    if (!colorOverride)
+        glColor4f(coreColor.r, coreColor.g, coreColor.b, 0.85f * alphaMod);
     glPushMatrix();
     renderGeoPill(baseRadius,len,16);
     glPopMatrix();
@@ -864,21 +873,24 @@ void BoltSceneNode::BoltRenderNode::renderGeoBolt()
     float radInc = 1.5f * baseRadius - baseRadius;
     glPushMatrix();
     glTranslatef(0, 0, -radInc * 0.5f);
-    myColor4f(c.r, c.g, c.b, 0.5f);
+    if (!colorOverride)
+        glColor4f(c.r, c.g, c.b, 0.5f);
     renderGeoPill(1.5f * baseRadius, len + radInc, 25);
     glPopMatrix();
 
     radInc = 2.7f * baseRadius - baseRadius;
     glPushMatrix();
     glTranslatef(0, 0, -radInc*0.5f);
-    myColor4f(c.r, c.g, c.b, 0.25f);
+    if (!colorOverride)
+        glColor4f(c.r, c.g, c.b, 0.25f);
     renderGeoPill(2.7f * baseRadius, len + radInc, 32);
     glPopMatrix();
 
     radInc = 3.8f * baseRadius - baseRadius;
     glPushMatrix();
     glTranslatef(0, 0,-radInc*0.5f);
-    myColor4f(c.r, c.g, c.b, 0.125f);
+    if (!colorOverride)
+        glColor4f(c.r, c.g, c.b, 0.125f);
     renderGeoPill(3.8f * baseRadius, len + radInc, 48);
     glPopMatrix();
 
@@ -959,7 +971,8 @@ void            BoltSceneNode::BoltRenderNode::render()
             }
 
             if (sceneNode->texturing) glDisable(GL_TEXTURE_2D);
-            myColor4fv(flareColor);
+            if (!colorOverride)
+                glColor4f(flareColor.r, flareColor.g, flareColor.b, flareColor.a);
             for (int i = 0; i < numFlares; i++)
             {
                 // pick random direction in 3-space.  picking a random theta with
@@ -988,7 +1001,8 @@ void            BoltSceneNode::BoltRenderNode::render()
         if (sceneNode->texturing)
         {
             // draw billboard square
-            myColor4fv(textureColor); // 1.0f all
+            if (!colorOverride)
+                glColor4f(textureColor.r, textureColor.g, textureColor.b, textureColor.a);
             glMatrixMode(GL_TEXTURE);
             glPushMatrix();
             glLoadIdentity();

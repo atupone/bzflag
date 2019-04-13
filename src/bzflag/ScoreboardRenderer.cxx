@@ -23,6 +23,7 @@
 #include "TimeKeeper.h"
 #include "OpenGLCommon.h"
 #include "VBO_Drawing.h"
+#include "OpenGLCommon.h"
 
 /* local implementation headers */
 #include "LocalPlayer.h"
@@ -207,18 +208,10 @@ static const float dimFactor = 0.2f;
 
 void ScoreboardRenderer::hudColor3fv(const glm::vec3 &c)
 {
+    auto color = c;
     if (dim)
-        glColor3f(dimFactor * c[0], dimFactor * c[1], dimFactor * c[2]);
-    else
-        glColor3f(c.r, c.g, c.b);
-}
-
-void ScoreboardRenderer::hudColor3fv(const GLfloat* c)
-{
-    if (dim)
-        glColor3f(dimFactor * c[0], dimFactor * c[1], dimFactor * c[2]);
-    else
-        glColor3fv(c);
+        color *= dimFactor;
+    glColor4f(color.r, color.g, color.b, 1.0f);
 }
 
 
@@ -649,13 +642,13 @@ void ScoreboardRenderer::drawRoamTarget(float _x0, float _y0,
     glDisable(GL_BLEND);
     glDisable(GL_LIGHTING);
     glDisable(GL_TEXTURE_2D);
-    glColor4fv(c0);
+    glColor4f(c0[0], c0[1], c0[2], c0[3]);
     glPushMatrix();
     glTranslatef(x0, y1, 0.0f);
     glScalef(x1 - x0, 0.0f, 0.0f);
     DRAWER.asimmetricLineX();
     glPopMatrix();
-    glColor4fv(c1);
+    glColor4f(c1[0], c1[1], c1[2], c1[3]);
     glPushMatrix();
     glTranslatef(x0, y0, 0.0f);
     glScalef(x1 - x0, 0.0f, 0.0f);

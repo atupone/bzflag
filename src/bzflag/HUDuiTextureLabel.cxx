@@ -61,7 +61,7 @@ void            HUDuiTextureLabel::doRender()
         const float xx = getX();
         const float yy = getY();
         gstate.setState();
-        glColor3fv(textColor);
+        glColor4f(textColor[0], textColor[1], textColor[2], 1.0f);
         glPushMatrix();
         glTranslatef(xx, yy - descent, 0.0f);
         glScalef(_width, _height, 0.0f);

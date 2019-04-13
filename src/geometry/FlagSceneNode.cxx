@@ -396,7 +396,11 @@ void            FlagSceneNode::FlagRenderNode::render(bool shadow)
     const auto &sphere = sceneNode->getCenter();
     const float topHeight = base + Height;
 
-    myColor4fv(sceneNode->color);
+    if (!colorOverride)
+    {
+        auto c = sceneNode->color;
+        glColor4f(c.r, c.g, c.b, c.a);
+    }
 
     glPushMatrix();
     {
@@ -446,7 +450,8 @@ void            FlagSceneNode::FlagRenderNode::render(bool shadow)
         }
 
         // Drawing the pole black untextured
-        myColor4f(0.0f, 0.0f, 0.0f, sceneNode->color[3]);
+        if (!colorOverride)
+            glColor4f(0.0f, 0.0f, 0.0f, sceneNode->color[3]);
 
         if (doing_texturing)
             glDisable(GL_TEXTURE_2D);
