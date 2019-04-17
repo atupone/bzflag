@@ -10,10 +10,6 @@
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-
-// top dog
-#include "common.h"
-
 // implementation header
 #include "Triangulate.h"
 
@@ -22,7 +18,7 @@
 #include <vector>
 
 // common headers
-#include "vectors.h"
+#include "vectors_old.h"
 
 
 // triangulation parameters

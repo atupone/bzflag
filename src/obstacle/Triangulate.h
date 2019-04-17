@@ -13,10 +13,11 @@
 #ifndef __TRIANGULATE_H__
 #define __TRIANGULATE_H__
 
+// top dog
+#include "common.h"
 
 /* system interface headers */
 #include <vector>
-
 
 typedef struct
 {
