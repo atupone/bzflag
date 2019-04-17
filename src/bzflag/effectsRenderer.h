@@ -86,7 +86,7 @@ public:
     {
         return true;
     }
-    bool GetDeathVector ( fvec3 &UNUSED(vel) ) override
+    virtual bool GetDeathVector ( glm::vec3 &UNUSED(vel) )
     {
         return false;
     }
