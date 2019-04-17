@@ -21,12 +21,12 @@
 #include "Obstacle.h"
 
 // System headers
-#include <iostream>
 #include <string>
 #include <vector>
+#include <iostream>
 
 // Common headers
-#include "vectors.h"
+#include "vectors_old.h"
 #include "Ray.h"
 #include "MeshFace.h"
 #include "MeshTransform.h"

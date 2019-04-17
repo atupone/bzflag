@@ -21,16 +21,16 @@
 #include "Obstacle.h"
 
 // System headers
-#include <iostream>
 #include <string>
+#include <iostream>
 
 // Common headers
+#include "vectors_old.h"
+#include "Ray.h"
 #include "global.h"
 #include "BzMaterial.h"
-#include "Ray.h"
-#include "vectors.h"
 
-class MeshFace final : public Obstacle
+class MeshFace : public Obstacle
 {
 
     friend class MeshObstacle;
