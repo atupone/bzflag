@@ -30,6 +30,7 @@
 #include "ParseColor.h"
 #include "BZDBCache.h"
 #include "MeshSceneNode.h"
+#include "OpenGLCommon.h"
 
 /* FIXME - local implementation dependancies */
 #include "BackgroundRenderer.h"
@@ -130,7 +131,7 @@ void SceneRenderer::setWindow(MainWindow* _window)
     canUseHiddenLine = true;
 
     // prepare context with stuff that'll never change
-    glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
+    glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
     glGetIntegerv(GL_MAX_LIGHTS, &maxLights);
     reservedLights = 1;           // only one light between sun and moon
     maxLights -= reservedLights;      // can't use the reserved lights
@@ -176,7 +177,7 @@ void SceneRenderer::setZBufferSplit(bool on)
         {
             numDepthRanges = 1;
             depthRangeSize = 1.0;
-            glDepthRange(0.0, 1.0);
+            OpenGLCommon::DepthRange(0.0, 1.0);
         }
     }
     else
@@ -253,25 +254,14 @@ void SceneRenderer::setQuality(int value)
     else
         BZDB.set("moonSegments","12");
 
-    if (useQualityValue > 0)
-    {
-        // this can be modified by OpenGLMaterial
-        glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
-    }
-    else
-    {
-        // OpenGLMaterial will not modify if (quality <= 0)
-        glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_FALSE);
-    }
+    // this can be modified by OpenGLMaterial
+    OpenGLCommon::LightModelLocalViewer(useQualityValue > 0);
 
     // this setting helps keep those specular highlights
     // highlighting when applied to a dark textured surface.
     // It was mainlined in OpenGL Version 1.2
     // (there's also the GL_EXT_separate_specular_color extension)
-    if (useQualityValue >= 1)
-        glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SEPARATE_SPECULAR_COLOR);
-    else
-        glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SINGLE_COLOR);
+    OpenGLCommon::LightModelSpecular(useQualityValue >= 1);
 
     BZDB.set("useQuality", TextUtils::format("%d", value));
 }
@@ -910,17 +900,13 @@ void SceneRenderer::renderScene(bool UNUSED(_lastFrame), bool UNUSED(_sameFrame)
         if (useHiddenLineOn)
             glDepthRange(0.0, 1.0);
         else
-        {
-            GLclampd x_near = (GLclampd)depthRange * depthRangeSize;
-            glDepthRange(x_near, x_near + depthRangeSize);
-        }
+            OpenGLCommon::DepthRange((float)depthRange, (float)depthRangeSize);
     }
 
     // draw start of background (no depth testing)
     OpenGLGState::resetState();
 
-    const GLdouble plane[4] = {0.0, 0.0, +1.0, 0.0};
-    glClipPlane(GL_CLIP_PLANE0, plane);
+    OpenGLCommon::ClipPlane(0, glm::vec4(0.0, 0.0, 1.0, 0.0));
 
     if (background)
     {
@@ -1098,7 +1084,7 @@ static bool setupMapFog()
         glHint(GL_FOG_HINT, GL_FASTEST);
 
     // setup GL fog
-    glFogi(GL_FOG_MODE, fogMode);
+    glFogf(GL_FOG_MODE, fogMode);
     glFogf(GL_FOG_DENSITY, fogDensity);
     glFogf(GL_FOG_START, fogStart);
     glFogf(GL_FOG_END, fogEnd);
