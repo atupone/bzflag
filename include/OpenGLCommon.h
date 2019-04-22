@@ -16,15 +16,25 @@
 
 // System headers
 #include <glm/fwd.hpp>
+#include <glm/vec3.hpp>
+#include <glm/vec4.hpp>
 
-class OpenGLCommon
+// common headers
+#include "bzfgl.h"
+
+namespace OpenGLCommon
 {
-public:
-    static void getFogColor(glm::vec4 &fogColor);
-    static void setFogColor(const glm::vec4 &fogColor);
-    static void setEyePlanes(const glm::vec4 &sPlane, const glm::vec4 &tPlane);
-    static void getViewPort(glm::ivec4 &viewport);
-};
+void getFogColor(glm::vec4 &fogColor);
+void setFogColor(const glm::vec4 &fogColor);
+void setEyePlanes(const glm::vec4 &sPlane, const glm::vec4 &tPlane);
+void getViewPort(glm::ivec4 &viewport);
+void ClipPlane(int id, glm::vec4 plane);
+void Ortho(float left, float right, float bottom, float top, float nearVal, float farVal);
+void ClearDepth();
+void DepthRange(float depthRange, float depthRangeSize);
+void LightModelLocalViewer(bool enable);
+void LightModelSpecular(bool enable);
+}
 
 #endif
 
