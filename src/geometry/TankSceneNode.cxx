@@ -26,6 +26,7 @@
 #include "StateDatabase.h"
 #include "SceneRenderer.h"
 #include "BZDBCache.h"
+#include "OpenGLCommon.h"
 
 // local implementation headers
 #include "ViewFrustum.h"
@@ -425,10 +426,7 @@ void TankSceneNode::setJumpJets(float scale)
 void TankSceneNode::setClipPlane(const glm::vec4 &_plane)
 {
     clip = true;
-    clipPlane[0] = GLdouble(_plane[0]);
-    clipPlane[1] = GLdouble(_plane[1]);
-    clipPlane[2] = GLdouble(_plane[2]);
-    clipPlane[3] = GLdouble(_plane[3]);
+    clipPlane = glm::make_vec4(_plane);
 }
 
 
@@ -894,7 +892,7 @@ void TankSceneNode::TankRenderNode::render()
 
     if (sceneNode->clip && !isShadow)
     {
-        glClipPlane(GL_CLIP_PLANE1, sceneNode->clipPlane);
+        OpenGLCommon::ClipPlane(1, sceneNode->clipPlane);
         glEnable(GL_CLIP_PLANE1);
     }
 
