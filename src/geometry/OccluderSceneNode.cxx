@@ -31,7 +31,7 @@ OccluderSceneNode::OccluderSceneNode(const MeshFace* face)
     setOccluder(true);
 
     // record plane info
-    memcpy(plane, face->getPlane(), sizeof(float[4]));
+    memcpy(plane, glm::value_ptr(face->getPlane()), sizeof(float[4]));
 
     // record extents info
     extents = face->getExtents();
