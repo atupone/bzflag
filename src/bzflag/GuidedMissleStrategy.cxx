@@ -16,6 +16,7 @@
 // System headers
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/norm.hpp>
+#include <glm/gtx/rotate_vector.hpp>
 
 /* common implementation headers */
 #include "BZDBCache.h"
@@ -61,6 +62,7 @@ GuidedMissileStrategy::GuidedMissileStrategy(ShotPath* _path) :
     const auto dir = glm::normalize(vel);
     azimuth = limitAngle(atan2f(dir[1], dir[0]));
     elevation = limitAngle(atan2f(dir[2], hypotf(dir[1], dir[0])));
+    currentDirection = dir;
 
     // initialize segments
     currentTime = getPath().getStartTime();
@@ -176,37 +178,63 @@ void GuidedMissileStrategy::update(float dt)
         const auto &targetPos = target->getPosition();
         auto desiredDir = targetPos - nextPos;
         desiredDir[2] += target->getMuzzleHeight(); // right between the eyes
+        desiredDir = glm::normalize(desiredDir);
 
         // compute desired angles
-        float newAzimuth = atan2f(desiredDir[1], desiredDir[0]);
-        float newElevation = atan2f(desiredDir[2],
-                                    hypotf(desiredDir[1], desiredDir[0]));
+        // The cross product gives a vector that is normal to the plan that has
+        // both the current direction and the desired one
+        auto rotationAxis = glm::cross(currentDirection, desiredDir);
+        // The magnitude is simply the sin between the two vectors, as they are
+        // both normalize. I need the length, but the square is the same
+        float sin2Theta = glm::length2(rotationAxis);
 
         float gmissileAng = BZDB.eval(StateDatabase::BZDB_GMTURNANGLE);
+        float maxAngle = dt * gmissileAng;
+        bool  limitingNeeded = true;
 
         // compute new azimuth
-        float deltaAzimuth = limitAngle(newAzimuth - azimuth);
-        if (fabsf(deltaAzimuth) <= dt * gmissileAng)
-            azimuth = limitAngle(newAzimuth);
-        else if (deltaAzimuth > 0.0f)
-            azimuth = limitAngle(azimuth + dt * gmissileAng);
-        else
-            azimuth = limitAngle(azimuth - dt * gmissileAng);
+        // I assume that maxAngle is very little (as dt should be) so sin2Theta
+        // should be like Theta*Theta
+        if (sin2Theta <= powf(maxAngle, 2))
+        {
+            // It seems that the rotation angle is less than the maxAngle, but
+            // care... could be 180 degree. So only in this case I compute the
+            // cos
+            float cosTheta = glm::dot(desiredDir, currentDirection);
+            if (cosTheta > 0.0f)
+                // Ok no need for limiting GM.
+                limitingNeeded = false;
+            else
+            {
+                // special case when vectors in opposite directions:
+                // there is no "ideal" rotation axis
+                // So try one; any will do as long as it's perpendicular to start
+                rotationAxis = glm::cross(glm::vec3(0.0f, 0.0f, 1.0f), desiredDir);
+                if (glm::length2(rotationAxis) < 0.01f)
+                    // bad luck, they were parallel, try again!
+                    rotationAxis = glm::cross(glm::vec3(1.0f, 0.0f, 0.0f), desiredDir);
+            }
+        }
 
-        // compute new elevation
-        float deltaElevation = limitAngle(newElevation - elevation);
-        if (fabsf(deltaElevation) <= dt * gmissileAng)
-            elevation = limitAngle(newElevation);
-        else if (deltaElevation > 0.0f)
-            elevation = limitAngle(elevation + dt * gmissileAng);
+        glm::vec3 newDirection;
+
+        if (limitingNeeded)
+        {
+            // Normalize the rotation axis as needed by glm::rotate
+            rotationAxis = glm::normalize(rotationAxis);
+            // And rotate at max angle
+            newDirection = glm::rotate(currentDirection, maxAngle, rotationAxis);
+        }
         else
-            elevation = limitAngle(elevation - dt * gmissileAng);
+            // The new direction will be the desired one
+            newDirection = desiredDir;
+
+        azimuth   = limitAngle(atan2f(newDirection[1], newDirection[0]));
+        elevation = limitAngle(atan2f(newDirection[2],
+                                      hypotf(newDirection[1], newDirection[0])));
+        currentDirection = newDirection;
     }
-    auto newDirection = glm::vec3(
-                            cosf(azimuth) * cosf(elevation),
-                            sinf(azimuth) * cosf(elevation),
-                            sinf(elevation));
-    Ray ray = Ray(nextPos, newDirection);
+    Ray ray = Ray(nextPos, currentDirection);
 
     renderTimes++;
     if (puffTime < 0 )
@@ -258,9 +286,8 @@ void GuidedMissileStrategy::update(float dt)
     segments.pop_back();
 
     // update shot
-    newDirection *= shotSpeed;
     setPosition(nextPos);
-    setVelocity(newDirection);
+    setVelocity(currentDirection * shotSpeed);
 }
 
 float GuidedMissileStrategy::checkBuildings(const Ray& ray)
@@ -284,6 +311,8 @@ float GuidedMissileStrategy::checkBuildings(const Ray& ray)
             World::getWorld()->getTeleporter(target, outFace);
         teleporter->getPointWRT(*outTeleporter, face, outFace,
                                 nextPos, NULL, &azimuth);
+        currentDirection[0] = cosf(azimuth) * cosf(elevation);
+        currentDirection[1] = sinf(azimuth) * cosf(elevation);
         return t / shotSpeed;
     }
     else if (building)
@@ -415,6 +444,7 @@ void GuidedMissileStrategy::readUpdate(uint16_t code, const void* msg)
     // fix up dependent variables
     const auto vel = getPath().getVelocity();
     auto dir = glm::normalize(vel);
+    currentDirection = dir;
     azimuth = limitAngle(atan2f(dir[1], dir[0]));
     elevation = limitAngle(atan2f(dir[2], hypotf(dir[1], dir[0])));
     const auto pos = getPath().getPosition();
