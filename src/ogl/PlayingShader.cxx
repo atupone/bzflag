@@ -56,6 +56,12 @@ void PlayingShader::init()
     idlGlobalParamUniform  = getUniformLocation("idlGlobalParam");
     idlLocalParamUniform    = getUniformLocation("idlLocalParam");
 
+    centerUniform           = getUniformLocation("center");
+    repeatUniform           = getUniformLocation("repeat");
+    groundSizeUniform       = getUniformLocation("groundSize");
+
+    sizeColorUniform      = getUniformLocation("sizeColor");
+
     glGetIntegerv(GL_MAX_LIGHTS, &maxLights);
     if (maxLights > 128)
         maxLights = 128;
@@ -192,6 +198,33 @@ void PlayingShader::setIDLLocal(const glm::vec3 cross[2], float dist)
     localParam[0] = glm::vec4(cross[0], dist);
     localParam[1] = glm::vec4(cross[1], dist);
     setUniform(idlLocalParamUniform, 2, localParam);
+}
+
+void PlayingShader::setCenter(const glm::vec2 &center)
+{
+    setUniform(centerUniform, center);
+}
+
+void PlayingShader::setRepeat(float repeat)
+{
+    setUniform(repeatUniform, repeat);
+}
+
+void PlayingShader::setGroundSize(float groundSize)
+{
+    setUniform(groundSizeUniform, groundSize);
+}
+
+void PlayingShader::setCrown(
+    float innerSize,
+    float outerSize,
+    const glm::vec3 &innerColor,
+    const glm::vec3 &outerColor)
+{
+    glm::vec4 sizeColor[2];
+    sizeColor[0] = glm::vec4(innerColor, innerSize);
+    sizeColor[1] = glm::vec4(outerColor, outerSize);
+    setUniform(sizeColorUniform, 2, sizeColor);
 }
 
 

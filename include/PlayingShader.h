@@ -50,6 +50,9 @@ public:
     const int ModelRingXY    = 2;
     const int ModelRingYZ    = 3;
     const int ModelIDL         = 4;
+    const int ModelGrCenter  = 5;
+    const int ModelNormRecv  = 6;
+    const int ModelAdvRecv   = 7;
 
     void setRingXYParam(float rad,
                         float topsideOffset,
@@ -65,6 +68,17 @@ public:
 
     void setIDLGlobal(const glm::vec3 &origin, bool colorOverride);
     void setIDLLocal(const glm::vec3 cross[2], float dist);
+
+    void setCenter(const glm::vec2 &center);
+    void setRepeat(float repeat);
+    void setGroundSize(float groundSize);
+
+    void setCrown(
+        float innerSize,
+        float outerSize,
+        const glm::vec3 &innerColor,
+        const glm::vec3 &outerColor);
+
 protected:
     friend class Singleton<PlayingShader>;
 
@@ -96,6 +110,11 @@ private:
 
     GLint   idlGlobalParamUniform;
     GLint   idlLocalParamUniform;
+
+    GLint   centerUniform;
+    GLint   repeatUniform;
+    GLint   groundSizeUniform;
+    GLint   sizeColorUniform;
 
     GLint   lightEnabled[128];
     GLint   maxLights;
