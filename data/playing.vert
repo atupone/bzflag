@@ -31,6 +31,17 @@ uniform vec4 ringParam;
 uniform vec4  idlGlobalParam;
 uniform vec4  idlLocalParam[2];
 
+uniform float repeat;
+uniform vec2  center;
+uniform float groundSize;
+
+// Index 0 => Inner
+// Index 1 => Outer
+// rgb     => color (advanced)
+// r       => alpha (!advanced) gl_Color is rgb
+// a       => size
+uniform vec4  sizeColor[2];
+
 vec3 ecPosition3;
 vec3 normal;
 vec3 eye;
@@ -262,6 +273,82 @@ void drawIDL()
     gl_FrontColor = colorOverride ? gl_Color : proj ? outerColor : innerColor;
 }
 
+float groundCoordinate(float value, float center)
+{
+    const float centerSize = 128.0;
+    float result;
+    int absValue = int(abs(value));
+
+    result = absValue == 1 ? centerSize : groundSize;
+    if (value < 0.0)
+        result = -result;
+    if (absValue == 1)
+        result += center;
+    return result;
+}
+
+void drawGroundCentered()
+{
+    vec4 vertex = gl_Vertex;
+    vec4 texCoord;
+
+    vertex.x = groundCoordinate(vertex.x, center.x);
+    vertex.y = groundCoordinate(vertex.y, center.y);
+    texCoord = gl_TextureMatrix[0] * vec4(repeat * vertex.xy, 0.0, 1.0);
+
+    normal = gl_NormalMatrix * vec3(0.0, 0.0, 1.0);
+
+    // Transform vertex to eye coordinates
+    vec4 ecPosition  = gl_ModelViewMatrix * vertex;
+
+    setOutput(ecPosition, texCoord, gl_Color);
+}
+
+void drawNormalReceiver()
+{
+    vec4 vertex = gl_Vertex;
+    vec4 color  = sizeColor[int(vertex.z)];
+
+    vertex.xy  *= color.a;
+    color.a     = color.r;
+    color.rgb   = gl_Color.rgb;
+
+    vertex.xy += center;
+    vertex.z   = 0.0;
+
+    normal = gl_NormalMatrix * vec3(0.0, 0.0, 1.0);
+
+    // Transform vertex to eye coordinates
+    vec4 ecPosition  = gl_ModelViewMatrix * vertex;
+
+    setOutput(ecPosition, vec4(0.0), color);
+}
+
+void drawAdvancedReceiver()
+{
+    vec4 vertex   = gl_Vertex;
+    vec4 color    = sizeColor[int(vertex.z)];
+    vec4 texCoord = gl_MultiTexCoord0;
+
+    vertex.xy    *= color.a;
+    color.a       = 1.0;
+
+    vertex.xy    += center;
+    vertex.z      = 0.0;
+
+    if (repeat > 0.0)
+        texCoord = vec4(repeat * vec2(vertex), 0.0, 1.0);
+
+    texCoord = gl_TextureMatrix[0] * texCoord;
+
+    normal = gl_NormalMatrix * vec3(0.0, 0.0, 1.0);
+
+    // Transform vertex to eye coordinates
+    vec4 ecPosition  = gl_ModelViewMatrix * vertex;
+
+    setOutput(ecPosition, texCoord, color);
+}
+
 void main(void)
 {
     const int ModelFixedPipe = 0;
@@ -269,6 +356,9 @@ void main(void)
     const int ModelRingXY    = 2;
     const int ModelRingYZ    = 3;
     const int ModelIDL       = 4;
+    const int ModelGrCenter  = 5;
+    const int ModelNormRecv  = 6;
+    const int ModelAdvRecv   = 7;
 
     if (model == ModelFixedPipe)
         fixedPipeline();
@@ -280,6 +370,12 @@ void main(void)
         drawRingYZ();
     else if (model == ModelIDL)
         drawIDL();
+    else if (model == ModelGrCenter)
+        drawGroundCentered();
+    else if (model == ModelNormRecv)
+        drawNormalReceiver();
+    else if (model == ModelAdvRecv)
+        drawAdvancedReceiver();
 }
 
 

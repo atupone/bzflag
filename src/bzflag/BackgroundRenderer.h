@@ -86,6 +86,9 @@ private:
     static void     initContext(void*);
     static void     bzdbCallback(const std::string&, void*);
 
+    Vertex_Chunk buildCrown(unsigned int slices);
+    Vertex_Chunk buildGroundCentered();
+
     // rendering state
     bool        blank;
     bool        invert;
@@ -181,6 +184,10 @@ private:
     static const glm::vec4  defaultGroundColorInv[4];
 
     int         triangleCount;
+
+    Vertex_Chunk           groundReceiver32Chunk;
+    Vertex_Chunk           groundReceiver8Chunk;
+    Vertex_Chunk           centeredGroundChunk;
 };
 
 //
