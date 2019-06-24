@@ -250,6 +250,10 @@ BackgroundRenderer::BackgroundRenderer() :
             (void*)this);
 
     notifyStyleChange();
+
+    groundReceiver32Chunk = buildCrown(32);
+    groundReceiver8Chunk  = buildCrown(8);
+    centeredGroundChunk   = buildGroundCentered();
 }
 
 BackgroundRenderer::~BackgroundRenderer()
@@ -261,6 +265,23 @@ BackgroundRenderer::~BackgroundRenderer()
     delete[] mountainsList;
 }
 
+
+Vertex_Chunk BackgroundRenderer::buildCrown(unsigned int slices)
+{
+    std::vector<glm::vec3> vertices;
+    const float sliceAngle = 2.0 * M_PI / double(slices);
+    for (unsigned int i = 0; i <= slices; i++)
+    {
+        float angle = sliceAngle * i;
+        auto vertex = glm::vec3( cosf(angle), sinf(angle), 0.0f);
+        vertices.push_back(vertex);
+        vertex.z = 1.0f;
+        vertices.push_back(vertex);
+    }
+    Vertex_Chunk chunk = Vertex_Chunk(Vertex_Chunk::V, vertices.size());
+    chunk.vertexData(vertices);
+    return chunk;
+}
 
 void BackgroundRenderer::bzdbCallback(const std::string& name, void* data)
 {
@@ -595,6 +616,7 @@ void BackgroundRenderer::renderGroundEffects(SceneRenderer& renderer,
         {
             if (BZDBCache::tessellation && (renderer.useQuality() >= 3))
             {
+                SHADER.setModel(SHADER.ModelAdvRecv);
 //    (BZDB.get(StateDatabase::BZDB_FOGMODE) == "none")) {
                 // not really tessellation, but it is tied to the "Best" lighting,
                 // avoid on foggy maps, because the blending function accumulates
@@ -602,7 +624,11 @@ void BackgroundRenderer::renderGroundEffects(SceneRenderer& renderer,
                 drawAdvancedGroundReceivers(renderer);
             }
             else
+            {
+                SHADER.setModel(SHADER.ModelNormRecv);
                 drawGroundReceivers(renderer);
+            }
+            SHADER.setModel(SHADER.ModelFixedPipe);
         }
 
         {
@@ -1112,19 +1138,34 @@ void BackgroundRenderer::drawGroundCentered()
     const float maxDist = +groundSize - centerSize;
     center = glm::clamp(center, minDist, maxDist);
 
-    const glm::vec2 vertices[8] =
-    {
-        { -groundSize, -groundSize },
-        { +groundSize, -groundSize },
-        { +groundSize, +groundSize },
-        { -groundSize, +groundSize },
-        { center[0] - centerSize, center[1] - centerSize },
-        { center[0] + centerSize, center[1] - centerSize },
-        { center[0] + centerSize, center[1] + centerSize },
-        { center[0] - centerSize, center[1] + centerSize }
-    };
+    SHADER.setModel(SHADER.ModelGrCenter);
+    SHADER.setCenter(center);
+    SHADER.setGroundSize(groundSize);
 
     const float repeat = BZDB.eval("groundHighResTexRepeat");
+    SHADER.setRepeat(repeat);
+
+    centeredGroundChunk.draw(GL_TRIANGLE_STRIP);
+    SHADER.setModel(SHADER.ModelFixedPipe);
+
+    return;
+}
+
+
+Vertex_Chunk BackgroundRenderer::buildGroundCentered()
+{
+    const glm::vec2 vertices[8] =
+    {
+        { -2.0f, -2.0f },
+        { +2.0f, -2.0f },
+        { +2.0f, +2.0f },
+        { -2.0f, +2.0f },
+        { -1.0f, -1.0f },
+        { +1.0f, -1.0f },
+        { +1.0f, +1.0f },
+        { -1.0f, +1.0f }
+    };
+
     const int indices[5][4] =
     {
         { 4, 5, 7, 6 },
@@ -1134,26 +1175,31 @@ void BackgroundRenderer::drawGroundCentered()
         { 3, 0, 7, 4 },
     };
 
-    glNormal3f(0.0f, 0.0f, 1.0f);
-    {
-        static Vertex_Chunk ground(Vertex_Chunk::VT, 4);
-        for (int q = 0; q < 5; q++)
-        {
-            glm::vec2 t[4];
-            glm::vec3 v[4];
-            for (int c = 0; c < 4; c++)
-            {
-                const int index = indices[q][c];
-                t[c] = vertices[index] * repeat;
-                v[c] = glm::vec3(vertices[index], 0.0f);
-            }
-            ground.textureData(t);
-            ground.vertexData(v);
-            ground.draw(GL_TRIANGLE_STRIP);
-        }
-    }
+    std::vector<glm::vec3> v;
 
-    return;
+    glm::vec3 vertex;
+    int q = 0;
+    while (1)
+    {
+        int index;
+        for (int c = 0; c < 4; c++)
+        {
+            index = indices[q][c];
+            vertex = glm::vec3(vertices[index], 0);
+            v.push_back(vertex);
+        }
+        q++;
+        if (q >= 5)
+            break;
+        // Degenerate triangles
+        v.push_back(vertex);
+        index = indices[q][0];
+        vertex = glm::vec3(vertices[index], 0);
+        v.push_back(vertex);
+    }
+    Vertex_Chunk chunk = Vertex_Chunk(Vertex_Chunk::V, v.size());
+    chunk.vertexData(v);
+    return chunk;
 }
 
 
@@ -1282,24 +1328,6 @@ void BackgroundRenderer::drawGroundReceivers(SceneRenderer& renderer)
     static const int receiverRings = 4;
     static const int receiverSlices = 8;
     static const float receiverRingSize = 1.2f;   // meters
-    static glm::vec2 angle[receiverSlices + 1];
-    static Vertex_Chunk circle(Vertex_Chunk::VC, receiverSlices + 2);
-
-    static bool init = false;
-    if (!init)
-    {
-        init = true;
-        const float receiverSliceAngle = (float)(2.0 * M_PI / double(receiverSlices));
-        glm::vec3 v[receiverSlices + 2];
-        v[0] = glm::vec3(0.0f);
-        for (int i = 0; i <= receiverSlices; i++)
-        {
-            angle[i][0] = cosf((float)i * receiverSliceAngle);
-            angle[i][1] = sinf((float)i * receiverSliceAngle);
-            v[i + 1] = glm::vec3(angle[i] * receiverRingSize, 0.0f);
-        }
-        circle.vertexData(v);
-    }
 
     const int count = renderer.getNumAllLights();
     if (count == 0)
@@ -1314,8 +1342,7 @@ void BackgroundRenderer::drawGroundReceivers(SceneRenderer& renderer)
     glm::vec4 fogColor;
     setupBlackFog(fogColor);
 
-    glPushMatrix();
-    int i, j;
+    int i;
     for (int k = 0; k < count; k++)
     {
         const OpenGLLight& light = renderer.getLight(k);
@@ -1338,43 +1365,24 @@ void BackgroundRenderer::drawGroundReceivers(SceneRenderer& renderer)
             continue;
 
         // move to the light's position
-        glTranslatef(pos[0], pos[1], 0.0f);
+        auto center = glm::make_vec2(pos);
+        SHADER.setCenter(center);
 
         // set the main lighting color
-        auto color = lightColor;
-        float innerAlpha = I;
+        glColor(lightColor);
 
-        GLfloat outerSize = receiverRingSize;
-        // inner ring
-        d = hypotf(outerSize, pos[2]);
-        I = B / (atten[0] + d * (atten[1] + d * atten[2]));
-        I *= pos[2] / d;
-        float outerAlpha = I;
+        GLfloat outerSize = 0.0f;
+        float outerAlpha  = I;
 
-        // draw ground receiver, computing lighting at each vertex ourselves
+        for (i = 1; i <= receiverRings; i++)
         {
-            glm::vec4 c[receiverSlices + 2];
-            color[3] = innerAlpha;
-            c[0] = color;
+            GLfloat innerSize = outerSize;
+            outerSize = receiverRingSize * GLfloat(i * i);
 
-            // inner ring
-            color[3] = outerAlpha;
-            for (j = 0; j <= receiverSlices; j++)
-                c[j+1] = color;
-            circle.colorData(c);
-        }
-        circle.draw(GL_TRIANGLE_FAN);
-        triangleCount += receiverSlices;
+            // compute inner and outer lit colors
+            float innerAlpha = outerAlpha;
 
-        std::vector<glm::vec4> c;
-        std::vector<glm::vec3> v;
-        for (i = 1; i < receiverRings; i++)
-        {
-            const GLfloat innerSize = outerSize;
-            innerAlpha = outerAlpha;
-
-            outerSize = receiverRingSize * GLfloat((i + 1) * (i + 1));
-            if (i + 1 == receiverRings)
+            if (i == receiverRings)
                 I = 0.0f;
             else
             {
@@ -1384,27 +1392,15 @@ void BackgroundRenderer::drawGroundReceivers(SceneRenderer& renderer)
             }
             outerAlpha = I;
 
-            {
-                for (j = 0; j <= receiverSlices; j++)
-                {
-                    color[3] = innerAlpha;
-                    c.push_back(color);
-                    v.push_back(glm::vec3(angle[j] * innerSize, 0.0f));
-                    color[3] = outerAlpha;
-                    c.push_back(color);
-                    v.push_back(glm::vec3(angle[j] * outerSize, 0.0f));
-                }
-            }
+            SHADER.setCrown(
+                innerSize,
+                outerSize,
+                glm::vec3(innerAlpha),
+                glm::vec3(outerAlpha));
+            groundReceiver8Chunk.draw(GL_TRIANGLE_STRIP);
         }
-        Vertex_Chunk ring(Vertex_Chunk::VC, v.size());
-        ring.colorData(c);
-        ring.vertexData(v);
-        ring.draw(GL_TRIANGLE_STRIP);
-        triangleCount += (receiverSlices * receiverRings * 2);
-
-        glTranslatef(-pos[0], -pos[1], 0.0f);
+        triangleCount += (receiverSlices + 1) * receiverRings * 2 - 2;
     }
-    glPopMatrix();
 
     glSetFogColor(fogColor);
 }
@@ -1415,24 +1411,6 @@ void BackgroundRenderer::drawAdvancedGroundReceivers(SceneRenderer& renderer)
     const float minLuminance = 0.02f;
     static const int receiverSlices = 32;
     static const float receiverRingSize = 0.5f;   // meters
-    static glm::vec2 angle[receiverSlices + 1];
-    static Vertex_Chunk circle(Vertex_Chunk::VC, receiverSlices + 2);
-
-    static bool init = false;
-    if (!init)
-    {
-        init = true;
-        const float receiverSliceAngle = (float)(2.0 * M_PI / double(receiverSlices));
-        glm::vec3 v[receiverSlices + 2];
-        v[0] = glm::vec3(0.0f);
-        for (int i = 0; i <= receiverSlices; i++)
-        {
-            angle[i][0] = cosf((float)i * receiverSliceAngle);
-            angle[i][1] = sinf((float)i * receiverSliceAngle);
-            v[i + 1] = glm::vec3(angle[i] * receiverRingSize, 0.0f);
-        }
-        circle.vertexData(v);
-    }
 
     const int count = renderer.getNumAllLights();
     if (count == 0)
@@ -1468,9 +1446,11 @@ void BackgroundRenderer::drawAdvancedGroundReceivers(SceneRenderer& renderer)
         const float repeat = BZDB.eval("groundHighResTexRepeat");
         SHADER.setRepeat(repeat);
     }
+    else
+        SHADER.setRepeat(0.0f);
 
-    glPushMatrix();
-    int i, j;
+    const auto black = glm::vec3(0.0f);
+    int i;
     for (int k = 0; k < count; k++)
     {
         const OpenGLLight& light = renderer.getLight(k);
@@ -1499,74 +1479,37 @@ void BackgroundRenderer::drawAdvancedGroundReceivers(SceneRenderer& renderer)
             continue;
 
         // move to the light's position
-        glTranslatef(pos[0], pos[1], 0.0f);
+        auto center = glm::make_vec2(pos);
+        SHADER.setCenter(center);
 
-        float innerSize;
-        glm::vec3 innerColor;
-        float outerSize;
-        glm::vec3 outerColor;
+        float outerSize = 0.0f;
 
-        // draw ground receiver, computing lighting at each vertex ourselves
+        bool moreRings = true;
+        for (i = 1; moreRings; i++)
         {
-            glm::vec4 c[receiverSlices + 2];
+            float innerSize = outerSize;
+            outerSize = receiverRingSize * float(i * i);
             // center point
-            innerColor = I * baseColor;
-            c[0] = glm::vec4(innerColor, 1.0f);
+            auto innerColor = I * baseColor;
+            glColor(innerColor);
+            glVertex2f(0.0f, 0.0f);
 
             // inner ring
             d = hypotf(receiverRingSize, pos[2]);
             I = 1.0f / (atten[0] + d * (atten[1] + d * atten[2]));
             I *= pos[2] / d; // diffuse angle factor
-            outerColor = I * baseColor;
-            outerSize = receiverRingSize;
-            for (j = 0; j <= receiverSlices; j++)
-                c[j + 1] = glm::vec4(outerColor, 1.0f);
-            circle.colorData(c);
+            moreRings = (I * maxVal) >= minLuminance;
+            auto outerColor = moreRings ? I * baseColor : black;
+            SHADER.setCrown(
+                innerSize,
+                outerSize,
+                innerColor,
+                outerColor);
+            groundReceiver32Chunk.draw(GL_TRIANGLE_STRIP);
         }
-        circle.draw(GL_TRIANGLE_FAN);
-        triangleCount += receiverSlices;
 
-        bool moreRings = true;
-        std::vector<glm::vec4> c;
-        std::vector<glm::vec3> v;
-        for (i = 2; moreRings; i++)
-        {
-            // inner ring
-            innerSize = outerSize;
-            innerColor = outerColor;
-
-            // outer ring
-            outerSize = receiverRingSize * GLfloat(i * i);
-            d = hypotf(outerSize, pos[2]);
-            I = 1.0f / (atten[0] + d * (atten[1] + d * atten[2]));
-            I *= pos[2] / d; // diffuse angle factor
-            if ((I * maxVal) < minLuminance)
-            {
-                I = 0.0f;
-                moreRings = false; // bail after this ring
-            }
-            outerColor = I * baseColor;
-
-            {
-                for (j = 0; j <= receiverSlices; j++)
-                {
-                    c.push_back(glm::vec4(innerColor, 1.0f));
-                    v.push_back(glm::vec3(angle[j] * innerSize, 0.0f));
-                    c.push_back(glm::vec4(outerColor, 1.0f));
-                    v.push_back(glm::vec3(angle[j] * outerSize, 0.0f));
-                }
-            }
-        }
-        Vertex_Chunk ring(Vertex_Chunk::VC, v.size());
-        ring.colorData(c);
-        ring.vertexData(v);
-        ring.draw(GL_TRIANGLE_STRIP);
-        triangleCount += (receiverSlices * 2 * (i - 2));
-
-        glTranslatef(-pos[0], -pos[1], 0.0f);
+        triangleCount += (receiverSlices + 1) * i * 2 - 2;
     }
-    glPopMatrix();
-
     if (useTexture)
         SHADER.setRepeat(0.0f);
 
