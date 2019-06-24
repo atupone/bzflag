@@ -31,15 +31,6 @@ void setFogColor(const glm::vec4 &fogColor)
     glFogfv(GL_FOG_COLOR, glm::value_ptr(fogColor));
 }
 
-void setEyePlanes(const glm::vec4 &sPlane,
-                  const glm::vec4 &tPlane)
-{
-    glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
-    glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
-    glTexGenfv(GL_S, GL_EYE_PLANE, glm::value_ptr(sPlane));
-    glTexGenfv(GL_T, GL_EYE_PLANE, glm::value_ptr(tPlane));
-}
-
 void ClipPlane(int id, glm::vec4 plane)
 {
     const GLdouble myPlane[] = { plane[0], plane[1], plane[2], plane[3]};

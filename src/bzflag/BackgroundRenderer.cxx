@@ -258,6 +258,10 @@ BackgroundRenderer::BackgroundRenderer() :
             (void*)this);
 
     notifyStyleChange();
+
+    groundReceiver32Chunk = buildCrown(32);
+    groundReceiver8Chunk  = buildCrown(8);
+    centeredGroundChunk   = buildGroundCentered();
 }
 
 BackgroundRenderer::~BackgroundRenderer()
@@ -268,6 +272,23 @@ BackgroundRenderer::~BackgroundRenderer()
     delete[] mountainsGState;
 }
 
+
+Vertex_Chunk BackgroundRenderer::buildCrown(unsigned int slices)
+{
+    std::vector<glm::vec3> vertices;
+    const float sliceAngle = 2.0 * M_PI / double(slices);
+    for (unsigned int i = 0; i <= slices; i++)
+    {
+        float angle = sliceAngle * i;
+        auto vertex = glm::vec3( cosf(angle), sinf(angle), 0.0f);
+        vertices.push_back(vertex);
+        vertex.z = 1.0f;
+        vertices.push_back(vertex);
+    }
+    Vertex_Chunk chunk = Vertex_Chunk(Vertex_Chunk::V, vertices.size());
+    chunk.vertexData(vertices);
+    return chunk;
+}
 
 void BackgroundRenderer::bzdbCallback(const std::string& name, void* data)
 {
@@ -673,6 +694,7 @@ void BackgroundRenderer::renderGroundEffects(SceneRenderer& renderer,
         {
             if (BZDBCache::tesselation && (renderer.useQuality() >= 3))
             {
+                SHADER.setModel(SHADER.ModelAdvRecv);
 //    (BZDB.get(StateDatabase::BZDB_FOGMODE) == "none")) {
                 // not really tesselation, but it is tied to the "Best" lighting,
                 // avoid on foggy maps, because the blending function accumulates
@@ -680,7 +702,11 @@ void BackgroundRenderer::renderGroundEffects(SceneRenderer& renderer,
                 drawAdvancedGroundReceivers(renderer);
             }
             else
+            {
+                SHADER.setModel(SHADER.ModelNormRecv);
                 drawGroundReceivers(renderer);
+            }
+            SHADER.setModel(SHADER.ModelFixedPipe);
         }
 
         if (renderer.useQuality() > 1)
@@ -905,30 +931,6 @@ void BackgroundRenderer::prepareSkyBoxVBO()
     backVBO.colorData(colors);
     backVBO.vertexData(vertices);
     backVBO.textureData(txcds);
-}
-
-
-static void glVertex2fv(const glm::vec2 &p)
-{
-    ::glVertex2f(p.x, p.y);
-}
-
-
-static void glColor3fv(const glm::vec3 &c)
-{
-    ::glColor3f(c.r, c.g, c.b);
-}
-
-
-static void glColor4fv(const glm::vec4 &c)
-{
-    ::glColor4f(c.r, c.g, c.b, c.a);
-}
-
-
-static void glTexCoord2fv(const glm::vec2 &t)
-{
-    ::glTexCoord2f(t.s, t.t);
 }
 
 
@@ -1175,19 +1177,34 @@ void BackgroundRenderer::drawGroundCentered()
     const float maxDist = +groundSize - centerSize;
     center = glm::clamp(center, minDist, maxDist);
 
-    const glm::vec2 vertices[8] =
-    {
-        { -groundSize, -groundSize },
-        { +groundSize, -groundSize },
-        { +groundSize, +groundSize },
-        { -groundSize, +groundSize },
-        { center[0] - centerSize, center[1] - centerSize },
-        { center[0] + centerSize, center[1] - centerSize },
-        { center[0] + centerSize, center[1] + centerSize },
-        { center[0] - centerSize, center[1] + centerSize }
-    };
+    SHADER.setModel(SHADER.ModelGrCenter);
+    SHADER.setCenter(center);
+    SHADER.setGroundSize(groundSize);
 
     const float repeat = BZDB.eval("groundHighResTexRepeat");
+    SHADER.setRepeat(repeat);
+
+    centeredGroundChunk.draw(GL_TRIANGLE_STRIP);
+    SHADER.setModel(SHADER.ModelFixedPipe);
+
+    return;
+}
+
+
+Vertex_Chunk BackgroundRenderer::buildGroundCentered()
+{
+    const glm::vec2 vertices[8] =
+    {
+        { -2.0f, -2.0f },
+        { +2.0f, -2.0f },
+        { +2.0f, +2.0f },
+        { -2.0f, +2.0f },
+        { -1.0f, -1.0f },
+        { +1.0f, -1.0f },
+        { +1.0f, +1.0f },
+        { -1.0f, +1.0f }
+    };
+
     const int indices[5][4] =
     {
         { 4, 5, 7, 6 },
@@ -1197,22 +1214,31 @@ void BackgroundRenderer::drawGroundCentered()
         { 3, 0, 7, 4 },
     };
 
-    glNormal3f(0.0f, 0.0f, 1.0f);
-    {
-        for (int q = 0; q < 5; q++)
-        {
-            glBegin(GL_TRIANGLE_STRIP);
-            for (int c = 0; c < 4; c++)
-            {
-                const int index = indices[q][c];
-                glTexCoord2fv(vertices[index] * repeat);
-                glVertex2fv(vertices[index]);
-            }
-            glEnd();
-        }
-    }
+    std::vector<glm::vec3> v;
 
-    return;
+    glm::vec3 vertex;
+    int q = 0;
+    while (1)
+    {
+        int index;
+        for (int c = 0; c < 4; c++)
+        {
+            index = indices[q][c];
+            vertex = glm::vec3(vertices[index], 0);
+            v.push_back(vertex);
+        }
+        q++;
+        if (q >= 5)
+            break;
+        // Degenerate triangles
+        v.push_back(vertex);
+        index = indices[q][0];
+        vertex = glm::vec3(vertices[index], 0);
+        v.push_back(vertex);
+    }
+    Vertex_Chunk chunk = Vertex_Chunk(Vertex_Chunk::V, v.size());
+    chunk.vertexData(v);
+    return chunk;
 }
 
 
@@ -1341,19 +1367,6 @@ void BackgroundRenderer::drawGroundReceivers(SceneRenderer& renderer)
     static const int receiverRings = 4;
     static const int receiverSlices = 8;
     static const float receiverRingSize = 1.2f;   // meters
-    static glm::vec2 angle[receiverSlices + 1];
-
-    static bool init = false;
-    if (!init)
-    {
-        init = true;
-        const float receiverSliceAngle = (float)(2.0 * M_PI / double(receiverSlices));
-        for (int i = 0; i <= receiverSlices; i++)
-        {
-            angle[i][0] = cosf((float)i * receiverSliceAngle);
-            angle[i][1] = sinf((float)i * receiverSliceAngle);
-        }
-    }
 
     const int count = renderer.getNumAllLights();
     if (count == 0)
@@ -1368,8 +1381,7 @@ void BackgroundRenderer::drawGroundReceivers(SceneRenderer& renderer)
     glm::vec4 fogColor;
     setupBlackFog(fogColor);
 
-    glPushMatrix();
-    int i, j;
+    int i;
     for (int k = 0; k < count; k++)
     {
         const OpenGLLight& light = renderer.getLight(k);
@@ -1392,25 +1404,22 @@ void BackgroundRenderer::drawGroundReceivers(SceneRenderer& renderer)
             continue;
 
         // move to the light's position
-        glTranslatef(pos[0], pos[1], 0.0f);
+        auto center = glm::make_vec2(pos);
+        SHADER.setCenter(center);
 
         // set the main lighting color
         glm::vec4 color;
         color[0] = lightColor[0];
         color[1] = lightColor[1];
         color[2] = lightColor[2];
+        glColor4f(lightColor[0], lightColor[1], lightColor[2], 1.0f);
 
         GLfloat outerSize = 0.0f;
         float outerAlpha  = I;
 
-        glm::vec2 vertexList[receiverSlices + 1];
-
-        for (j = 0; j <= receiverSlices; j++)
-            vertexList[j] = glm::vec2(0.0f);
-
-        glBegin(GL_TRIANGLE_STRIP);
         for (i = 1; i <= receiverRings; i++)
         {
+            float innerSize = outerSize;
             outerSize = receiverRingSize * GLfloat(i * i);
 
             // compute inner and outer lit colors
@@ -1426,30 +1435,15 @@ void BackgroundRenderer::drawGroundReceivers(SceneRenderer& renderer)
             }
             outerAlpha = I;
 
-            for (j = 0; j < receiverSlices; j++)
-            {
-                color[3] = innerAlpha;
-                glColor4fv(color);
-                glVertex2fv(vertexList[j]);
-                vertexList[j] = angle[j] * outerSize;
-                color[3] = outerAlpha;
-                glColor4fv(color);
-                glVertex2fv(vertexList[j]);
-            }
-            color[3] = innerAlpha;
-            glColor4fv(color);
-            glVertex2fv(vertexList[receiverSlices]);
-            vertexList[receiverSlices] = vertexList[0];
-            color[3] = outerAlpha;
-            glColor4fv(color);
-            glVertex2fv(vertexList[0]);
+            SHADER.setCrown(
+                innerSize,
+                outerSize,
+                glm::vec3(innerAlpha),
+                glm::vec3(outerAlpha));
+            groundReceiver8Chunk.draw(GL_TRIANGLE_STRIP);
         }
-        glEnd();
         triangleCount += (receiverSlices + 1) * receiverRings * 2 - 2;
-
-        glTranslatef(-pos[0], -pos[1], 0.0f);
     }
-    glPopMatrix();
 
     OpenGLCommon::setFogColor(fogColor);
 }
@@ -1460,19 +1454,6 @@ void BackgroundRenderer::drawAdvancedGroundReceivers(SceneRenderer& renderer)
     const float minLuminance = 0.02f;
     static const int receiverSlices = 32;
     static const float receiverRingSize = 0.5f;   // meters
-    static glm::vec2 angle[receiverSlices + 1];
-
-    static bool init = false;
-    if (!init)
-    {
-        init = true;
-        const float receiverSliceAngle = (float)(2.0 * M_PI / double(receiverSlices));
-        for (int i = 0; i <= receiverSlices; i++)
-        {
-            angle[i][0] = cosf((float)i * receiverSliceAngle);
-            angle[i][1] = sinf((float)i * receiverSliceAngle);
-        }
-    }
 
     const int count = renderer.getNumAllLights();
     if (count == 0)
@@ -1506,16 +1487,13 @@ void BackgroundRenderer::drawAdvancedGroundReceivers(SceneRenderer& renderer)
     if (useTexture)
     {
         const float repeat = BZDB.eval("groundHighResTexRepeat");
-        const auto sPlane = glm::vec4(repeat, 0.0f, 0.0f, 0.0f);
-        const auto tPlane = glm::vec4(0.0f, repeat, 0.0f, 0.0f);
-        OpenGLCommon::setEyePlanes(sPlane, tPlane);
-        glEnable(GL_TEXTURE_GEN_S);
-        glEnable(GL_TEXTURE_GEN_T);
+        SHADER.setRepeat(repeat);
     }
+    else
+        SHADER.setRepeat(0.0f);
 
     const auto black = glm::vec3(0.0f);
-    glPushMatrix();
-    int i, j;
+    int i;
     for (int k = 0; k < count; k++)
     {
         const OpenGLLight& light = renderer.getLight(k);
@@ -1544,17 +1522,11 @@ void BackgroundRenderer::drawAdvancedGroundReceivers(SceneRenderer& renderer)
             continue;
 
         // move to the light's position
-        glTranslatef(pos[0], pos[1], 0.0f);
+        auto center = glm::make_vec2(pos);
+        SHADER.setCenter(center);
 
         float outerSize = 0.0f;
         auto outerColor = I * baseColor;
-
-        glm::vec2 vertexList[receiverSlices + 1];
-
-        for (j = 0; j <= receiverSlices; j++)
-            vertexList[j] = glm::vec2(0.0f);
-
-        glBegin(GL_TRIANGLE_STRIP);
 
         bool moreRings = true;
         for (i = 1; moreRings; i++)
@@ -1563,39 +1535,22 @@ void BackgroundRenderer::drawAdvancedGroundReceivers(SceneRenderer& renderer)
             const auto innerColor = outerColor;
 
             // outer ring
+            float innerSize = outerSize;
             outerSize = receiverRingSize * GLfloat(i * i);
             d = hypotf(outerSize, pos[2]);
             I = 1.0f / (atten[0] + d * (atten[1] + d * atten[2]));
             I *= pos[2] / d; // diffuse angle factor
             moreRings = (I * maxVal) >= minLuminance;
             outerColor = moreRings ? I * baseColor : black;
-
-            for (j = 0; j < receiverSlices; j++)
-            {
-                glColor3fv(innerColor);
-                glVertex2fv(vertexList[j]);
-                vertexList[j] = angle[j] * outerSize;
-                glColor3fv(outerColor);
-                glVertex2fv(vertexList[j]);
-            }
-            glColor3fv(innerColor);
-            glVertex2fv(vertexList[receiverSlices]);
-            vertexList[receiverSlices] = vertexList[0];
-            glColor3fv(outerColor);
-            glVertex2fv(vertexList[0]);
+            SHADER.setCrown(
+                innerSize,
+                outerSize,
+                innerColor,
+                outerColor);
+            groundReceiver32Chunk.draw(GL_TRIANGLE_STRIP);
         }
 
-        glEnd();
         triangleCount += (receiverSlices + 1) * i * 2 - 2;
-
-        glTranslatef(-pos[0], -pos[1], 0.0f);
-    }
-    glPopMatrix();
-
-    if (useTexture)
-    {
-        glDisable(GL_TEXTURE_GEN_S);
-        glDisable(GL_TEXTURE_GEN_T);
     }
 
     OpenGLCommon::setFogColor(fogColor);

@@ -26,7 +26,6 @@ namespace OpenGLCommon
 {
 void getFogColor(glm::vec4 &fogColor);
 void setFogColor(const glm::vec4 &fogColor);
-void setEyePlanes(const glm::vec4 &sPlane, const glm::vec4 &tPlane);
 void getViewPort(glm::ivec4 &viewport);
 void ClipPlane(int id, glm::vec4 plane);
 void Ortho(float left, float right, float bottom, float top, float nearVal, float farVal);
