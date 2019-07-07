@@ -24,6 +24,7 @@
 #include "BZDBCache.h"
 #include "OpenGLCommon.h"
 #include "VBO_Drawing.h"
+#include "HUDShader.h"
 
 /* local implementation headers */
 #include "LocalPlayer.h"
@@ -1340,10 +1341,10 @@ void HUDRenderer::drawWaypointMarker(const EnhancedHUDMarker &marker,
         hudColor3Afv( color, 0.45f );
         float textOffset = 5.0f;
         float width = FontManager::instance().getStrLength(headingFontFace, headingFontSize, marker.name);
-        glEnable(GL_TEXTURE_2D);
+        HUDSHADER.setTexturing(true);
         FontManager::instance().drawString(-width * 0.5f, textOffset + triangleSize,
                                            0, headingFontFace, headingFontSize, marker.name);
-        glDisable(GL_TEXTURE_2D);
+        HUDSHADER.setTexturing(false);
     }
 
     glPopMatrix();
@@ -1386,10 +1387,10 @@ void HUDRenderer::drawLockonMarker(const EnhancedHUDMarker &marker,
         hudColor3Afv( color, 0.45f );
         float textOffset = 5.0f;
         float width = FontManager::instance().getStrLength(headingFontFace, headingFontSize, marker.name);
-        glEnable(GL_TEXTURE_2D);
+        HUDSHADER.setTexturing(true);
         FontManager::instance().drawString(-width * 0.5f, textOffset + lockonSize,
                                            0, headingFontFace, headingFontSize, marker.name);
-        glDisable(GL_TEXTURE_2D);
+        HUDSHADER.setTexturing(false);
     }
 
     glPopMatrix();
@@ -1722,11 +1723,11 @@ void            HUDRenderer::renderPlaying(SceneRenderer& renderer)
 
     if (!BZDB.isTrue("_forbidMarkers") && experimental)
     {
-        glDisable(GL_TEXTURE_2D);
+        HUDSHADER.setTexturing(false);
 
         drawMarkersInView(centerx,centery,myTank);
 
-        glEnable(GL_TEXTURE_2D);
+        HUDSHADER.setTexturing(true);
     }
 
 
@@ -1964,6 +1965,7 @@ void            HUDRenderer::renderShots(const Player* target)
     // sort the reload values
     qsort(factors, maxShots, sizeof(float), compare_float);
 
+    HUDSHADER.setTexturing(false);
     // draw the reload values
     glEnable(GL_BLEND);
     glPushMatrix();
@@ -1998,6 +2000,7 @@ void            HUDRenderer::renderShots(const Player* target)
     }
     glPopMatrix();
     glDisable(GL_BLEND);
+    HUDSHADER.setTexturing(true);
 
     delete[] factors;
 }

@@ -278,6 +278,7 @@
     </ClCompile>
     <ClCompile Include="..\..\src\ogl\RadarShader.cxx" />
     <ClCompile Include="..\..\src\ogl\Shader.cxx" />
+    <ClCompile Include="..\..\src\ogl\HUDShader.cxx" />
     <ClCompile Include="..\..\src\ogl\Vertex_Chunk.cxx" />
     <ClCompile Include="..\..\src\ogl\VBO_Element.cxx" />
     <ClCompile Include="..\..\src\ogl\VBO_Handler.cxx" />
@@ -296,6 +297,7 @@
     <ClInclude Include="..\..\include\RadarShader.h" />
     <ClInclude Include="..\..\include\RenderNode.h" />
     <ClInclude Include="..\..\include\Shader.h" />
+    <ClInclude Include="..\..\include\HUDShader.h" />
     <ClInclude Include="..\..\include\Vertex_Chunk.h" />
     <ClInclude Include="..\..\src\ogl\VBO_Element.h" />
     <ClInclude Include="..\..\src\ogl\VBO_Handler.h" />

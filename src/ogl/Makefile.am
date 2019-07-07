@@ -25,6 +25,7 @@ libGLKit_la_SOURCES =			\
 	RadarShader.cxx			\
 	RenderNode.cxx			\
 	Shader.cxx			\
+	HUDShader.cxx			\
 	Vertex_Chunk.cxx                \
 	VBO_Element.h			\
 	VBO_Element.cxx                 \
