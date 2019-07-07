@@ -29,6 +29,7 @@
 #include "TimeKeeper.h"
 #include "TextUtils.h"
 #include "VBO_Drawing.h"
+#include "HUDShader.h"
 
 // Local implementation headers
 #include "ImageFont.h"
@@ -352,7 +353,7 @@ void FontManager::drawString(float x, float y, float z, int faceID, float size,
             pFont->drawString(scale, color, &tmpText[startSend], len);
             if (underline)
             {
-                glDisable(GL_TEXTURE_2D);
+                HUDSHADER.setTexturing(false);
                 glEnable(GL_BLEND);
                 if (bright && underlineColor[0] >= 0)
                     glColor4f(underlineColor[0],
@@ -370,7 +371,7 @@ void FontManager::drawString(float x, float y, float z, int faceID, float size,
                 // with respect to the string just drawn
                 glScalef(width, 0.0f, 0.0f);
                 DRAWER.asimmetricLineX();
-                glEnable(GL_TEXTURE_2D);
+                HUDSHADER.setTexturing(true);
             }
             glDepthMask(depthMask);
             glPopMatrix();
