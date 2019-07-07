@@ -3,6 +3,8 @@ SUBDIRS = l10n fonts
 validate:
 	glslangValidator playing.vert
 	glslangValidator playing.frag
+	glslangValidator HUD.vert
+	glslangValidator HUD.frag
 
 dist_pkgdata_DATA =		\
 	automatic_icon.png	\
@@ -45,6 +47,8 @@ dist_pkgdata_DATA =		\
 	green_laser.png		\
 	green_super_bolt.png	\
 	green_tank.png		\
+	HUD.frag		\
+	HUD.vert		\
 	hunt.wav		\
 	hunt_select.wav		\
 	hunter_bolt.png		\

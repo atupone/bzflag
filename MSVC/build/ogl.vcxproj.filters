@@ -29,6 +29,7 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\ogl\PlayingShader.cxx">
+    <ClCompile Include="..\..\src\ogl\HUDShader.cxx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\ogl\Vertex_Chunk.cxx">
@@ -79,6 +80,7 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\PlayingShader.h">
+    <ClInclude Include="..\..\include\HUDShader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\Vertex_Chunk.h">

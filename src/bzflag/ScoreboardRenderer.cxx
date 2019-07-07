@@ -27,6 +27,7 @@
 #include "OpenGLAPI.h"
 #include "VBO_Drawing.h"
 #include "PlayingShader.h"
+#include "HUDShader.h"
 
 /* local implementation headers */
 #include "LocalPlayer.h"
@@ -639,7 +640,7 @@ void ScoreboardRenderer::drawRoamTarget(float _x0, float _y0,
     glPushAttrib(GL_ALL_ATTRIB_BITS);
     glDisable(GL_BLEND);
     SHADER.setLighting(false);
-    glDisable(GL_TEXTURE_2D);
+    bool oldTexturing = HUDSHADER.setTexturing(false);
     glColor(c0);
     glPushMatrix();
     glTranslatef(x0, y1, 0.0f);
@@ -652,6 +653,7 @@ void ScoreboardRenderer::drawRoamTarget(float _x0, float _y0,
     glScalef(x1 - x0, 1.0f, 1.0f);
     DRAWER.asimmetricLineX();
     glPopMatrix();
+    HUDSHADER.setTexturing(oldTexturing);
     glPopAttrib();
 }
 

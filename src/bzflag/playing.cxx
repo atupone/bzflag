@@ -65,6 +65,7 @@
 #include "ZSceneDatabase.h"
 #include "VBO_Drawing.h"
 #include "PlayingShader.h"
+#include "HUDShader.h"
 
 // local implementation headers
 #include "AutoPilot.h"
@@ -5750,6 +5751,8 @@ static void drawUI()
         hud->setFrameRadarTriangleCount(0);
     }
 
+    HUDSHADER.push();
+
     // update the HUD (player list, alerts)
     if (World::getWorld() && hud)
         hud->render(*sceneRenderer);
@@ -5757,6 +5760,8 @@ static void drawUI()
     // draw the control panel
     if (controlPanel)
         controlPanel->render(*sceneRenderer);
+
+    HUDSHADER.pop();
 
     // draw the radar
     if (radar)
@@ -5766,8 +5771,12 @@ static void drawUI()
         radar->render(*sceneRenderer, showBlankRadar, observer);
     }
 
+    HUDSHADER.push();
+
     // update the HUD (menus)
     renderDialog();
+
+    HUDSHADER.pop();
 
     // render the drag-line
     renderRoamMouse();
@@ -7452,9 +7461,13 @@ static void     defaultErrorCallback(const char* msg)
 static void     startupErrorCallback(const char* msg)
 {
     controlPanel->addMessage(msg);
+
+    HUDSHADER.push();
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT);
     controlPanel->render(*sceneRenderer);
+    HUDSHADER.pop();
+
     mainWindow->getWindow()->swapBuffers();
 }
 
@@ -7547,7 +7560,11 @@ void            startPlaying(BzfDisplay* _display,
     glEnable(GL_SCISSOR_TEST);
     controlPanel->resize();
     sceneRenderer->render();
+
+    HUDSHADER.push();
+    HUDSHADER.setTexturing(true);
     controlPanel->render(*sceneRenderer);
+    HUDSHADER.pop();
     mainWindow->getWindow()->swapBuffers();
 
     // startup error callback adds message to control panel and
@@ -7635,7 +7652,10 @@ void            startPlaying(BzfDisplay* _display,
     // draw again
     glClear(GL_COLOR_BUFFER_BIT);
     sceneRenderer->render();
+
+    HUDSHADER.push();
     controlPanel->render(*sceneRenderer);
+    HUDSHADER.pop();
     mainWindow->getWindow()->swapBuffers();
     mainWindow->getWindow()->yieldCurrent();
 

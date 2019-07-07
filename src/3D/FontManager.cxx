@@ -31,6 +31,7 @@
 #include "OpenGLAPI.h"
 #include "VBO_Drawing.h"
 #include "PlayingShader.h"
+#include "HUDShader.h"
 
 // Local implementation headers
 #include "ImageFont.h"
@@ -334,6 +335,7 @@ void FontManager::drawString(float x, float y, float z, int faceID, float size,
             if (underline)
             {
                 SHADER.setTexturing(false);
+                HUDSHADER.setTexturing(false);
                 glEnable(GL_BLEND);
                 if (underlineColor[0] >= 0)
                 {
@@ -349,6 +351,7 @@ void FontManager::drawString(float x, float y, float z, int faceID, float size,
                 glScalef(width, 0.0f, 0.0f);
                 DRAWER.asimmetricLineX();
                 SHADER.setTexturing(true);
+                HUDSHADER.setTexturing(true);
             }
             glDepthMask(depthMask);
             glPopMatrix();

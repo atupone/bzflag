@@ -32,6 +32,7 @@
 #endif
 #include "OpenGLAPI.h"
 #include "VBO_Drawing.h"
+#include "HUDShader.h"
 
 /* local implementation headers */
 #include "SceneRenderer.h"
@@ -361,6 +362,7 @@ void            ControlPanel::render(SceneRenderer& _renderer)
         GLint y2 = y1 + messageAreaPixels[3];
         // clear the background
         glColor4f(0.0f, 0.0f, 0.0f, _renderer.getPanelOpacity());
+        HUDSHADER.setTexturing(false);
         // clear an extra pixel column to simplify fuzzy float stuff later
         glPushMatrix();
         glTranslatef((float)(x1 - 1), (float)y1, 0.0f);
@@ -368,6 +370,7 @@ void            ControlPanel::render(SceneRenderer& _renderer)
         DRAWER.asimmetricRect();
         glPopMatrix();
 
+        HUDSHADER.setTexturing(true);
         // display tabs for chat sections
         if (showTabs)
         {
