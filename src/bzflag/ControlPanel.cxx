@@ -356,7 +356,7 @@ void            ControlPanel::render(SceneRenderer& _renderer)
     if (_renderer.getPanelOpacity() > 0.0f)
     {
         // nice blended messages background
-        if (BZDBCache::blend && _renderer.getPanelOpacity() < 1.0f)
+        if (_renderer.getPanelOpacity() < 1.0f)
             glEnable(GL_BLEND);
 
         GLint x1 = messageAreaPixels[0];
@@ -391,7 +391,7 @@ void            ControlPanel::render(SceneRenderer& _renderer)
             } // end iteration over tabs
         }
 
-        if (BZDBCache::blend && _renderer.getPanelOpacity() < 1.0f)
+        if (_renderer.getPanelOpacity() < 1.0f)
             glDisable(GL_BLEND);
     }
 
@@ -579,8 +579,7 @@ void            ControlPanel::render(SceneRenderer& _renderer)
     if ( outlineOpacity < 1.0f )
         outlineOpacity = (outlineOpacity*fudgeFactor) + (1.0f - fudgeFactor);
 
-    if (BZDBCache::blend)
-        glEnable(GL_BLEND);
+    glEnable(GL_BLEND);
 
     // nice border
     glColor4f(teamColor[0], teamColor[1], teamColor[2],outlineOpacity );
@@ -640,8 +639,7 @@ void            ControlPanel::render(SceneRenderer& _renderer)
     }
     glEnd();
 
-    if (BZDBCache::blend)
-        glDisable(GL_BLEND);
+    glDisable(GL_BLEND);
 
     glColor4f(teamColor[0], teamColor[1], teamColor[2],1.0f );
 
