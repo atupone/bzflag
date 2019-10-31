@@ -803,7 +803,7 @@ void SceneRenderer::render(bool _lastFrame, bool _sameFrame,
             extent = BZDBCache::worldSize * 10.0f;
         }
         // if low quality then use stipple -- it's probably much faster
-        if (BZDBCache::blend && (useQualityValue >= 1))
+        if (useQualityValue >= 1)
         {
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             glEnable(GL_BLEND);
@@ -817,7 +817,7 @@ void SceneRenderer::render(bool _lastFrame, bool _sameFrame,
             glEnable(GL_POLYGON_STIPPLE);
         }
         glRectf(-extent, -extent, +extent, +extent);
-        if (BZDBCache::blend && (useQualityValue >= 1))
+        if (useQualityValue >= 1)
             glDisable(GL_BLEND);
         else
             glDisable(GL_POLYGON_STIPPLE);
@@ -1153,7 +1153,7 @@ void SceneRenderer::renderDimming()
         glColor4f(color[0], color[1], color[2], density);
 
         // if low quality then use stipple -- it's probably much faster
-        if (BZDBCache::blend && (useQualityValue >= 1))
+        if (useQualityValue >= 1)
             glEnable(GL_BLEND);
         else
         {
@@ -1161,7 +1161,7 @@ void SceneRenderer::renderDimming()
             glEnable(GL_POLYGON_STIPPLE);
         }
         glRectf(-1.0f, -1.0f, +1.0f, +1.0f);
-        if (BZDBCache::blend && (useQualityValue >= 1))
+        if (useQualityValue >= 1)
             glDisable(GL_BLEND);
         else
             glDisable(GL_POLYGON_STIPPLE);
