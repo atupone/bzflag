@@ -321,21 +321,15 @@ void            FlagSceneNode::notifyStyleChange()
     geoPole = (quality >= 1);
     realFlag = (quality >= 3);
 
-    texturing = BZDBCache::texture && BZDBCache::blend;
+    texturing = BZDBCache::texture;
     OpenGLGStateBuilder builder(gstate);
     builder.enableTexture(texturing);
 
     if (transparent)
     {
-        if (BZDBCache::blend)
         {
             builder.setBlending(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             builder.setStipple(1.0f);
-        }
-        else if (transparent)
-        {
-            builder.resetBlending();
-            builder.setStipple(0.5f);
         }
         builder.resetAlphaFunc();
     }
@@ -416,15 +410,11 @@ void            FlagSceneNode::FlagRenderNode::render()
     float poleWidth = BZDBCache::flagPoleWidth;
     const bool doing_texturing = sceneNode->texturing;
     const bool is_billboard = sceneNode->billboard;
-    const bool is_transparent = sceneNode->transparent;
 
     const auto &sphere = getPosition();
     const float topHeight = base + Height;
 
     myColor4fv(sceneNode->color);
-
-    if (!BZDBCache::blend && (is_transparent || doing_texturing))
-        myStipple(sceneNode->color[3]);
 
     glPushMatrix();
     {
@@ -533,9 +523,6 @@ void            FlagSceneNode::FlagRenderNode::render()
             glEnable(GL_TEXTURE_2D);
     }
     glPopMatrix();
-
-    if (!BZDBCache::blend && is_transparent)
-        myStipple(0.5f);
 }
 
 const glm::vec3 &FlagSceneNode::FlagRenderNode::getPosition() const

@@ -159,16 +159,6 @@ DisplayMenu::DisplayMenu() : formatMenu(NULL)
 
     option = new HUDuiList;
     option->setFontFace(fontFace);
-    option->setLabel("Blending:");
-    option->setCallback(callback, "2");
-    options = &option->getList();
-    options->push_back(std::string("Off"));
-    options->push_back(std::string("On"));
-    option->update();
-    listHUD.push_back(option);
-
-    option = new HUDuiList;
-    option->setFontFace(fontFace);
     option->setLabel("Smoothing:");
     option->setCallback(callback, "3");
     options = &option->getList();
@@ -390,7 +380,6 @@ void            DisplayMenu::resize(int _width, int _height)
 
 
         ((HUDuiList*)listHUD[i++])->setIndex(BZDB.isTrue("dither"));
-        ((HUDuiList*)listHUD[i++])->setIndex(BZDB.isTrue("blend"));
         ((HUDuiList*)listHUD[i++])->setIndex(BZDB.isTrue("smooth"));
 
 
@@ -430,10 +419,6 @@ void            DisplayMenu::callback(HUDuiControl* w, const void* data)
     {
     case '1':
         BZDB.set("dither", list->getIndex() ? "1" : "0");
-        sceneRenderer->notifyStyleChange();
-        break;
-    case '2':
-        BZDB.set("blend", list->getIndex() ? "1" : "0");
         sceneRenderer->notifyStyleChange();
         break;
     case '3':
@@ -521,9 +506,13 @@ void            DisplayMenu::callback(HUDuiControl* w, const void* data)
         break;
     }
     case 'g':
+    {
         BzfWindow* window = getMainWindow()->getWindow();
         if (window->hasGammaControl())
             window->setGamma(indexToGamma(list->getIndex()));
+        break;
+    }
+    default:
         break;
     }
 }
