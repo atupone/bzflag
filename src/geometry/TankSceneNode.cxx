@@ -180,7 +180,7 @@ void TankSceneNode::notifyStyleChange()
     builder.enableTexture(BZDBCache::texture);
     builder.enableMaterial(BZDBCache::lighting);
     builder.setSmoothing(BZDBCache::smooth);
-    if (BZDBCache::blend && transparent)
+    if (transparent)
     {
         builder.setBlending(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         builder.setStipple(1.0f);
@@ -589,15 +589,9 @@ void TankIDLSceneNode::move(const glm::vec4 &_plane)
 void TankIDLSceneNode::notifyStyleChange()
 {
     OpenGLGStateBuilder builder(gstate);
-    if (BZDBCache::blend)
     {
         builder.setBlending(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         builder.setStipple(1.0f);
-    }
-    else
-    {
-        builder.resetBlending();
-        builder.setStipple(0.5f);
     }
     gstate = builder.getState();
     return;
@@ -912,9 +906,6 @@ void TankSceneNode::TankRenderNode::render()
     color = &sceneNode->color;
     alpha = sceneNode->color[3];
 
-    if (!BZDBCache::blend && sceneNode->transparent)
-        myStipple(alpha);
-
     if (sceneNode->clip && !isShadow)
     {
         glClipPlane(GL_CLIP_PLANE1, sceneNode->clipPlane);
@@ -1023,8 +1014,6 @@ void TankSceneNode::TankRenderNode::render()
     //      pass light position in world space.
 
     glShadeModel(GL_FLAT);
-    if (!BZDBCache::blend && sceneNode->transparent)
-        myStipple(0.5f);
     if (sceneNode->clip)
         glDisable(GL_CLIP_PLANE1);
 
