@@ -85,16 +85,9 @@ void SphereSceneNode::notifyStyleChange()
     OpenGLGStateBuilder builder(gstate);
     if (transparent)
     {
-        if (BZDBCache::blend)
         {
             builder.setBlending(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             builder.setStipple(1.0f);
-            builder.setNeedsSorting(true);
-        }
-        else
-        {
-            builder.resetBlending();
-            builder.setStipple(0.5f);
             builder.setNeedsSorting(true);
         }
     }
@@ -367,7 +360,6 @@ void SphereLodSceneNode::SphereLodRenderNode::render()
 #endif
 
     const bool transparent = sceneNode->transparent;
-    const bool stippled = transparent && !BZDBCache::blend;
 
     const GLuint list = SphereLodSceneNode::lodLists[lod];
 
@@ -381,10 +373,9 @@ void SphereLodSceneNode::SphereLodRenderNode::render()
         {
             if (transparent)
             {
-                if (BZDBCache::blend)
+                {
                     glDisable(GL_BLEND);
-                else
-                    myStipple(1.0f);
+                }
             }
             glDisable(GL_LIGHTING);
 
@@ -410,19 +401,15 @@ void SphereLodSceneNode::SphereLodRenderNode::render()
 
             if (transparent)
             {
-                if (BZDBCache::blend)
+                {
                     glEnable(GL_BLEND);
-                else
-                    myStipple(0.5f);
+                }
             }
             glEnable(GL_LIGHTING);
         }
 
         // draw the surface
         myColor4fv(sceneNode->color);
-        if (stippled)
-            myStipple(sceneNode->color[3]);
-        if (!stippled)
         {
             glCullFace(GL_FRONT);
             glCallList(list);
@@ -441,8 +428,6 @@ void SphereLodSceneNode::SphereLodRenderNode::render()
             glEnable(GL_LIGHTING);
             addTriangleCount(2);
         }
-        if (stippled)
-            myStipple(0.5f);
     }
     glPopMatrix();
 
@@ -519,7 +504,6 @@ void            SphereBspSceneNode::addRenderNodes(
 
     renderNode.setHighResolution(lod != 0);
 
-    if (BZDBCache::blend)
     {
         const auto &mySphere = getSphere();
         const float azimuth = atan2f(mySphere[1] - eye[1], eye[0] - mySphere[0]);
@@ -626,8 +610,6 @@ void            SphereBspSceneNode::SphereBspRenderNode::render()
     glScalef(radius, radius, radius);
 
     myColor4fv(sceneNode->color);
-    if (!BZDBCache::blend && sceneNode->transparent)
-        myStipple(sceneNode->color[3]);
     if (BZDBCache::lighting)
     {
 #ifdef GL_VERSION_1_2
@@ -732,9 +714,6 @@ void            SphereBspSceneNode::SphereBspRenderNode::render()
         }
     }
 
-    if (!BZDBCache::blend && sceneNode->transparent)
-        myStipple(0.5f);
-
     glPopMatrix();
 
     glDisable(GL_CLIP_PLANE0);
@@ -828,8 +807,6 @@ void            SphereFragmentSceneNode::FragmentRenderNode::render()
         glScalef(pRadius, pRadius, pRadius);
 
         myColor4fv(sceneNode->color);
-        if (!BZDBCache::blend && sceneNode->transparent)
-            myStipple(sceneNode->color[3]);
         glBegin(GL_TRIANGLE_STRIP);
         {
             if (BZDBCache::lighting)
