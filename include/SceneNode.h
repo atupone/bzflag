@@ -79,8 +79,6 @@ public:
     void        setOccluder(bool value);
 
     virtual void    addLight(SceneRenderer&);
-    virtual int     split(const float* plane,
-                          SceneNode*& front, SceneNode*& back) const;
     virtual void    addShadowNodes(SceneRenderer&);
     virtual void    addRenderNodes(SceneRenderer&);
     virtual void    renderRadar();

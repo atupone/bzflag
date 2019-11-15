@@ -40,11 +40,9 @@ public:
                       bool makeLODs);
     ~QuadWallSceneNode();
 
-    int         split(const float*, SceneNode*&, SceneNode*&) const override;
-
-    void        addRenderNodes(SceneRenderer&) override;
-    void        addShadowNodes(SceneRenderer&) override;
-    void        renderRadar() override;
+    void        addRenderNodes(SceneRenderer&);
+    void        addShadowNodes(SceneRenderer&);
+    void        renderRadar();
 
 
     bool        inAxisBox (const Extents& exts) const override;

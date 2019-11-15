@@ -28,11 +28,9 @@ public:
                       const GLfloat2Array& uvs);
     ~PolyWallSceneNode();
 
-    int         split(const float*, SceneNode*&, SceneNode*&) const override;
-
-    void        addRenderNodes(SceneRenderer&) override;
-    void        addShadowNodes(SceneRenderer&) override;
-    void        renderRadar() override;
+    void        addRenderNodes(SceneRenderer&);
+    void        addShadowNodes(SceneRenderer&);
+    void        renderRadar();
 
     void        getRenderNodes(std::vector<RenderSet>& rnodes) override;
 
