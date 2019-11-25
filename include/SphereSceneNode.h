@@ -27,40 +27,13 @@ class SphereSceneNode : public SceneNode
 {
 public:
     SphereSceneNode(const GLfloat pos[3], GLfloat radius);
-    virtual ~SphereSceneNode();
+
+    void setShockWave(bool value);
 
     void setColor(GLfloat r, GLfloat g, GLfloat b, GLfloat a = 1.0f);
     void setColor(const GLfloat* rgba);
     void move(const GLfloat pos[3], GLfloat radius);
     void notifyStyleChange() override final;
-
-    virtual void setShockWave(bool)
-    {
-        return;
-    };
-
-    virtual void addRenderNodes(SceneRenderer&) = 0;
-    virtual void addShadowNodes(SceneRenderer&) = 0;
-
-protected:
-    GLfloat     radius;
-    GLfloat     color[4];
-    bool        transparent;
-    OpenGLGState    gstate;
-};
-
-
-/******************************************************************************/
-
-const int sphereLods = 5;
-
-class SphereLodSceneNode final : public SphereSceneNode
-{
-public:
-    SphereLodSceneNode(const GLfloat pos[3], GLfloat radius);
-    ~SphereLodSceneNode();
-
-    void setShockWave(bool value) override;
 
     void addRenderNodes(SceneRenderer&);
     void addShadowNodes(SceneRenderer&);
@@ -75,83 +48,36 @@ protected:
     {
         friend class SphereLodSceneNode;
     public:
-        SphereLodRenderNode(const SphereLodSceneNode*);
+        SphereLodRenderNode(const SphereSceneNode*);
         ~SphereLodRenderNode();
         void setLod(int lod);
         void render() override;
         const GLfloat* getPosition() const override;
 
     private:
-        const SphereLodSceneNode* sceneNode;
+        const SphereSceneNode* sceneNode;
         int lod;
     };
 
-private:
+    GLfloat     radius;
+    GLfloat     color[4];
+    bool        transparent;
+    OpenGLGState    gstate;
     SphereLodRenderNode renderNode;
     bool shockWave;
     bool inside;
 
     static bool initialized;
+    static const int sphereLods = 5;
     static GLuint lodLists[sphereLods];
     static float lodPixelsSqr[sphereLods];
     static int listTriangleCount[sphereLods];
 
-    friend class SphereLodSceneNode::SphereLodRenderNode;
+    friend class SphereSceneNode::SphereLodRenderNode;
 };
 
 
-/******************************************************************************/
-
-const int       SphereRes = 8;
-const int       SphereLowRes = 6;
-
-class SphereBspSceneNode : public SphereSceneNode
-{
-public:
-    SphereBspSceneNode(const GLfloat pos[3], GLfloat radius);
-    ~SphereBspSceneNode();
-
-    void        addRenderNodes(SceneRenderer&) override;
-    void        addShadowNodes(SceneRenderer&) override;
-
-protected:
-    GLfloat     getRadius() const
-    {
-        return radius;
-    }
-
-private:
-    void        freeParts();
-
-protected:
-    class SphereBspRenderNode final : public RenderNode
-    {
-        friend class SphereBspSceneNode;
-    public:
-        SphereBspRenderNode(const SphereBspSceneNode*);
-        ~SphereBspRenderNode();
-        void        setHighResolution(bool);
-        void        setBaseIndex(int index);
-        void        render() override;
-        const GLfloat* getPosition() const override;
-    private:
-        const SphereBspSceneNode* sceneNode;
-        bool        highResolution;
-        int     baseIndex;
-        static GLfloat  geom[2 * SphereRes * (SphereRes + 1)][3];
-        static GLfloat  lgeom[SphereLowRes * (SphereLowRes + 1)][3];
-    };
-    friend class SphereBspRenderNode;
-
-private:
-    SphereBspRenderNode renderNode;
-};
-
-
-/******************************************************************************/
-
-
-#endif // BZF_SPHERE_SCENE_NODE_H
+#endif // BZF_FLAG_SCENE_NODE_H
 
 // Local Variables: ***
 // mode: C++ ***
