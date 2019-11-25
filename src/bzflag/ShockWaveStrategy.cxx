@@ -24,6 +24,7 @@
 
 ShockWaveStrategy::ShockWaveStrategy(ShotPath *_path) :
     ShotStrategy(_path),
+    shockNode(new SphereSceneNode(_path->getPosition(), radius)),
     radius(BZDB.eval(StateDatabase::BZDB_SHOCKINRADIUS)),
     radius2(radius * radius)
 {
@@ -32,14 +33,7 @@ ShockWaveStrategy::ShockWaveStrategy(ShotPath *_path) :
     f.lifetime *= BZDB.eval(StateDatabase::BZDB_SHOCKADLIFE);
 
     // make scene node
-    const float* pos = _path->getPosition();
-    if (RENDERER.useQuality() >= 2)
-    {
-        shockNode = new SphereLodSceneNode(pos, radius);
-        shockNode->setShockWave(true);
-    }
-    else
-        shockNode = new SphereBspSceneNode(pos, radius);
+    shockNode->setShockWave(true);
 
     // get team
     if (_path->getPlayer() == ServerPlayer)
