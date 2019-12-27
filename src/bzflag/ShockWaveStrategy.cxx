@@ -24,9 +24,9 @@
 
 ShockWaveStrategy::ShockWaveStrategy(ShotPath *_path) :
     ShotStrategy(_path),
-    shockNode(new SphereSceneNode(_path->getPosition(), radius)),
     radius(BZDB.eval(StateDatabase::BZDB_SHOCKINRADIUS)),
-    radius2(radius * radius)
+    radius2(radius * radius),
+    shockNode(new SphereSceneNode(_path->getPosition(), radius))
 {
     // setup shot
     FiringInfo& f = getFiringInfo(_path);

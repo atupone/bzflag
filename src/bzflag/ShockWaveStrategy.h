@@ -38,10 +38,10 @@ public:
     void        radarRender() const override;
 
 private:
-    SphereSceneNode*    shockNode;
     float       radius;
     float       radius2;
     TeamColor       team;
+    SphereSceneNode* shockNode;
 };
 
 
