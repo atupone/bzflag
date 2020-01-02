@@ -31,6 +31,7 @@
 
 // System headers
 #include <vector>
+#include <glm/vec3.hpp>
 
 // Common headers
 #include "bzfgl.h"
@@ -69,6 +70,7 @@ public:
     virtual const GLfloat* getVertex (int vertex) const;
     virtual const GLfloat* getPlane() const;
     virtual GLfloat getDistance(const GLfloat* eye) const;
+    virtual GLfloat getDistance(const glm::vec3 &eye) const;
 
     virtual bool    inAxisBox (const Extents& exts) const;
 
