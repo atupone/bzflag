@@ -25,6 +25,7 @@
 
 // System headers
 #include <vector>
+#include <glm/vec3.hpp>
 
 // Global headers
 #include "OpenGLGState.h"
@@ -90,6 +91,7 @@ public:
     void        append(RenderNode*, const OpenGLGState*, float depth);
     void        render() const;
 
+    void        sort(const glm::vec3 &eye);
     void        sort(const GLfloat* eye);
 
 private:
