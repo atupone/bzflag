@@ -160,6 +160,12 @@ void EighthDBaseSceneNode::EighthDBaseRenderNode::render()
     glEnd();
 }
 
+const glm::vec3 EighthDBaseSceneNode::EighthDBaseRenderNode::getPosition() const
+{
+    return sceneNode->getCenter();
+}
+
+
 // Local Variables: ***
 // mode: C++ ***
 // tab-width: 4 ***

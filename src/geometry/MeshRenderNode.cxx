@@ -105,6 +105,12 @@ void OpaqueRenderNode::renderShadow()
 }
 
 
+const glm::vec3 OpaqueRenderNode::getPosition() const
+{
+    return glm::vec3(0.0f);
+}
+
+
 /******************************************************************************/
 
 AlphaGroupRenderNode::AlphaGroupRenderNode(MeshDrawMgr* _drawMgr,
@@ -118,7 +124,7 @@ AlphaGroupRenderNode::AlphaGroupRenderNode(MeshDrawMgr* _drawMgr,
     OpaqueRenderNode(_drawMgr, _xformMatrix, _normalize,
                      _color, _lod, _set, _exts, _triangles)
 {
-    memcpy(pos, _pos, sizeof(GLfloat[3]));
+    pos = glm::make_vec3(_pos);
     return;
 }
 
@@ -127,9 +133,15 @@ const GLfloat* AlphaGroupRenderNode::getPosition() const
     return pos;
 }
 
+const glm::vec3 AlphaGroupRenderNode::getPosition() const
+{
+    return pos;
+}
+
+
 void AlphaGroupRenderNode::setPosition(const GLfloat* _pos)
 {
-    memcpy(pos, _pos, sizeof(GLfloat[3]));
+    pos = glm::make_vec3(_pos);
     return;
 }
 

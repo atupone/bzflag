@@ -63,7 +63,7 @@ protected:
         const GLfloat* getVertex(int i) const;
         const GLfloat (*getVertices() const)[3];
         int getVertexCount() const;
-        const GLfloat* getPosition() const override;
+        const glm::vec3 getPosition() const override;
     private:
         void drawV() const; // draw with just vertices
         void drawVT() const; // draw with texcoords

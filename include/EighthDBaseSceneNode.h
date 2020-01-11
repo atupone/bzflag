@@ -37,8 +37,8 @@ protected:
                               const float pos[3],
                               const float size[3], float rotation);
         ~EighthDBaseRenderNode();
-        void        render() override;
-        const GLfloat* getPosition() const override;
+        void        render();
+        const glm::vec3 getPosition() const override;
     private:
         const EighthDBaseSceneNode *sceneNode;
         GLfloat corner[8][3];

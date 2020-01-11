@@ -51,8 +51,8 @@ protected:
         SphereLodRenderNode(const SphereSceneNode*);
         ~SphereLodRenderNode();
         void setLod(int lod);
-        void render() override;
-        const GLfloat* getPosition() const override;
+        void render();
+        const glm::vec3 getPosition() const override;
 
     private:
         const SphereSceneNode* sceneNode;

@@ -47,8 +47,8 @@ protected:
         {
             style = _style;
         }
-        void        render() override;
-        const GLfloat* getPosition() const override;
+        void        render();
+        const glm::vec3 getPosition() const override;
     private:
         void        drawV() const;
         void        drawVT() const;

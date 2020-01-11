@@ -63,7 +63,7 @@ protected:
         void        render() override;
         void        renderShadow() override;
         const GLfloat*  getVertex(int i) const;
-        const GLfloat* getPosition() const override;
+        const glm::vec3 getPosition() const override;
     private:
         void        drawV() const;
         void        drawVT() const;

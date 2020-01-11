@@ -66,8 +66,8 @@ protected:
         ~BoltRenderNode();
         void        setColor(const GLfloat* rgba);
         void        setTextureColor(const GLfloat* rgba);
-        void        render() override;
-        const GLfloat* getPosition() const override;
+        void        render();
+        const glm::vec3 getPosition() const override;
         void        setAnimation(int cu, int cv);
 
         void        renderGeoBolt();

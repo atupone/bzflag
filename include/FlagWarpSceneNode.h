@@ -41,8 +41,8 @@ protected:
     public:
         FlagWarpRenderNode(const FlagWarpSceneNode*);
         ~FlagWarpRenderNode();
-        void        render() override;
-        const GLfloat* getPosition() const override;
+        void        render();
+        const glm::vec3 getPosition() const override;
     private:
         const FlagWarpSceneNode* sceneNode;
         static float ring[12][2];

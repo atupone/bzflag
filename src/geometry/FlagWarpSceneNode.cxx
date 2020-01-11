@@ -193,6 +193,11 @@ void            FlagWarpSceneNode::FlagWarpRenderNode::render()
     glPopMatrix();
 }
 
+const glm::vec3 FlagWarpSceneNode::FlagWarpRenderNode::getPosition() const
+{
+    return sceneNode->getCenter();
+}
+
 // Local Variables: ***
 // mode: C++ ***
 // tab-width: 4 ***

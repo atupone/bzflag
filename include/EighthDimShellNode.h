@@ -40,9 +40,12 @@ protected:
         ShellRenderNode(RenderNode *renderNode,
                         const OpenGLGState* gstate);
         ~ShellRenderNode();
-        void render() override;
-        void renderShadow() override;
-        const GLfloat* getPosition() const override;
+        void render();
+        void renderShadow()
+        {
+            return;
+        }
+        const glm::vec3 getPosition() const override;
     public:
         const OpenGLGState* getGState() const;
     private:

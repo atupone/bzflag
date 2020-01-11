@@ -16,6 +16,9 @@
 // Inherits from
 #include "RenderNode.h"
 
+// System headers
+#include <glm/vec3.hpp>
+
 // common implementation headers
 #include "bzfgl.h"
 
@@ -31,9 +34,10 @@ public:
                      GLfloat *xformMatrix, bool normalize,
                      const GLfloat* color, int lod, int set,
                      const Extents* exts, int triangles);
-    void render() override final;
-    void renderShadow() override final;
-    const GLfloat* getPosition() const override;
+    void render();
+    void renderRadar();
+    void renderShadow();
+    const glm::vec3 getPosition() const override;
 private:
     void drawV() const;
     void drawVN() const;
@@ -58,10 +62,10 @@ public:
                          const GLfloat* color, int lod, int set,
                          const Extents* exts, const float pos[3],
                          int triangles);
-    const GLfloat* getPosition() const override;
+    const glm::vec3 getPosition() const override;
     void setPosition(const GLfloat* pos);
 private:
-    float pos[3];
+    glm::vec3 pos;
 };
 
 

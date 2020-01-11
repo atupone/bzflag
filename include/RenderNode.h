@@ -41,8 +41,7 @@ public:
     virtual void    render() = 0;
     virtual void    renderShadow();
     virtual void    renderRadar();
-    // Used for sorting objects by distance
-    virtual const GLfloat* getPosition() const = 0;
+    virtual const glm::vec3 getPosition() const = 0;
 
     static int      getTriangleCount();
     static void     resetTriangleCount();
@@ -94,7 +93,6 @@ public:
     void        render() const;
 
     void        sort(const glm::vec3 &eye);
-    void        sort(const GLfloat* eye);
 
 private:
     struct Item
