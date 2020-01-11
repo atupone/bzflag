@@ -14,7 +14,10 @@
 #include "ConeObstacle.h"
 
 // System headers
+#include <cassert>
 #include <math.h>
+#include <glm/vec2.hpp>
+#include <glm/vec3.hpp>
 
 // Common headers
 #include "global.h"

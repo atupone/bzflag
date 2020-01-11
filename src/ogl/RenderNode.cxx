@@ -17,6 +17,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <algorithm>
+#include <glm/vec3.hpp>
 
 //
 // RenderNode

@@ -14,7 +14,10 @@
 #include "ArcObstacle.h"
 
 // System interfaces
+#include <cassert>
 #include <math.h>
+#include <glm/vec2.hpp>
+#include <glm/vec3.hpp>
 
 //Common interfaces
 #include "global.h"
