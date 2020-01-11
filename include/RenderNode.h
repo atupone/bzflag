@@ -26,6 +26,7 @@
 // System headers
 #include <vector>
 #include <glm/vec3.hpp>
+#include <glm/fwd.hpp>
 
 // Global headers
 #include "OpenGLGState.h"
