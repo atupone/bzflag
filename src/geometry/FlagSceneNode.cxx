@@ -527,9 +527,9 @@ void            FlagSceneNode::FlagRenderNode::render()
     glPopMatrix();
 }
 
-const GLfloat*  FlagSceneNode::FlagRenderNode::getPosition() const
+const glm::vec3 FlagSceneNode::FlagRenderNode::getPosition() const
 {
-    return sceneNode->getSphere();
+    return sceneNode->getCenter();
 }
 
 

@@ -10,6 +10,8 @@
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#define GLM_ENABLE_EXPERIMENTAL
+
 // Interface headers
 #include "RenderNode.h"
 
@@ -18,6 +20,7 @@
 #include <string.h>
 #include <algorithm>
 #include <glm/vec3.hpp>
+#include <glm/gtx/norm.hpp>
 
 //
 // RenderNode
@@ -103,36 +106,8 @@ void RenderNodeGStateList::sort(const glm::vec3 &e)
     // calculate distances from the eye (squared)
     for (auto &item : list)
     {
-        const GLfloat* p = item.node->getPosition();
-        const float dx = (p[0] - e[0]);
-        const float dy = (p[1] - e[1]);
-        const float dz = (p[2] - e[2]);
-        item.depth = ((dx * dx) + (dy * dy) + (dz * dz));
-    }
-
-    // sort from farthest to closest
-    // Note: std::sort is guaranteed O(n log n). qsort (std::qsort) has no guarantee
-    std::sort( list.begin(), list.end(),
-               [](Item const& lhs, Item const& rhs)
-    {
-        return lhs.depth > rhs.depth;
-    }
-             );
-
-    return;
-}
-
-
-void RenderNodeGStateList::sort(const GLfloat* e)
-{
-    // calculate distances from the eye (squared)
-    for (auto &item : list)
-    {
-        const GLfloat* p = item.node->getPosition();
-        const float dx = (p[0] - e[0]);
-        const float dy = (p[1] - e[1]);
-        const float dz = (p[2] - e[2]);
-        item.depth = ((dx * dx) + (dy * dy) + (dz * dz));
+        const auto p = item.node->getPosition();
+        item.depth = glm::distance2(p, e);
     }
 
     // sort from farthest to closest

@@ -66,7 +66,7 @@ protected:
         void render() override;
         void renderRadar() override;
         void renderShadow() override;
-        const GLfloat* getPosition() const override;
+        const glm::vec3 getPosition() const override;
 
     private:
         void drawV() const; // draw with just vertices

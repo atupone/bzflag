@@ -155,10 +155,7 @@ public:
     {
         return;
     }
-    const GLfloat* getPosition() const
-    {
-        return te->pos;
-    }
+    const glm::vec3 getPosition() const override;
 
 private:
     TrackType type;
@@ -777,6 +774,12 @@ void TrackRenderNode::render()
     else if (type == SmokeTrack)
         drawTreads(*te);
     return;
+}
+
+
+const glm::vec3 TrackRenderNode::getPosition() const
+{
+    return glm::make_vec3(te->pos);
 }
 
 
