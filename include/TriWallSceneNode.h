@@ -37,8 +37,8 @@ public:
 
     bool        inAxisBox (const Extents& exts) const override;
 
-    int         getVertexCount () const override;
-    const       GLfloat* getVertex (int vertex) const override;
+    int         getVertexCount () const;
+    const       glm::vec3 getVertex (int vertex) const override;
 
     bool        cull(const ViewFrustum&) const override;
 

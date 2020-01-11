@@ -43,7 +43,7 @@ public:
     ~MeshFragSceneNode();
 
     // virtual functions from SceneNode
-    const GLfloat* getPlane() const override;
+    const glm::vec4 getPlane() const override;
     bool cull(const ViewFrustum&) const override;
     void addShadowNodes(SceneRenderer&) override;
     void addRenderNodes(SceneRenderer&) override;

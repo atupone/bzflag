@@ -31,10 +31,10 @@ public:
                       const GLfloat2Array& texcoords);
     ~MeshPolySceneNode();
 
-    bool cull(const ViewFrustum& frustum) const override;
-    bool inAxisBox (const Extents& exts) const override;
-    int getVertexCount () const override;
-    const GLfloat* getVertex (int vertex) const override;
+    bool cull(const ViewFrustum& frustum) const;
+    bool inAxisBox (const Extents& exts) const;
+    int getVertexCount () const;
+    const glm::vec3 getVertex (int vertex) const override;
     const GLfloat (*getVertices() const)[3];
 
     void addRenderNodes(SceneRenderer&);
@@ -103,11 +103,6 @@ inline const GLfloat* MeshPolySceneNode::Geometry::getVertex(int i) const
 inline const GLfloat (*MeshPolySceneNode::Geometry::getVertices() const)[3]
 {
     return vertices.getArray();
-}
-
-inline const GLfloat* MeshPolySceneNode::getVertex(int i) const
-{
-    return node.getVertex(i);
 }
 
 inline const GLfloat (*MeshPolySceneNode::getVertices() const)[3]

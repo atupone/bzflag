@@ -60,9 +60,9 @@ WallSceneNode::~WallSceneNode()
     delete[] elementAreas;
 }
 
-const GLfloat* WallSceneNode::getPlane() const
+const glm::vec4 WallSceneNode::getPlane() const
 {
-    return plane;
+    return glm::make_vec4(plane);
 }
 
 void            WallSceneNode::setNumLODs(int num, float* areas)
@@ -104,7 +104,8 @@ bool            WallSceneNode::cull(const ViewFrustum& frustum) const
     const int planeCount = frustum.getPlaneCount();
     int i;
     float d[6], d2[6];
-    const GLfloat* mySphere = getSphere();
+    const auto &mySphere = getCenter();
+    const auto r = getRadius2();
     bool inside = true;
     for (i = 0; i < planeCount; i++)
     {
@@ -115,7 +116,7 @@ bool            WallSceneNode::cull(const ViewFrustum& frustum) const
         if (d[i] < 0.0f)
         {
             d2[i] = d[i] * d[i];
-            if (d2[i] > mySphere[3])
+            if (d2[i] > r)
                 return true;
             inside = false;
         }
@@ -136,7 +137,7 @@ bool            WallSceneNode::cull(const ViewFrustum& frustum) const
             continue;
         const auto norm = frustum.getSide(i);
         const GLfloat c = norm[0]*plane[0] + norm[1]*plane[1] + norm[2]*plane[2];
-        if (d2[i] > mySphere[3] * (1.0f - c*c))
+        if (d2[i] > r * (1.0f - c*c))
             return true;
     }
 
@@ -152,7 +153,8 @@ int         WallSceneNode::pickLevelOfDetail(
 
     int bestLOD = 0;
 
-    const GLfloat* mySphere = getSphere();
+    const auto &mySphere = getCenter();
+    const auto r = getRadius2();
     const int numLights = renderer.getNumLights();
     for (int i = 0; i < numLights; i++)
     {
@@ -171,7 +173,7 @@ int         WallSceneNode::pickLevelOfDetail(
                      (pos[2] - mySphere[2]) * (pos[2] - mySphere[2]);
 
         // pick representative distance
-        GLfloat d = (ld > 1.5f * mySphere[3]) ? ld : pd * pd;
+        GLfloat d = (ld > 1.5f * r) ? ld : pd * pd;
 
         // choose lod based on distance and element areas;
         int j;
@@ -390,22 +392,22 @@ void            WallSceneNode::setColor()
     if (BZDBCache::texture && useColorTexture)
         myColor4f(1,1,1,1);
     else if (dynamicColor != NULL)
-        myColor4fv(dynamicColor);
+        myColor4fv(glm::make_vec4(dynamicColor));
     else
     {
         switch (style)
         {
         case 0:
-            myColor4fv(color);
+            myColor4fv(glm::make_vec4(color));
             break;
         case 1:
-            myColor4fv(lightedColor);
+            myColor4fv(glm::make_vec4(lightedColor));
             break;
         case 2:
-            myColor4fv(modulateColor);
+            myColor4fv(glm::make_vec4(modulateColor));
             break;
         case 3:
-            myColor4fv(lightedModulateColor);
+            myColor4fv(glm::make_vec4(lightedModulateColor));
             break;
         }
     }

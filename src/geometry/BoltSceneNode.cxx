@@ -135,7 +135,7 @@ void            BoltSceneNode::setTextureAnimation(int cu, int cv)
 void            BoltSceneNode::move(const GLfloat pos[3],
                                     const GLfloat vel[3])
 {
-    setCenter(pos);
+    setCenter(glm::make_vec3(pos));
     light.setPosition(pos);
     velocity[0] = vel[0];
     velocity[1] = vel[1];
@@ -573,9 +573,9 @@ void            BoltSceneNode::BoltRenderNode::render()
     if (blackFog)
         glFogfv(GL_FOG_COLOR, glm::value_ptr(glm::vec4(0.0f, 0.0f, 0.0f, 0.0f)));
 
-    const float* sphere = sceneNode->getSphere();
+    auto pos = sceneNode->getCenter();
     glPushMatrix();
-    glTranslatef(sphere[0], sphere[1], sphere[2]);
+    glTranslatef(pos.x, pos.y, pos.z);
 
     bool drawBillboardShot = false;
     if (experimental)
@@ -683,11 +683,6 @@ void            BoltSceneNode::BoltRenderNode::render()
                 float alpha = startAlpha;
                 const float sizeStep  = Size  * invLenPlusOne;
                 const float alphaStep = alpha * invLenPlusOne;
-
-                glm::vec3 pos;
-                pos.x = sphere[0];
-                pos.y = sphere[1];
-                pos.z = sphere[2];
 
                 int uvCell = rand() % 16;
 
