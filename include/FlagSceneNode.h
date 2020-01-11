@@ -33,7 +33,7 @@ public:
     void        setWind(const GLfloat wind[3], float dt);
     void        setBillboard(bool billboard);
 
-    const GLfloat*  getColor() const
+    const glm::vec4 &getColor() const
     {
         return color;
     }
@@ -46,8 +46,7 @@ public:
     void        addRenderNodes(SceneRenderer&) override;
     void        addShadowNodes(SceneRenderer&) override;
 
-    bool        cullShadow(int planeCount,
-                           const float (*planes)[4]) const override;
+    bool cullShadow(const std::vector<glm::vec4> &planes) const override;
 protected:
     class FlagRenderNode : public RenderNode
     {
@@ -67,7 +66,7 @@ private:
     GLfloat     angle;
     GLfloat     tilt;
     GLfloat     hscl;
-    GLfloat     color[4];
+    glm::vec4   color;
     bool        transparent;
     bool        texturing;
     OpenGLGState    gstate;
