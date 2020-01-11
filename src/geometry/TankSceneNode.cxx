@@ -815,6 +815,10 @@ void TankIDLSceneNode::IDLRenderNode::render()
 }
 
 
+const glm::vec3 TankIDLSceneNode::IDLRenderNode::getPosition() const
+{
+    return sceneNode->getCenter();
+}
 //
 // TankSceneNode::TankRenderNode
 //
@@ -891,6 +895,12 @@ void TankSceneNode::TankRenderNode::setNarrowWithDepth(bool narrow)
 {
     narrowWithDepth = narrow;
     return;
+}
+
+
+const glm::vec3 TankSceneNode::TankRenderNode::getPosition() const
+{
+    return sceneNode->getCenter();
 }
 
 

@@ -226,10 +226,11 @@ void MeshFragSceneNode::Geometry::setStyle(int style_)
     style = style_;
 }
 
-const GLfloat* MeshFragSceneNode::Geometry::getPosition() const
+const glm::vec3 MeshFragSceneNode::Geometry::getPosition() const
 {
-    return sceneNode.getSphere();
+    return sceneNode.getCenter();
 }
+
 
 //
 // MeshFragSceneNode
