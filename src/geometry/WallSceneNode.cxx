@@ -198,13 +198,6 @@ int         WallSceneNode::pickLevelOfDetail(
     return bestLOD;
 }
 
-GLfloat         WallSceneNode::getDistance(const GLfloat* eye) const
-{
-    const GLfloat d = plane[0] * eye[0] + plane[1] * eye[1] +
-                      plane[2] * eye[2] + plane[3];
-    return d * d;
-}
-
 void            WallSceneNode::setColor(
     GLfloat r, GLfloat g, GLfloat b, GLfloat a)
 {
