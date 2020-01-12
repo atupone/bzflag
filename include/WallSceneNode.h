@@ -39,7 +39,6 @@ public:
     const GLfloat*  getModulateColor() const;
     const GLfloat*  getLightedColor() const;
     const GLfloat*  getLightedModulateColor() const;
-    GLfloat         getDistance(const GLfloat*) const override final;
     bool            inAxisBox (const Extents& exts) const override;
 
     void        setColor(GLfloat r, GLfloat g,
