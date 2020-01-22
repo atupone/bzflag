@@ -209,7 +209,7 @@ void            WallSceneNode::setColor(
     color[3] = a;
 }
 
-void            WallSceneNode::setDynamicColor(const GLfloat* rgba)
+void WallSceneNode::setDynamicColor(const glm::vec4 *rgba)
 {
     dynamicColor = rgba;
     return;
@@ -395,7 +395,7 @@ void            WallSceneNode::setColor()
     if (BZDBCache::texture && useColorTexture)
         myColor4f(1,1,1,1);
     else if (dynamicColor != NULL)
-        myColor4fv(glm::make_vec4(dynamicColor));
+        myColor4fv(*dynamicColor);
     else
     {
         switch (style)
