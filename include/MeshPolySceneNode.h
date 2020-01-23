@@ -52,7 +52,7 @@ protected:
                  const GLfloat3Array& vertices,
                  const GLfloat3Array& normals,
                  const GLfloat2Array& texcoords,
-                 const GLfloat* normal);
+                 const glm::vec3 *normal);
         ~Geometry();
         void setStyle(int _style)
         {
@@ -73,7 +73,7 @@ protected:
     private:
         MeshPolySceneNode* sceneNode;
         int style;
-        const GLfloat* normal;
+        const glm::vec3 *normal;
     public:
         GLfloat3Array vertices;
         GLfloat3Array normals;
