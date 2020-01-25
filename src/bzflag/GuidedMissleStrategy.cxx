@@ -40,7 +40,9 @@ GuidedMissileStrategy::GuidedMissileStrategy(ShotPath* _path) :
     renderTimes(0),
     needUpdate(true)
 {
-    ptSceneNode = new BoltSceneNode(_path->getPosition(),_path->getVelocity(),false);
+    ptSceneNode = new BoltSceneNode(glm::make_vec3(_path->getPosition()),
+                                    glm::make_vec3(_path->getVelocity()),
+                                    false);
     TextureManager &tm = TextureManager::instance();
     int texture = tm.getTextureID("missile");
 
@@ -49,7 +51,8 @@ GuidedMissileStrategy::GuidedMissileStrategy(ShotPath* _path) :
         ptSceneNode->setTexture(texture);
         ptSceneNode->setTextureAnimation(4, 4);
         ptSceneNode->setColor(1.0f, 0.2f, 0.0f);
-        ptSceneNode->setTeamColor(Team::getShotColor(_path->getTeam()));
+        ptSceneNode->setTeamColor(glm::make_vec3(
+                                      Team::getShotColor(_path->getTeam())));
         ptSceneNode->setFlares(true);
     }
 
@@ -476,7 +479,8 @@ void GuidedMissileStrategy::readUpdate(uint16_t code, const void* msg)
 
 void GuidedMissileStrategy::addShot(SceneDatabase* scene, bool)
 {
-    ptSceneNode->move(getPath().getPosition(), getPath().getVelocity());
+    ptSceneNode->move(glm::make_vec3(getPath().getPosition()),
+                      glm::make_vec3(getPath().getVelocity()));
     scene->addDynamicNode(ptSceneNode);
 }
 
