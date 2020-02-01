@@ -24,8 +24,8 @@
 class EighthDBoxSceneNode final : public EighthDimSceneNode
 {
 public:
-    EighthDBoxSceneNode(const float pos[3],
-                        const float size[3], float rotation);
+    EighthDBoxSceneNode(const glm::vec3 &pos,
+                        const glm::vec3 &size, float rotation);
     ~EighthDBoxSceneNode();
 
     void        notifyStyleChange() override;
@@ -36,14 +36,14 @@ protected:
     {
     public:
         EighthDBoxRenderNode(const EighthDBoxSceneNode*,
-                             const float pos[3],
-                             const float size[3], float rotation);
+                             const glm::vec3 &pos,
+                             const glm::vec3 &size, float rotation);
         ~EighthDBoxRenderNode();
-        void        render();
+        void        render() override;
         const glm::vec3 getPosition() const override;
     private:
         const EighthDBoxSceneNode* sceneNode;
-        GLfloat     corner[8][3];
+        glm::vec3 corner[8];
     };
 
 private:
