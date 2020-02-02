@@ -106,7 +106,7 @@ Player::Player(const PlayerId& _id, TeamColor _team,
     if (id != ServerPlayer)
     {
         // make scene nodes
-        tankNode = new TankSceneNode(state.pos, forward);
+        tankNode = new TankSceneNode(glm::make_vec3(state.pos), glm::make_vec3(forward));
         tankIDLNode = new TankIDLSceneNode(tankNode);
         changeTeam(team);
         const float sphereRad = (1.5f * BZDBCache::tankRadius);
@@ -869,7 +869,7 @@ void Player::addToScene(SceneDatabase* scene, TeamColor effectiveTeam,
                         bool inCockpit, bool seerView,
                         bool showTreads, bool showIDL)
 {
-    const GLfloat groundPlane[4] = {0.0f, 0.0f, 1.0f, 0.0f};
+    const auto groundPlane = glm::vec4(0.0f, 0.0f, 1.0f, 0.0f);
 
     if (!isAlive() && !isExploding())
     {
@@ -877,13 +877,13 @@ void Player::addToScene(SceneDatabase* scene, TeamColor effectiveTeam,
     }
 
     // place the tank
-    tankNode->move(state.pos, forward);
+    tankNode->move(glm::make_vec3(state.pos), glm::make_vec3(forward));
 
     // only use dimensions if we aren't at steady state.
     // this is done because it's more expensive to use
     // GL_NORMALIZE then to use precalculated normals.
     if (useDimensions)
-        tankNode->setDimensions(dimensionsScale);
+        tankNode->setDimensions(glm::make_vec3(dimensionsScale));
     else
     {
         if (flagType == Flags::Obesity) tankNode->setObese();
@@ -918,7 +918,7 @@ void Player::addToScene(SceneDatabase* scene, TeamColor effectiveTeam,
 
     // setup the color and material
     setVisualTeam(effectiveTeam);
-    tankNode->setColor(color);
+    tankNode->setColor(glm::make_vec4(color));
 
     tankNode->setInTheCockpit(inCockpit);
 
@@ -952,13 +952,13 @@ void Player::addToScene(SceneDatabase* scene, TeamColor effectiveTeam,
                 // stick in interdimensional lights node
                 if (showIDL)
                 {
-                    tankIDLNode->move(plane);
+                    tankIDLNode->move(glm::make_vec4(plane));
                     scene->addDynamicNode(tankIDLNode);
                 }
 
                 // add clipping plane to tank node
                 if (!inCockpit)
-                    tankNode->setClipPlane(plane);
+                    tankNode->setClipPlane(glm::make_vec4(plane));
             }
         }
         else if (getPosition()[2] < 0.0f)
@@ -985,8 +985,7 @@ void Player::addToScene(SceneDatabase* scene, TeamColor effectiveTeam,
         const float fadeRatio = 0.8f;
         if (t > fadeRatio)
         {
-            GLfloat newColor[4];
-            memcpy(newColor, color, sizeof(float[3]));
+            auto newColor = glm::make_vec4(color);
             const float fadeFactor = (1.0f - t) / (1.0f - fadeRatio);
             newColor[3] = color[3] * fadeFactor;
             tankNode->setColor(newColor);
