@@ -10,9 +10,14 @@
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#include <string.h>
-
+// Interface
 #include "BzMaterial.h"
+
+// System headers
+#include <string.h>
+#include <glm/gtc/type_ptr.hpp>
+
+// Common headers
 #include "TextureMatrix.h"
 #include "DynamicColor.h"
 #include "Pack.h"
@@ -242,11 +247,11 @@ void BzMaterial::reset()
 {
     dynamicColor = -1;
     const float defAmbient[4] = { 0.2f, 0.2f, 0.2f, 1.0f };
-    const float defDiffuse[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+    const auto defDiffuse = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
     const float defSpecular[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
     const float defEmission[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
     memcpy (ambient, defAmbient, sizeof(ambient));
-    memcpy (diffuse, defDiffuse, sizeof(diffuse));
+    diffuse = defDiffuse;
     memcpy (specular, defSpecular, sizeof(specular));
     memcpy (emission, defEmission, sizeof(emission));
     shininess = 0.0f;
@@ -310,7 +315,7 @@ BzMaterial& BzMaterial::operator=(const BzMaterial& m)
 
     dynamicColor = m.dynamicColor;
     memcpy (ambient, m.ambient, sizeof(ambient));
-    memcpy (diffuse, m.diffuse, sizeof(diffuse));
+    diffuse = m.diffuse;
     memcpy (specular, m.specular, sizeof(specular));
     memcpy (emission, m.emission, sizeof(emission));
     shininess = m.shininess;
@@ -351,7 +356,7 @@ bool BzMaterial::operator==(const BzMaterial& m) const
 
     if ((dynamicColor != m.dynamicColor) ||
             (memcmp (ambient, m.ambient, sizeof(float[4])) != 0) ||
-            (memcmp (diffuse, m.diffuse, sizeof(float[4])) != 0) ||
+            (diffuse != m.diffuse) ||
             (memcmp (specular, m.specular, sizeof(float[4])) != 0) ||
             (memcmp (emission, m.emission, sizeof(float[4])) != 0) ||
             (shininess != m.shininess) || (alphaThreshold != m.alphaThreshold) ||
@@ -422,7 +427,7 @@ void* BzMaterial::pack(void* buf) const
 
     buf = nboPackInt(buf, dynamicColor);
     buf = pack4Float(buf, ambient);
-    buf = pack4Float(buf, diffuse);
+    buf = pack4Float(buf, glm::value_ptr(diffuse));
     buf = pack4Float(buf, specular);
     buf = pack4Float(buf, emission);
     buf = nboPackFloat(buf, shininess);
@@ -474,7 +479,7 @@ const void* BzMaterial::unpack(const void* buf)
     buf = nboUnpackInt(buf, inTmp);
     dynamicColor = int(inTmp);
     buf = unpack4Float(buf, ambient);
-    buf = unpack4Float(buf, diffuse);
+    buf = unpack4Float(buf, glm::value_ptr(diffuse));
     buf = unpack4Float(buf, specular);
     buf = unpack4Float(buf, emission);
     buf = nboUnpackFloat(buf, shininess);
@@ -575,7 +580,7 @@ void BzMaterial::print(std::ostream& out, const std::string& indent) const
         out << std::endl;
     }
     printColor(out, "  ambient ",  ambient,  defaultMaterial.ambient);
-    printColor(out, "  diffuse ",  diffuse,  defaultMaterial.diffuse);
+    printColor(out, "  diffuse ",  glm::value_ptr(diffuse),  glm::value_ptr(defaultMaterial.diffuse));
     printColor(out, "  specular ", specular, defaultMaterial.specular);
     printColor(out, "  emission ", emission, defaultMaterial.emission);
     if (shininess != defaultMaterial.shininess)
@@ -647,7 +652,7 @@ void BzMaterial::printMTL(std::ostream& out, const std::string& UNUSED(indent)) 
     const float* c;
     c = ambient; // not really used
     out << "#Ka " << c[0] << " " << c[1] << " " << c[2] << std::endl;
-    c = diffuse;
+    c = glm::value_ptr(diffuse);
     out << "Kd " << c[0] << " " << c[1] << " " << c[2] << std::endl;
     c = emission;
     out << "Ke " << c[0] << " " << c[1] << " " << c[2] << std::endl;
@@ -732,7 +737,7 @@ void BzMaterial::setAmbient(const float color[4])
 
 void BzMaterial::setDiffuse(const float color[4])
 {
-    memcpy (diffuse, color, sizeof(float[4]));
+    diffuse = glm::make_vec4(color);
     return;
 }
 
@@ -943,7 +948,7 @@ const float* BzMaterial::getAmbient() const
     return ambient;
 }
 
-const float* BzMaterial::getDiffuse() const
+const glm::vec4 &BzMaterial::getDiffuse() const
 {
     return diffuse;
 }

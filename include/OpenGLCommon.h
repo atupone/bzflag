@@ -1,5 +1,5 @@
 /* bzflag
- * Copyright (c) 1993-2023 Tim Riker
+ * Copyright (c) 1993-2018 Tim Riker
  *
  * This package is free software;  you can redistribute it and/or
  * modify it under the terms of the license found in the file
@@ -10,25 +10,18 @@
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#ifndef _PARSE_COLOR_H_
-#define _PARSE_COLOR_H_
-
-// 1st
 #include "common.h"
 
 // System headers
-#include <string>
-#include <iostream>
 #include <glm/fwd.hpp>
 
-extern bool parseColorCString(const char* str, float color[4]);
-extern bool parseColorString(const std::string& str, float color[4]);
-extern bool parseColorString(const std::string& str, glm::vec4 &color);
-extern bool parseColorStream(std::istream& input, float color[4]);
-
-
-#endif // _PARSE_COLOR_H_
-
+class OpenGLCommon
+{
+public:
+    static void getFogColor(glm::vec4 &fogColor);
+    static void setFogColor(const glm::vec4 &fogColor);
+    static void setEyePlanes(const glm::vec4 &sPlane, const glm::vec4 &tPlane);
+};
 
 // Local Variables: ***
 // mode: C++ ***
