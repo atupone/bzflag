@@ -50,12 +50,12 @@ public:
 
     void        resize();
 
-    const GLfloat*  getSunDirection() const;
+    const glm::vec3 &getSunDirection() const;
     void        setBlank(bool blank = true);
     void        setInvert(bool invert = true);
     void        setCelestial(const SceneRenderer&,
-                             const float sunDirection[3],
-                             const float moonDirection[3]);
+                             const glm::vec3 &sunDirection,
+                             const glm::vec3 &moonDirection);
     void        addCloudDrift(GLfloat uDrift, GLfloat vDrift);
     void        notifyStyleChange();
 
@@ -129,15 +129,15 @@ private:
     // celestial stuff
     bool        haveSkybox;
     int         skyboxTexID[6];
-    GLfloat     skyboxColor[8][4];
+    glm::vec4   skyboxColor[8];
     bool        doStars;
     bool        doSunset;
-    GLfloat     skyZenithColor[3];
-    GLfloat     skySunDirColor[3];
-    GLfloat     skyAntiSunDirColor[3];
-    GLfloat     skyCrossSunDirColor[3];
-    float       sunDirection[3];
-    float       moonDirection[3];
+    glm::vec3   skyZenithColor;
+    glm::vec3   skySunDirColor;
+    glm::vec3   skyAntiSunDirColor;
+    glm::vec3   skyCrossSunDirColor;
+    glm::vec3   sunDirection;
+    glm::vec3   moonDirection;
     float       sunsetTop;
     int         starGStateIndex;
     OpenGLGState    skyGState;
@@ -150,13 +150,13 @@ private:
     GLuint      starList;
     GLuint      starXFormList;
 
-    static GLfloat      skyPyramid[5][3];
+    static glm::vec3    skyPyramid[5];
     static const GLfloat    cloudRepeats;
 
-    static GLfloat      groundColor[4][4];
-    static GLfloat      groundColorInv[4][4];
-    static const GLfloat    defaultGroundColor[4][4];
-    static const GLfloat    defaultGroundColorInv[4][4];
+    static glm::vec4    groundColor[4];
+    static glm::vec4    groundColorInv[4];
+    static const glm::vec4  defaultGroundColor[4];
+    static const glm::vec4  defaultGroundColorInv[4];
 
     int         triangleCount;
 };
