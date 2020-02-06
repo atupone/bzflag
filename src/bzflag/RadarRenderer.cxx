@@ -97,6 +97,18 @@ void RadarRenderer::setDimming(float newDimming)
 }
 
 
+void RadarRenderer::drawShot(const ShotPath* shot)
+{
+    glBegin(GL_POINTS);
+    glVertex2fv(shot->getPosition());
+    glEnd();
+}
+
+static void glColor3fv(const glm::vec3 &c)
+{
+    ::glColor3f(c.r, c.g, c.b);
+}
+
 void RadarRenderer::setTankColor(const Player* player)
 {
     //The height box also uses the tank color
@@ -115,16 +127,13 @@ void RadarRenderer::setTankColor(const Player* player)
     {
         const float dimfactor = 0.4f;
 
-        const float *color;
+        glm::vec3 color;
         if (myTank->getFlag() == Flags::Colorblindness)
             color = Team::getRadarColor(RogueTeam);
         else
             color = Team::getRadarColor(player->getTeam());
 
-        float dimmedcolor[3];
-        dimmedcolor[0] = color[0] * dimfactor;
-        dimmedcolor[1] = color[1] * dimfactor;
-        dimmedcolor[2] = color[2] * dimfactor;
+        auto dimmedcolor = color * dimfactor;
         glColor3fv(dimmedcolor);
     }
     else
@@ -660,7 +669,7 @@ void RadarRenderer::render(SceneRenderer& renderer, bool blank, bool observer)
                     const float cs = colorScale(shot->getPosition()[2], muzzleHeight);
                     if (coloredShot)
                     {
-                        const float *shotcolor;
+                        glm::vec3 shotcolor;
                         if (myTank->getFlag() == Flags::Colorblindness)
                             shotcolor = Team::getRadarColor(RogueTeam);
                         else
@@ -702,7 +711,7 @@ void RadarRenderer::render(SceneRenderer& renderer, bool blank, bool observer)
             }
             // Flags change color by height
             const float cs = colorScale(flag.position[2], muzzleHeight);
-            const float *flagcolor = flag.type->getRadarColor();
+            const auto flagcolor = flag.type->getRadarColor();
             glColor3f(flagcolor[0] * cs, flagcolor[1] * cs, flagcolor[2] * cs);
             drawFlag(flag.position);
         }

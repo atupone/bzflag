@@ -22,6 +22,7 @@
 #include "Bundle.h"
 #include "FontManager.h"
 #include "BZDBCache.h"
+#include "OpenGLCommon.h"
 
 /* local implementation headers */
 #include "LocalPlayer.h"
@@ -39,7 +40,7 @@
 // headingOffset:  the number of degrees from the center of the heading
 // strip display to either side.  altitudeOffset is similar.
 const float     HUDRenderer::altitudeOffset = 20.0f;
-const GLfloat       HUDRenderer::black[3] = { 0.0f, 0.0f, 0.0f };
+const glm::vec3 HUDRenderer::black = glm::vec3(0.0f);
 std::string     HUDRenderer::headingLabel[36];
 std::string     HUDRenderer::restartLabelFormat("Press %s to start");
 std::string     HUDRenderer::resumeLabel("Press Pause to resume");
@@ -83,15 +84,9 @@ HUDRenderer::HUDRenderer(const BzfDisplay* _display,
         dater = true;
 
     // initialize colors
-    hudColor[0] = 1.0f;
-    hudColor[1] = 0.625f;
-    hudColor[2] = 0.125f;
-    messageColor[0] = 1.0f;
-    messageColor[1] = 1.0f;
-    messageColor[2] = 1.0f;
-    warningColor[0] = 1.0f;
-    warningColor[1] = 0.0f;
-    warningColor[2] = 0.0f;
+    hudColor     = glm::vec3(1.0f, 0.625f, 0.125f);
+    messageColor = glm::vec3(1.0f);
+    warningColor = glm::vec3(1.0f, 0.0f, 0.0f);
 
     // make sure we're notified when MainWindow resizes
     window.getWindow()->addResizeCallback(resizeCallback, this);
@@ -307,9 +302,7 @@ void            HUDRenderer::setLabelsFontSize(int, int height)
 
 void            HUDRenderer::setColor(float r, float g, float b)
 {
-    hudColor[0] = r;
-    hudColor[1] = g;
-    hudColor[2] = b;
+    hudColor = glm::vec3(r, g, b);
 }
 
 void            HUDRenderer::setPlaying(bool _playing)
@@ -498,10 +491,8 @@ void            HUDRenderer::initCracks()
     {
         const float d = 0.90f * float(maxMotionSize) * ((float)bzfrand() + 0.90f);
         const float a = (float)(2.0 * M_PI * (double(i) + bzfrand()) / double(HUDNumCracks));
-        cracks[i][0][0] = 0.0f;
-        cracks[i][0][1] = 0.0f;
-        cracks[i][1][0] = d * cosf(a);
-        cracks[i][1][1] = d * sinf(a);
+        cracks[i][0] = glm::vec2(0.0f);
+        cracks[i][1] = d * glm::vec2(cosf(a), sinf(a));
         makeCrack(cracks, i, 1, a);
     }
 }
@@ -516,7 +507,7 @@ void            HUDRenderer::setCracks(bool _showCracks)
     showCracks = _showCracks;
 }
 
-void            HUDRenderer::addMarker(float _heading, const float *_color )
+void            HUDRenderer::addMarker(float _heading, const glm::vec3 &_color)
 {
     markers.resize(markers.size() + 1);
     HUDMarker &m = markers[markers.size() - 1];
@@ -525,7 +516,7 @@ void            HUDRenderer::addMarker(float _heading, const float *_color )
     while (_heading < 0.0f) _heading += 360.0f;
     while (_heading >= 360.0f) _heading -= 360.0f;
     m.heading = _heading;
-    memcpy(m.color, _color, sizeof(m.color));
+    m.color = _color;
 }
 
 
@@ -642,34 +633,88 @@ std::string     HUDRenderer::makeHelpString(const char* help) const
     return msg;
 }
 
-void            HUDRenderer::makeCrack(float crackpattern[HUDNumCracks][(1 << HUDCrackLevels) + 1][2], int n, int l,
+void            HUDRenderer::makeCrack(glm::vec2 crackpattern[HUDNumCracks][(1 << HUDCrackLevels) + 1], int n, int l,
                                        float a)
 {
     if (l >= (1 << (HUDCrackLevels - 1))) return;
     float d = 0.5f * float(maxMotionSize) *
               ((float)bzfrand() + 0.5f) * powf(0.5f, 0.69f * logf(float(l)));
     float newAngle = (float)(a + M_PI * bzfrand() / double(HUDNumCracks));
-    crackpattern[n][2*l][0] = crackpattern[n][l][0] + d * cosf(newAngle);
-    crackpattern[n][2*l][1] = crackpattern[n][l][1] + d * sinf(newAngle);
+    crackpattern[n][2*l] = crackpattern[n][l] + d * glm::vec2(cosf(newAngle), sinf(newAngle));
     makeCrack(crackpattern, n, 2*l, newAngle);
     d = 0.5f * float(maxMotionSize) *
         ((float)bzfrand() + 0.5f) * powf(0.5f, 0.69f * logf(float(l)));
     newAngle = (float)(a - M_PI * bzfrand() / double(HUDNumCracks));
-    crackpattern[n][2*l+1][0] = crackpattern[n][l][0] + d * cosf(newAngle);
-    crackpattern[n][2*l+1][1] = crackpattern[n][l][1] + d * sinf(newAngle);
+    crackpattern[n][2*l+1] = crackpattern[n][l] + d * glm::vec2(cosf(newAngle), sinf(newAngle));
     makeCrack(crackpattern, n, 2*l+1, newAngle);
 }
 
 static const float dimFactor = 0.2f;
 
+void            HUDRenderer::hudColor3f(GLfloat r, GLfloat g, GLfloat b)
+{
+    if (dim)
+        glColor3f(dimFactor * r, dimFactor * g, dimFactor * b);
+    else
+        glColor3f(r, g, b);
+}
 
-void HUDRenderer::hudColor3Afv(const float * c, const float a)
+void            HUDRenderer::hudColor4f(
+    GLfloat r, GLfloat g, GLfloat b, GLfloat a)
+{
+    if (dim)
+        glColor4f(dimFactor * r, dimFactor * g, dimFactor * b, a);
+    else
+        glColor4f(r, g, b, a);
+}
+
+static void glVertex2fv(const glm::vec2 &p)
+{
+    ::glVertex2f(p.x, p.y);
+}
+
+static void glColor3fv(const glm::vec3 &c)
+{
+    ::glColor3f(c.r, c.g, c.b);
+}
+
+static void glColor4fv(const glm::vec4 &c)
+{
+    ::glColor4f(c.r, c.g, c.b, c.a);
+}
+
+void            HUDRenderer::hudColor3fv(const glm::vec3 &c)
+{
+    if (dim)
+        glColor3f(dimFactor * c[0], dimFactor * c[1], dimFactor * c[2]);
+    else
+        glColor3fv(c);
+}
+
+void HUDRenderer::hudColor3Afv(const glm::vec3 &c, const float a)
 {
     if ( dim )
         glColor4f( dimFactor *c[0], dimFactor *c[1], dimFactor *c[2], a );
     else
         glColor4f( c[0],c[1],c[2],a );
 }
+
+void            HUDRenderer::hudSColor3fv(const glm::vec3 &c)
+{
+    if (dim)
+        glColor3f(dimFactor * c[0], dimFactor * c[1], dimFactor * c[2]);
+    else
+        glColor3fv(c);
+}
+
+void            HUDRenderer::hudColor4fv(const glm::vec4 &c)
+{
+    if (dim)
+        glColor4f(dimFactor * c[0], dimFactor * c[1], dimFactor * c[2], c[3]);
+    else
+        glColor4fv(c);
+}
+
 
 void            HUDRenderer::drawGeometry()
 {
@@ -965,7 +1010,10 @@ void            HUDRenderer::renderStatus(void)
 
 
     // print status top-center
-    const GLfloat* statusColor = warningColor;
+    static const auto redColor = glm::vec3(1.0f, 0.0f, 0.0f);
+    static const auto yellowColor = glm::vec3(1.0f, 1.0f, 0.0f);
+    static const auto greenColor = glm::vec3(0.0f, 1.0f, 0.0f);
+    auto statusColor = warningColor;
     std::string msg;
     // TODO: the upper 4 values of timeLeft (~0u-3 to ~0u)
     // are reserved for future use as timer flags (e.g. paused)
@@ -1057,7 +1105,7 @@ void            HUDRenderer::renderTankLabels(SceneRenderer& renderer)
             const std::string name = pl->getCallSign();
             hudSColor3fv(Team::getRadarColor(pl->getTeam()));
             auto p = glm::project(
-                         glm::make_vec3(pl->getPosition()),
+                         pl->getPositionVec3(),
                          modelf,
                          projf,
                          view);
@@ -1182,7 +1230,7 @@ void HUDRenderer::saveMatrixes(const glm::mat4 &mm, const glm::mat4 &pm)
     // ssave off the stuff before we reset it
     modelMatrix = mm;
     projMatrix  = pm;
-    glGetIntegerv(GL_VIEWPORT,glm::value_ptr(viewport));
+    OpenGLCommon::getViewPort(viewport);
 }
 
 
@@ -1219,7 +1267,7 @@ glm::vec2 HUDRenderer::getMarkerCoordinate(
 void HUDRenderer::drawWaypointMarker(const EnhancedHUDMarker &marker,
                                      const glm::vec2 &viewPos)
 {
-    const float *color = glm::value_ptr(marker.color);
+    const auto color = marker.color;
 
     auto map = getMarkerCoordinate(marker.pos, viewPos);
 
@@ -1296,7 +1344,7 @@ void HUDRenderer::drawWaypointMarker(const EnhancedHUDMarker &marker,
 void HUDRenderer::drawLockonMarker(const EnhancedHUDMarker &marker,
                                    const glm::vec2 &viewPos)
 {
-    const float *color = glm::value_ptr(marker.color);
+    const auto color = marker.color;
 
     auto map = getMarkerCoordinate(marker.pos, viewPos);
 
