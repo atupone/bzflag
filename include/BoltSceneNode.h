@@ -66,7 +66,7 @@ protected:
         ~BoltRenderNode();
         void        setColor(const glm::vec4 &rgba);
         void        setTextureColor(const glm::vec4 &rgba);
-        void        render();
+        void        render() override;
         const glm::vec3 getPosition() const override;
         void        setAnimation(int cu, int cv);
 
