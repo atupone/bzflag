@@ -35,9 +35,9 @@ public:
                      GLfloat *xformMatrix, bool normalize,
                      const glm::vec4 *color, int lod, int set,
                      const Extents* exts, int triangles);
-    void render();
-    void renderRadar();
-    void renderShadow();
+    void render() override;
+    void renderRadar() override;
+    void renderShadow() override;
     const glm::vec3 getPosition() const override;
 private:
     void drawV() const;
