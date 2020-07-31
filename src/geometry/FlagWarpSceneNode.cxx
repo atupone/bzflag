@@ -13,9 +13,12 @@
 // interface header
 #include "FlagWarpSceneNode.h"
 
+#define GLM_ENABLE_EXPERIMENTAL
+
 // system headers
 #include <stdlib.h>
 #include <math.h>
+#include <glm/gtx/norm.hpp>
 
 // common implementation headers
 #include "StateDatabase.h"
@@ -63,15 +66,13 @@ void            FlagWarpSceneNode::move(const GLfloat pos[3])
     setCenter(glm::make_vec3(pos));
 }
 
-GLfloat         FlagWarpSceneNode::getDistance(const GLfloat* eye) const
+GLfloat         FlagWarpSceneNode::getDistance(const glm::vec3 &eye) const
 {
     // shift position of warp down a little because a flag and it's warp
     // are at the same position but we want the warp to appear below the
     // flag.
     const auto &mySphere = getCenter();
-    return (eye[0] - mySphere[0]) * (eye[0] - mySphere[0]) +
-           (eye[1] - mySphere[1]) * (eye[1] - mySphere[1]) +
-           (eye[2] - mySphere[2] + 0.2f) * (eye[2] - mySphere[2] + 0.2f);
+    return glm::distance2(eye + glm::vec3(0, 0, 0.2), mySphere);
 }
 
 void            FlagWarpSceneNode::notifyStyleChange()

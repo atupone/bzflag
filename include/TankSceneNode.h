@@ -141,7 +141,7 @@ public:
 
     void        addLight(SceneRenderer&) override;
 
-    void        renderRadar();
+    void        renderRadar() override;
 
     static void     setMaxLOD(int maxLevel);
 

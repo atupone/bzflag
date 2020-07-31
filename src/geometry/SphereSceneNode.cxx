@@ -330,26 +330,26 @@ static inline void drawFullScreenRect()
 
 void SphereSceneNode::SphereLodRenderNode::render()
 {
-    const GLfloat radius = sceneNode->radius;
+    const GLfloat radius_ = sceneNode->radius;
     const auto &sphere = sceneNode->getCenter();
 
     glEnable(GL_CLIP_PLANE0);
 
     glEnable(GL_RESCALE_NORMAL);
 
-    const bool transparent = sceneNode->transparent;
+    const bool transparent_ = sceneNode->transparent;
 
     const GLuint list = SphereSceneNode::lodLists[lod];
 
     glPushMatrix();
     {
         glTranslatef(sphere[0], sphere[1], sphere[2]);
-        glScalef(radius, radius, radius);
+        glScalef(radius_, radius_, radius_);
 
         // invert the color within contained volume
         if (sceneNode->shockWave)
         {
-            if (transparent)
+            if (transparent_)
                 glDisable(GL_BLEND);
             glDisable(GL_LIGHTING);
 
@@ -373,7 +373,7 @@ void SphereSceneNode::SphereLodRenderNode::render()
             }
             glDisable(GL_COLOR_LOGIC_OP);
 
-            if (transparent)
+            if (transparent_)
                 glEnable(GL_BLEND);
             glEnable(GL_LIGHTING);
         }

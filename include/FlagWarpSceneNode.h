@@ -29,11 +29,11 @@ public:
 
     void        setSizeFraction(GLfloat);
 
-    GLfloat     getDistance(const GLfloat*) const;
+    GLfloat     getDistance(const glm::vec3 &eye) const override;
     void        move(const GLfloat pos[3]);
 
-    void        notifyStyleChange();
-    void        addRenderNodes(SceneRenderer&);
+    void        notifyStyleChange() override;
+    void        addRenderNodes(SceneRenderer&) override;
 
 protected:
     class FlagWarpRenderNode : public RenderNode
@@ -41,7 +41,7 @@ protected:
     public:
         FlagWarpRenderNode(const FlagWarpSceneNode*);
         ~FlagWarpRenderNode();
-        void        render();
+        void        render() override;
         const glm::vec3 getPosition() const override;
     private:
         const FlagWarpSceneNode* sceneNode;

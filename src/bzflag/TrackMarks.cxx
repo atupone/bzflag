@@ -150,11 +150,8 @@ class TrackRenderNode : public RenderNode
 public:
     TrackRenderNode(const TrackEntry* te, TrackType type);
     ~TrackRenderNode();
-    void render();
-    void renderShadow()
-    {
-        return;
-    }
+    void render() override;
+    void renderShadow() override;
     const glm::vec3 getPosition() const override;
 
 private:
@@ -774,6 +771,11 @@ void TrackRenderNode::render()
     else if (type == SmokeTrack)
         drawTreads(*te);
     return;
+}
+
+
+void TrackRenderNode::renderShadow()
+{
 }
 
 

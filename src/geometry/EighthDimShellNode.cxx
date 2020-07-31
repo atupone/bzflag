@@ -161,6 +161,11 @@ void EighthDimShellNode::ShellRenderNode::render()
 }
 
 
+void EighthDimShellNode::ShellRenderNode::renderShadow()
+{
+}
+
+
 const glm::vec3 EighthDimShellNode::ShellRenderNode::getPosition() const
 {
     return renderNode->getPosition();

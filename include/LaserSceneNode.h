@@ -50,7 +50,7 @@ protected:
     public:
         LaserRenderNode(const LaserSceneNode*);
         ~LaserRenderNode();
-        void        render();
+        void        render() override;
         const glm::vec3 getPosition() const override;
     private:
         void renderFlatLaser();
