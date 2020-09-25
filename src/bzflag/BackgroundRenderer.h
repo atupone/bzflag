@@ -29,6 +29,7 @@
 #include "bzfgl.h"
 #include "OpenGLGState.h"
 #include "WeatherRenderer.h"
+#include "Vertex_Chunk.h"
 
 class SceneRenderer;
 class BackgroundRenderer
@@ -91,7 +92,7 @@ private:
     // stuff for ground
     OpenGLGState    groundGState[4];
     OpenGLGState    invGroundGState[4];
-    GLuint      simpleGroundList[4];
+    Vertex_Chunk    simpleGroundList[2];
     int         groundTextureID;
     const GLfloat*  groundTextureMatrix;
 
@@ -109,14 +110,20 @@ private:
     int         numMountainTextures;
     int         mountainsMinWidth;
     OpenGLGState*   mountainsGState;
-    GLuint*     mountainsList;
+    std::vector<Vertex_Chunk> mountainsList;
+    std::vector<glm::vec3>    mountainsVertex;
+    std::vector<glm::vec3>    mountainsNormal;
+    std::vector<glm::vec2>    mountainsTexture;
 
     // stuff for clouds
     GLfloat     cloudDriftU, cloudDriftV;
     bool        cloudsAvailable;
     bool        cloudsVisible;
     OpenGLGState    cloudsGState;
-    GLuint      cloudsList;
+    Vertex_Chunk    cloudsList;
+    std::vector<glm::vec4> cloudColor;
+    std::vector<glm::vec3> cloudVertex;
+    std::vector<glm::vec2> cloudTexture;
 
     // weather
     WeatherRenderer weather;
@@ -144,11 +151,14 @@ private:
     OpenGLGState    sunGState;
     OpenGLGState    moonGState[2];
     OpenGLGState    starGState[2];
-    GLuint      sunList;
-    GLuint      sunXFormList;
-    GLuint      moonList;
-    GLuint      starList;
-    GLuint      starXFormList;
+    glm::vec4              sun[21];
+    Vertex_Chunk           sunXFormList;
+    std::vector<glm::vec3> moonVertex;
+    Vertex_Chunk           moonList;
+    Vertex_Chunk           starXFormList;
+    std::vector<glm::vec4> starsColor;
+    std::vector<glm::vec4> starsVertex;
+    std::vector<glm::vec3> transformedStarsVertex;
 
     static glm::vec3    skyPyramid[5];
     static const GLfloat    cloudRepeats;
