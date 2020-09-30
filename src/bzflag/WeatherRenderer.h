@@ -30,6 +30,7 @@
 #include "bzfgl.h"
 #include "OpenGLGState.h"
 #include "SceneRenderer.h"
+#include "Vertex_Chunk.h"
 
 class WeatherRenderer
 {
@@ -48,9 +49,6 @@ public:
 
     // called to draw the rain for the current frame
     void draw(const SceneRenderer& sr);
-
-    // called when the GL lists need to be deleted
-    void freeContext(void);
 
     // called when the GL lists need to be remade
     void rebuildContext(void);
@@ -78,7 +76,7 @@ protected:
     float                   maxPuddleTime;
     float                   puddleSpeed;
     float                   puddleColor[4];
-    GLuint                  dropList;
+    Vertex_Chunk            dropList;
 
 public:
     typedef struct
@@ -102,7 +100,7 @@ protected:
 
     float           lastRainTime;
 
-    void buildDropList(bool draw = false);
+    void buildDropList();
 
     bool updateDrop(std::vector<rain>::iterator &drop, float frameTime, std::vector<rain> &toAdd);
     bool updatePuddle(std::vector<puddle>::iterator &splash, float frameTime);
