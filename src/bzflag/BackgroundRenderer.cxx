@@ -1585,7 +1585,6 @@ void BackgroundRenderer::doFreeDisplayLists()
     int i;
 
     // don't forget the tag-along
-    weather.freeContext();
     EFFECTS.freeContext();
 
     // simpleGroundList[1] && simpleGroundList[3] are copies of [0] & [2]
@@ -1632,7 +1631,6 @@ void BackgroundRenderer::doInitDisplayLists()
     SceneRenderer& renderer = RENDERER;
 
     // don't forget the tag-along
-    weather.rebuildContext();
     EFFECTS.rebuildContext();
 
     //
