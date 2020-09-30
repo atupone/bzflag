@@ -72,8 +72,6 @@ WeatherRenderer::WeatherRenderer()
 
     puddleColor[0] = puddleColor[1] = puddleColor[2] = puddleColor[3] = 1.0f;
 
-    dropList = INVALID_GL_LIST_ID;
-
     gridSize = 200.0f;
 
     keyFactor = 1.0f / gridSize;
@@ -105,7 +103,6 @@ WeatherRenderer::WeatherRenderer()
 
 WeatherRenderer::~WeatherRenderer()
 {
-    freeContext(); // free the display lists
     BZDB.removeCallback("_rainType", bzdbCallBack, this);
     BZDB.removeCallback("_rainDensity", bzdbCallBack, this);
     BZDB.removeCallback("_rainSpread", bzdbCallBack, this);
@@ -599,106 +596,92 @@ void WeatherRenderer::draw(const SceneRenderer& sr)
 }
 
 
-void WeatherRenderer::freeContext(void)
+void WeatherRenderer::buildDropList()
 {
-    if (dropList != INVALID_GL_LIST_ID)
-    {
-        glDeleteLists(dropList, 1);
-        dropList = INVALID_GL_LIST_ID;
-    }
-    return;
-}
+    glm::vec2 texture[4];
 
+    std::vector<glm::vec2> dropTexture;
+    std::vector<glm::vec3> dropVertex;
 
-void WeatherRenderer::rebuildContext(void)
-{
-    buildDropList();
-    return;
-}
-
-
-void WeatherRenderer::buildDropList(bool _draw)
-{
-    if (!_draw)
-    {
-        if (dropList != INVALID_GL_LIST_ID)
-        {
-            glDeleteLists(dropList, 1);
-            dropList = INVALID_GL_LIST_ID;
-        }
-        dropList = glGenLists(1);
-        glNewList(dropList, GL_COMPILE);
-    }
+    texture[0] = glm::vec2(0, 0);
+    texture[1] = glm::vec2(1, 0);
+    texture[2] = glm::vec2(0, 1);
+    texture[3] = glm::vec2(1, 1);
 
     if (doBillBoards)
     {
-        glBegin(GL_TRIANGLE_STRIP);
-        glTexCoord2f(0, 0);
-        glVertex3f(-rainSize[0], -rainSize[1], 0);
+        glm::vec3 vertex;
+        vertex  = glm::vec3(-rainSize[0], -rainSize[1], 0);
+        dropTexture.push_back(texture[0]);
+        dropVertex.push_back(vertex);
 
-        glTexCoord2f(1, 0);
-        glVertex3f(rainSize[0], -rainSize[1], 0);
+        vertex  = glm::vec3(rainSize[0], -rainSize[1], 0);
+        dropTexture.push_back(texture[1]);
+        dropVertex.push_back(vertex);
 
-        glTexCoord2f(0, 1);
-        glVertex3f(-rainSize[0], rainSize[1], 0);
+        vertex  = glm::vec3(-rainSize[0], rainSize[1], 0);
+        dropTexture.push_back(texture[2]);
+        dropVertex.push_back(vertex);
 
-        glTexCoord2f(1, 1);
-        glVertex3f(rainSize[0], rainSize[1], 0);
-        glEnd();
+        vertex  = glm::vec3(rainSize[0], rainSize[1], 0);
+        dropTexture.push_back(texture[3]);
+        dropVertex.push_back(vertex);
+
+        dropList = Vertex_Chunk(Vertex_Chunk::VT, 4);
+        dropList.textureData(dropTexture);
+        dropList.vertexData(dropVertex);
     }
     else
     {
-        glPushMatrix();
-        glBegin(GL_TRIANGLE_STRIP);
-        glTexCoord2f(0, 0);
-        glVertex3f(-rainSize[0], 0, -rainSize[1]);
+        glm::vec4 vertex[4];
+        vertex[0] = glm::vec4(-rainSize[0], 0, -rainSize[1], 1.0f);
+        vertex[1] = glm::vec4( rainSize[0], 0, -rainSize[1], 1.0f);
+        vertex[2] = glm::vec4(-rainSize[0], 0,  rainSize[1], 1.0f);
+        vertex[3] = glm::vec4( rainSize[0], 0,  rainSize[1], 1.0f);
 
-        glTexCoord2f(1, 0);
-        glVertex3f(rainSize[0], 0, -rainSize[1]);
+        for (int i = 0; i < 4; i++)
+        {
+            dropTexture.push_back(texture[i]);
+            dropVertex.push_back(glm::vec3(vertex[i]));
+        }
 
-        glTexCoord2f(0, 1);
-        glVertex3f(-rainSize[0], 0, rainSize[1]);
+        // Degenerate triangle
+        dropTexture.push_back(texture[3]);
+        dropVertex.push_back(glm::vec3(vertex[3]));
 
-        glTexCoord2f(1, 1);
-        glVertex3f(rainSize[0], 0, rainSize[1]);
-        glEnd();
+        const auto up = glm::vec3(0.0, 0.0, 1.0);
+        const auto id = glm::mat4(1.0f);
+        auto rotation = glm::rotate(id, (float)(M_PI / 1.5), up);
 
-        glRotatef(120, 0, 0, 1);
+        dropTexture.push_back(texture[0]);
+        dropVertex.push_back(glm::vec3(rotation * vertex[0]));
 
-        glBegin(GL_TRIANGLE_STRIP);
-        glTexCoord2f(0, 0);
-        glVertex3f(-rainSize[0], 0, -rainSize[1]);
+        for (int i = 0; i < 4; i++)
+        {
+            dropTexture.push_back(texture[i]);
+            dropVertex.push_back(glm::vec3(rotation * vertex[i]));
+        }
 
-        glTexCoord2f (1, 0);
-        glVertex3f(rainSize[0], 0, -rainSize[1]);
+        // Degenerate triangle
+        dropTexture.push_back(texture[3]);
+        dropVertex.push_back(glm::vec3(rotation * vertex[3]));
 
-        glTexCoord2f (0, 1);
-        glVertex3f(-rainSize[0], 0, rainSize[1]);
+        rotation = glm::rotate(rotation, (float)(M_PI / 1.5), up);
 
-        glTexCoord2f (1, 1);
-        glVertex3f(rainSize[0], 0, rainSize[1]);
-        glEnd();
+        // Degenerate triangle
+        dropTexture.push_back(texture[0]);
+        dropVertex.push_back(glm::vec3(rotation * vertex[0]));
 
-        glRotatef(120, 0, 0, 1);
+        for (int i = 0; i < 4; i++)
+        {
+            dropTexture.push_back(texture[i]);
+            dropVertex.push_back(glm::vec3(rotation * vertex[i]));
+        }
 
-        glBegin(GL_TRIANGLE_STRIP);
-        glTexCoord2f(0, 0);
-        glVertex3f(-rainSize[0], 0, -rainSize[1]);
-
-        glTexCoord2f(1, 0);
-        glVertex3f(rainSize[0], 0, -rainSize[1]);
-
-        glTexCoord2f(0, 1);
-        glVertex3f(-rainSize[0], 0, rainSize[1]);
-
-        glTexCoord2f(1, 1);
-        glVertex3f(rainSize[0], 0, rainSize[1]);
-        glEnd();
-        glPopMatrix();
+        dropList = Vertex_Chunk(Vertex_Chunk::VT, dropVertex.size());
+        dropList.textureData(dropTexture);
+        dropList.vertexData(dropVertex);
     }
-
-    if (!_draw)
-        glEndList();
 }
 
 
@@ -861,10 +844,7 @@ void WeatherRenderer::drawDrop(rain& drop, const SceneRenderer& sr)
         if (spinRain)
             glRotatef(lastRainTime * 10.0f * rainSpeed, 0, 0, 1);
 
-        if (1)
-            glCallList(dropList);
-        else
-            buildDropList(true);
+        dropList.draw(GL_TRIANGLE_STRIP);
         glPopMatrix();
     }
 }
