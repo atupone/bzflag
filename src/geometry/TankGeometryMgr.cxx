@@ -27,6 +27,7 @@
 #include "StateDatabase.h"
 #include "BZDBCache.h"
 #include "OpenGLGState.h"
+#include "Vertex_Chunk.h"
 
 
 // use the namespaces
@@ -39,12 +40,10 @@ using namespace TankGeometryUtils;
 // ---------------
 
 // the display lists
-static GLuint displayLists[LastTankShadow][LastTankLOD]
-[LastTankSize][LastTankPart];
+static Vertex_Chunk displayLists[LastTankLOD][LastTankSize][LastTankPart];
 
 // triangle counts
-static int partTriangles[LastTankShadow][LastTankLOD]
-[LastTankSize][LastTankPart];
+static int partTriangles[LastTankLOD][LastTankSize][LastTankPart];
 
 // the scaling factors
 static GLfloat scaleFactors[LastTankSize][3] =
@@ -57,9 +56,6 @@ static GLfloat scaleFactors[LastTankSize][3] =
 };
 // the current scaling factors
 static const float* currentScaleFactor = scaleFactors[Normal];
-
-// the current shadow mode (used to remove glNormal3f and glTexcoord2f calls)
-static TankShadow shadowMode = ShadowOn;
 
 // arrays of functions to avoid large switch statements
 typedef int (*partFunction)(void);
@@ -93,8 +89,6 @@ static const partFunction partFunctions[LastTankLOD][BasicTankParts] =
 // -------------------------
 
 static void setupScales();
-static void freeContext(void *data);
-static void initContext(void *data);
 static void bzdbCallback(const std::string& str, void *data);
 
 
@@ -107,18 +101,12 @@ static void bzdbCallback(const std::string& str, void *data);
 void TankGeometryMgr::init()
 {
     // initialize the lists to invalid
-    for (int shadow = 0; shadow < LastTankShadow; shadow++)
+    for (int part = 0; part < LastTankPart; part++)
     {
         for (int lod = 0; lod < LastTankLOD; lod++)
         {
             for (int size = 0; size < LastTankSize; size++)
-            {
-                for (int part = 0; part < LastTankPart; part++)
-                {
-                    displayLists[shadow][lod][size][part] = INVALID_GL_LIST_ID;
-                    partTriangles[shadow][lod][size][part] = 0;
-                }
-            }
+                partTriangles[lod][size][part] = 0;
         }
     }
 
@@ -129,11 +117,7 @@ void TankGeometryMgr::init()
     BZDB.addCallback (StateDatabase::BZDB_THIEFTINYFACTOR, bzdbCallback, NULL);
     BZDB.addCallback ("animatedTreads", bzdbCallback, NULL);
 
-    // install the context initializer
-    OpenGLGState::registerContextInitializer (freeContext, initContext, NULL);
-
-    // setup the scaleFactors
-    setupScales();
+    buildLists();
 
     return;
 }
@@ -147,8 +131,7 @@ void TankGeometryMgr::kill()
     BZDB.removeCallback (StateDatabase::BZDB_THIEFTINYFACTOR, bzdbCallback, NULL);
     BZDB.removeCallback ("animatedTreads", bzdbCallback, NULL);
 
-    // remove the context initializer callback
-    OpenGLGState::unregisterContextInitializer(freeContext, initContext, NULL);
+    deleteLists();
 
     return;
 }
@@ -157,27 +140,21 @@ void TankGeometryMgr::kill()
 void TankGeometryMgr::deleteLists()
 {
     // delete the lists that have been aquired
-    for (int shadow = 0; shadow < LastTankShadow; shadow++)
+    for (int part = 0; part < LastTankPart; part++)
     {
         for (int lod = 0; lod < LastTankLOD; lod++)
         {
             for (int size = 0; size < LastTankSize; size++)
-            {
-                for (int part = 0; part < LastTankPart; part++)
-                {
-                    GLuint& list = displayLists[shadow][lod][size][part];
-                    if (list != INVALID_GL_LIST_ID)
-                    {
-                        glDeleteLists(list, 1);
-                        list = INVALID_GL_LIST_ID;
-                    }
-                }
-            }
+                displayLists[lod][size][part] = Vertex_Chunk();
         }
     }
     return;
 }
 
+
+static std::vector<glm::vec2> tankTextur;
+static std::vector<glm::vec3> tankNormal;
+static std::vector<glm::vec3> tankVertex;
 
 void TankGeometryMgr::buildLists()
 {
@@ -205,99 +182,82 @@ void TankGeometryMgr::buildLists()
     int wheelDivs = divisionLevels[quality][0];
     int treadDivs = divisionLevels[quality][1];
 
-    for (int shadow = 0; shadow < LastTankShadow; shadow++)
+    // only do the basics, unless we're making an animated tank
+    int lastPart = BasicTankParts;
+    if (animated)
+        lastPart = HighTankParts;
+
+    for (int part = 0; part < lastPart; part++)
     {
         for (int lod = 0; lod < LastTankLOD; lod++)
         {
+            if ((part == Barrel) && (lod == MedTankLOD))
+                continue;
             for (int size = 0; size < LastTankSize; size++)
             {
+                tankTextur.clear();
+                tankNormal.clear();
+                tankVertex.clear();
 
-                // only do the basics, unless we're making an animated tank
-                int lastPart = BasicTankParts;
-                if (animated)
-                    lastPart = HighTankParts;
+                int& count = partTriangles[lod][size][part];
 
-                // set the shadow mode for the doNormal3f() and doTexcoord2f() calls
-                shadowMode = (TankShadow) shadow;
+                // setup the scale factor
+                currentScaleFactor = scaleFactors[size];
 
-                for (int part = 0; part < lastPart; part++)
+                if ((part <= Turret) || (!animated))
                 {
-
-                    if ((part == Barrel) && (lod == MedTankLOD))
-                        continue;
-                    GLuint& list = displayLists[shadow][lod][size][part];
-                    int& count = partTriangles[shadow][lod][size][part];
-
-                    // get a new OpenGL display list
-                    list = glGenLists(1);
-                    glNewList(list, GL_COMPILE);
-
-                    // setup the scale factor
-                    currentScaleFactor = scaleFactors[size];
-
-                    if ((part <= Turret) || (!animated))
+                    // the basic parts
+                    count = partFunctions[lod][part]();
+                }
+                else
+                {
+                    // the animated parts
+                    if (part == LeftCasing)
+                        count = buildHighLCasingAnim();
+                    else if (part == RightCasing)
+                        count = buildHighRCasingAnim();
+                    else if (part == LeftTread)
+                        count = buildHighLTread(treadDivs);
+                    else if (part == RightTread)
+                        count = buildHighRTread(treadDivs);
+                    else if ((part >= LeftWheel0) && (part <= LeftWheel3))
                     {
-                        // the basic parts
-                        count = partFunctions[lod][part]();
+                        int wheel = part - LeftWheel0;
+                        count = buildHighLWheel(wheel, (float)wheel * (float)(M_PI / 2.0),
+                                                wheelDivs);
                     }
-                    else
+                    else if ((part >= RightWheel0) && (part <= RightWheel3))
                     {
-                        // the animated parts
-                        if (part == LeftCasing)
-                            count = buildHighLCasingAnim();
-                        else if (part == RightCasing)
-                            count = buildHighRCasingAnim();
-                        else if (part == LeftTread)
-                            count = buildHighLTread(treadDivs);
-                        else if (part == RightTread)
-                            count = buildHighRTread(treadDivs);
-                        else if ((part >= LeftWheel0) && (part <= LeftWheel3))
-                        {
-                            int wheel = part - LeftWheel0;
-                            count = buildHighLWheel(wheel, (float)wheel * (float)(M_PI / 2.0),
-                                                    wheelDivs);
-                        }
-                        else if ((part >= RightWheel0) && (part <= RightWheel3))
-                        {
-                            int wheel = part - RightWheel0;
-                            count = buildHighRWheel(wheel, (float)wheel * (float)(M_PI / 2.0),
-                                                    wheelDivs);
-                        }
+                        int wheel = part - RightWheel0;
+                        count = buildHighRWheel(wheel, (float)wheel * (float)(M_PI / 2.0),
+                                                wheelDivs);
                     }
+                }
 
-                    // end of the list
-                    glEndList();
-
-                } // part
-            } // size
-        } // lod
-    } // shadow
+                Vertex_Chunk& list = displayLists[lod][size][part];
+                list = Vertex_Chunk(Vertex_Chunk::VTN, tankVertex.size());
+                list.textureData(tankTextur);
+                list.normalData(tankNormal);
+                list.vertexData(tankVertex);
+            } // part
+        } // size
+    } // lod
 
     return;
 }
 
 
-GLuint TankGeometryMgr::getPartList(TankGeometryEnums::TankShadow shadow,
-                                    TankGeometryEnums::TankPart part,
-                                    TankGeometryEnums::TankSize size,
-                                    TankGeometryEnums::TankLOD lod)
+int TankGeometryMgr::drawPart(bool                        isShadow,
+                              TankGeometryEnums::TankPart part,
+                              TankGeometryEnums::TankSize size,
+                              TankGeometryEnums::TankLOD  lod)
 {
     if ((part == Barrel) && (lod == MedTankLOD))
         lod = LowTankLOD;
 
-    return displayLists[shadow][lod][size][part];
-}
-
-
-int TankGeometryMgr::getPartTriangleCount(TankGeometryEnums::TankShadow sh,
-        TankGeometryEnums::TankPart part,
-        TankGeometryEnums::TankSize size,
-        TankGeometryEnums::TankLOD lod)
-{
-    if ((part == Barrel) && (lod == MedTankLOD))
-        lod = LowTankLOD;
-
-    return partTriangles[sh][lod][size][part];
+    // get the list
+    displayLists[lod][size][part].draw(GL_TRIANGLE_STRIP, isShadow);
+    return partTriangles[lod][size][part];
 }
 
 
@@ -315,25 +275,10 @@ const glm::vec3 TankGeometryMgr::getScaleFactor(TankSize size)
 
 static void bzdbCallback(const std::string& UNUSED(name), void * UNUSED(data))
 {
-    deleteLists();
     buildLists();
     return;
 }
 
-
-static void freeContext(void * UNUSED(data))
-{
-    // delete all of the lists
-    deleteLists();
-    return;
-}
-
-
-static void initContext(void * UNUSED(data))
-{
-    buildLists();
-    return;
-}
 
 
 static void setupScales()
@@ -381,21 +326,24 @@ static void setupScales()
 // ---------------------------
 
 
+static glm::vec3 normal;
+static glm::vec2 textur;
+
 void TankGeometryUtils::doVertex3f(GLfloat x, GLfloat y, GLfloat z)
 {
     const float* scale = currentScaleFactor;
     x = x * scale[0];
     y = y * scale[1];
     z = z * scale[2];
-    glVertex3f(x, y, z);
+    tankNormal.push_back(normal);
+    tankTextur.push_back(textur);
+    tankVertex.push_back(glm::vec3(x, y, z));
     return;
 }
 
 
 void TankGeometryUtils::doNormal3f(GLfloat x, GLfloat y, GLfloat z)
 {
-    if (shadowMode == ShadowOn)
-        return;
     const float* scale = currentScaleFactor;
     GLfloat sx = x * scale[0];
     GLfloat sy = y * scale[1];
@@ -407,16 +355,14 @@ void TankGeometryUtils::doNormal3f(GLfloat x, GLfloat y, GLfloat z)
         y *= scale[1] / d;
         z *= scale[2] / d;
     }
-    glNormal3f(x, y, z);
+    normal = glm::vec3(x, y, z);
     return;
 }
 
 
 void TankGeometryUtils::doTexCoord2f(GLfloat x, GLfloat y)
 {
-    if (shadowMode == ShadowOn)
-        return;
-    glTexCoord2f(x, y);
+    textur = glm::vec2(x, y);
     return;
 }
 
