@@ -85,15 +85,10 @@ void kill();
 void buildLists();
 void deleteLists();
 
-GLuint getPartList(TankGeometryEnums::TankShadow shadow,
-                   TankGeometryEnums::TankPart part,
-                   TankGeometryEnums::TankSize size,
-                   TankGeometryEnums::TankLOD lod);
-
-int getPartTriangleCount(TankGeometryEnums::TankShadow shadow,
-                         TankGeometryEnums::TankPart part,
-                         TankGeometryEnums::TankSize size,
-                         TankGeometryEnums::TankLOD lod);
+int drawPart(bool                        isShadow,
+             TankGeometryEnums::TankPart part,
+             TankGeometryEnums::TankSize size,
+             TankGeometryEnums::TankLOD  lod);
 
 const glm::vec3 getScaleFactor(TankGeometryEnums::TankSize size);
 }
