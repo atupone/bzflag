@@ -1328,33 +1328,15 @@ bool TankSceneNode::TankRenderNode::setupTextureMatrix(TankPart part)
 
 void TankSceneNode::TankRenderNode::renderLights()
 {
-    static const glm::vec3 lightsColor[3] =
-    {
-        { 1.0f, 1.0f, 1.0f },
-        { 1.0f, 0.0f, 0.0f },
-        { 0.0f, 1.0f, 0.0f }
-    };
-    static const glm::vec3 lightsPos[3] =
-    {
-        { -1.53f,  0.00f, 2.1f },
-        {  0.10f,  0.75f, 2.1f },
-        {  0.10f, -0.75f, 2.1f }
-    };
     sceneNode->lightsGState.setState();
     glPointSize(2.0f);
 
-    glBegin(GL_POINTS);
-    {
-        const auto scale = TankGeometryMgr::getScaleFactor(sceneNode->tankSize);
+    const auto scale = TankGeometryMgr::getScaleFactor(sceneNode->tankSize);
 
-        myColor3fv(lightsColor[0]);
-        glVertex3fv(lightsPos[0] * scale);
-        myColor3fv(lightsColor[1]);
-        glVertex3fv(lightsPos[1] * scale);
-        myColor3fv(lightsColor[2]);
-        glVertex3fv(lightsPos[2] * scale);
-    }
-    glEnd();
+    glPushMatrix();
+    glScalef(scale.x, scale.y, scale.z);
+    TankGeometryMgr::drawLights(colorOverride);
+    glPopMatrix();
 
     glPointSize(1.0f);
     sceneNode->gstate.setState();
@@ -1378,18 +1360,6 @@ void TankSceneNode::TankRenderNode::renderJumpJets()
     if (!sceneNode->jumpJetsOn)
         return;
 
-    typedef struct
-    {
-        glm::vec3 vertex;
-        glm::vec2 texcoord;
-    } jetVertex;
-    static const jetVertex jet[3] =
-    {
-        {{+0.3f,  0.0f, 0.0f}, {0.0f, 1.0f}},
-        {{-0.3f,  0.0f, 0.0f}, {1.0f, 1.0f}},
-        {{ 0.0f, -1.0f, 0.0f}, {0.5f, 0.0f}}
-    };
-
     myColor4f(1.0f, 1.0f, 1.0f, 0.5f);
 
     // use a clip plane, because the ground has no depth
@@ -1407,15 +1377,7 @@ void TankSceneNode::TankRenderNode::renderJumpJets()
 
             RENDERER.getViewFrustum().executeBillboard();
 
-            glBegin(GL_TRIANGLES);
-            {
-                for (int v = 0; v < 3; v++)
-                {
-                    glTexCoord2fv(jet[v].texcoord);
-                    glVertex3fv(jet[v].vertex);
-                }
-            }
-            glEnd();
+            TankGeometryMgr::drawJet();
         }
         glPopMatrix();
     }

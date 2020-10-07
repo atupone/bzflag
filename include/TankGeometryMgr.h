@@ -91,6 +91,10 @@ int drawPart(bool                        isShadow,
              TankGeometryEnums::TankLOD  lod);
 
 const glm::vec3 getScaleFactor(TankGeometryEnums::TankSize size);
+
+void drawLights(bool override);
+void drawJet();
+
 }
 
 
