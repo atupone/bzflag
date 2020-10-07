@@ -41,6 +41,8 @@ using namespace TankGeometryUtils;
 
 // the display lists
 static Vertex_Chunk displayLists[LastTankLOD][LastTankSize][LastTankPart];
+static Vertex_Chunk tankLights;
+static Vertex_Chunk tankJet;
 
 // triangle counts
 static int partTriangles[LastTankLOD][LastTankSize][LastTankPart];
@@ -148,6 +150,8 @@ void TankGeometryMgr::deleteLists()
                 displayLists[lod][size][part] = Vertex_Chunk();
         }
     }
+    tankLights = Vertex_Chunk();
+    tankJet = Vertex_Chunk();;
     return;
 }
 
@@ -243,7 +247,53 @@ void TankGeometryMgr::buildLists()
         } // size
     } // lod
 
+    static const glm::vec4 lightsColor[3] =
+    {
+        {1.0f, 1.0f, 1.0f, 1.0f},
+        {1.0f, 0.0f, 0.0f, 1.0f},
+        {0.0f, 1.0f, 0.0f, 1.0f}
+    };
+
+    static const glm::vec3 lightsPos[3] =
+    {
+        {-1.53f,  0.00f, 2.1f},
+        { 0.10f,  0.75f, 2.1f},
+        { 0.10f, -0.75f, 2.1f}
+    };
+
+    tankLights = Vertex_Chunk(Vertex_Chunk::VC, 3);
+    tankLights.colorData(lightsColor);
+    tankLights.vertexData(lightsPos);
+
+    static const glm::vec2 jetTexture[3] =
+    {
+        {0.0f, 1.0f},
+        {1.0f, 1.0f},
+        {0.5f, 0.0f}
+    };
+    static const glm::vec3 jetVertex[3] =
+    {
+        {+0.3f,  0.0f, 0.0f},
+        {-0.3f,  0.0f, 0.0f},
+        { 0.0f, -1.0f, 0.0f},
+    };
+
+    tankJet = Vertex_Chunk(Vertex_Chunk::VT, 3);
+    tankJet.textureData(jetTexture);
+    tankJet.vertexData(jetVertex);
     return;
+}
+
+
+void TankGeometryMgr::drawLights(bool override)
+{
+    tankLights.draw(GL_POINTS, override);
+}
+
+
+void TankGeometryMgr::drawJet()
+{
+    tankJet.draw(GL_TRIANGLES);
 }
 
 
