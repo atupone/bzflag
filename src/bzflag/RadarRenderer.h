@@ -18,9 +18,16 @@
 #ifndef BZF_RADAR_RENDERER_H
 #define BZF_RADAR_RENDERER_H
 
+// Always first
 #include "common.h"
+
+// System headers
+#include <vector>
+
+// Common headers
 #include "bzfgl.h"
 #include "Obstacle.h"
+#include "Vertex_Chunk.h"
 
 
 class SceneRenderer;
@@ -61,6 +68,7 @@ private:
     void        drawFancyTank(const class Player* player);
     void        drawFlag(const float pos[3]);
     void        drawFlagOnTank();
+    void        buildBoxPyrMeshVBO();
 
     static float    colorScale(const float z, const float h);
     static float    transScale(const float z, const float h);
@@ -88,6 +96,11 @@ private:
     bool        useTankModels;
     bool        useTankDimensions;
     int         triangleCount;
+    std::vector<std::vector<Vertex_Chunk>> meshVBO;
+    std::vector<Vertex_Chunk>              boxVBO;
+    std::vector<Vertex_Chunk>              boxOutVBO;
+    std::vector<Vertex_Chunk>              pyrVBO;
+    std::vector<Vertex_Chunk>              pyrOutVBO;
     static const float  colorFactor;
 };
 
