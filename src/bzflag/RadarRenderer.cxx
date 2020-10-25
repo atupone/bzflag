@@ -13,6 +13,9 @@
 // interface header
 #include "RadarRenderer.h"
 
+// System headers
+#include <glm/ext/matrix_transform.hpp>
+
 // common implementation headers
 #include "SceneRenderer.h"
 #include "MainWindow.h"
@@ -59,11 +62,128 @@ RadarRenderer::RadarRenderer(const SceneRenderer&, World* _world)
 {
 
     setControlColor();
+    buildBoxPyrMeshVBO();
 }
 
 void RadarRenderer::setWorld(World* _world)
 {
     world = _world;
+    buildBoxPyrMeshVBO();
+}
+
+
+void RadarRenderer::buildBoxPyrMeshVBO()
+{
+    if (world == nullptr)
+    {
+        meshVBO.clear();
+        boxVBO.clear();
+        boxOutVBO.clear();
+        pyrVBO.clear();
+        pyrOutVBO.clear();
+        return;
+    }
+
+    std::vector<glm::vec3> vertex;
+    const ObstacleList& meshes = OBSTACLEMGR.getMeshes();
+    int count = meshes.size();
+
+    meshVBO.resize(count);
+
+    for (int i = 0; i < count; i++)
+    {
+        const MeshObstacle* mesh = (const MeshObstacle*) meshes[i];
+        int faces = mesh->getFaceCount();
+        meshVBO[i].resize(faces);
+
+        for (int f = 0; f < faces; f++)
+        {
+            const MeshFace* face = mesh->getFace(f);
+
+            // draw the face as a triangle fan
+            int vertexCount = face->getVertexCount();
+            meshVBO[i][f] = Vertex_Chunk(Vertex_Chunk::V, vertexCount);
+            vertex.resize(vertexCount);
+            int start = 0;
+            int end   = vertexCount;
+            for (int v = 0; v < vertexCount; v++)
+            {
+                int p;
+                if (v == 0)
+                    p = 0;
+                else if (v % 2 == 1)
+                    p = ++start;
+                else
+                    p = --end;
+                const float* pos = face->getVertex(p);
+                vertex[v] = glm::vec3(pos[0], pos[1], 0.0f);
+            }
+            meshVBO[i][f].vertexData(vertex);
+        }
+    }
+
+    // draw box buildings.
+    const ObstacleList& boxes = OBSTACLEMGR.getBoxes();
+    count = boxes.size();
+
+    boxVBO.resize(count);
+    boxOutVBO.resize(count);
+
+    glm::vec3 vertices[4];
+    for (int i = 0; i < count; i++)
+    {
+        boxVBO[i]    = Vertex_Chunk();
+        boxOutVBO[i] = Vertex_Chunk();
+        const BoxBuilding& box = *((const BoxBuilding*) boxes[i]);
+        if (box.isInvisible())
+            continue;
+        boxVBO[i]    = Vertex_Chunk(Vertex_Chunk::V, 4);
+        boxOutVBO[i] = Vertex_Chunk(Vertex_Chunk::V, 4);
+        const float  wx = box.getWidth();
+        const float  hy = box.getBreadth();
+        const float* pos = box.getPosition();
+        const float  rot = box.getRotation();
+        auto unity = glm::mat4(1.0f);
+        auto translate(glm::translate(unity, glm::vec3(pos[0], pos[1], 0.0f)));
+        auto rotate(glm::rotate(translate, rot, glm::vec3(0.0f, 0.0f, 1.0f)));
+        vertices[0] = glm::vec3(rotate * glm::vec4(-wx, -hy, 0.0f, 1.0f));
+        vertices[1] = glm::vec3(rotate * glm::vec4( wx, -hy, 0.0f, 1.0f));
+        vertices[2] = glm::vec3(rotate * glm::vec4(-wx,  hy, 0.0f, 1.0f));
+        vertices[3] = glm::vec3(rotate * glm::vec4( wx,  hy, 0.0f, 1.0f));
+        boxVBO[i].vertexData(vertices);
+        vertices[2] = glm::vec3(rotate * glm::vec4( wx,  hy, 0.0f, 1.0f));
+        vertices[3] = glm::vec3(rotate * glm::vec4(-wx,  hy, 0.0f, 1.0f));
+        boxOutVBO[i].vertexData(vertices);
+    }
+
+    // draw pyramid buildings
+    const ObstacleList& pyramids = OBSTACLEMGR.getPyrs();
+    count = pyramids.size();
+
+    pyrVBO.resize(count);
+    pyrOutVBO.resize(count);
+
+    for (int i = 0; i < count; i++)
+    {
+        pyrVBO[i]    = Vertex_Chunk(Vertex_Chunk::V, 4);
+        pyrOutVBO[i] = Vertex_Chunk(Vertex_Chunk::V, 4);
+        const PyramidBuilding& pyr = *((const PyramidBuilding*) pyramids[i]);
+        const float  wx  = pyr.getWidth();
+        const float  hy  = pyr.getBreadth();
+        const float* pos = pyr.getPosition();
+        const float  rot = pyr.getRotation();
+        auto unity = glm::mat4(1.0f);
+        auto translate(glm::translate(unity, glm::vec3(pos[0], pos[1], 0.0f)));
+        auto rotate(glm::rotate(translate, rot, glm::vec3(0.0f, 0.0f, 1.0f)));
+        vertices[0] = glm::vec3(rotate * glm::vec4(-wx, -hy, 0.0f, 1.0f));
+        vertices[1] = glm::vec3(rotate * glm::vec4( wx, -hy, 0.0f, 1.0f));
+        vertices[2] = glm::vec3(rotate * glm::vec4(-wx,  hy, 0.0f, 1.0f));
+        vertices[3] = glm::vec3(rotate * glm::vec4( wx,  hy, 0.0f, 1.0f));
+        pyrVBO[i].vertexData(vertices);
+        vertices[2] = glm::vec3(rotate * glm::vec4( wx,  hy, 0.0f, 1.0f));
+        vertices[3] = glm::vec3(rotate * glm::vec4(-wx,  hy, 0.0f, 1.0f));
+        pyrOutVBO[i].vertexData(vertices);
+    }
 }
 
 
@@ -97,13 +217,6 @@ void RadarRenderer::setDimming(float newDimming)
     dimming = (1.0f - newDimming > 1.0f) ? 1.0f : (1.0f - newDimming < 0.0f) ? 0.0f : 1.0f - newDimming;
 }
 
-
-void RadarRenderer::drawShot(const ShotPath* shot)
-{
-    glBegin(GL_POINTS);
-    glVertex2fv(shot->getPosition());
-    glEnd();
-}
 
 static void glColor3fv(const glm::vec3 &c)
 {
@@ -424,6 +537,7 @@ void RadarRenderer::render(SceneRenderer& renderer, bool blank, bool observer)
         int noiseTexture = tm.getTextureID( "noise" );
 
         glColor3f(1.0f, 1.0f, 1.0f);
+        glScalef(radarRange, radarRange, 0.0f);
 
         if ((noiseTexture >= 0) && (renderer.useQuality() > 0))
         {
@@ -432,18 +546,18 @@ void RadarRenderer::render(SceneRenderer& renderer, bool blank, bool observer)
 
             static float np[] =
             {
-                0, 0, 1, 1,
-                1, 1, 0, 0,
-                0.5f, 0.5f, 1.5f, 1.5f,
-                1.5f, 1.5f, 0.5f, 0.5f,
-                0.25f, 0.25f, 1.25f, 1.25f,
-                1.25f, 1.25f, 0.25f, 0.25f,
-                0, 0.5f, 1, 1.5f,
-                1, 1.5f, 0, 0.5f,
-                0.5f, 0, 1.5f, 1,
-                1.4f, 1, 0.5f, 0,
-                0.75f, 0.75f, 1.75f, 1.75f,
-                1.75f, 1.75f, 0.75f, 0.75f,
+                0,         0,     1,  1,
+                1,         1,    -1, -1,
+                0.5f,   0.5f,     1,  1,
+                1.5f,   1.5f,    -1, -1,
+                0.25f, 0.25f,     1,  1,
+                1.25f, 1.25f,    -1,  1,
+                0,      0.5f,     1,  1,
+                1,      1.5f,    -1, -1,
+                0.5f,      0,     1,  1,
+                1.4f,      1, -0.9f, -1,
+                0.75f, 0.75f,     1,  1,
+                1.75f, 1.75f,    -1, -1,
             };
 
             int noisePattern = 4 * int(floor(sequences * bzfrand()));
@@ -451,18 +565,13 @@ void RadarRenderer::render(SceneRenderer& renderer, bool blank, bool observer)
             glEnable(GL_TEXTURE_2D);
             tm.bind(noiseTexture);
 
-            glBegin(GL_TRIANGLE_STRIP);
-            {
-                glTexCoord2f(np[noisePattern+0],np[noisePattern+1]);
-                glVertex2f(-radarRange,-radarRange);
-                glTexCoord2f(np[noisePattern+2],np[noisePattern+1]);
-                glVertex2f( radarRange,-radarRange);
-                glTexCoord2f(np[noisePattern+0],np[noisePattern+3]);
-                glVertex2f(-radarRange, radarRange);
-                glTexCoord2f(np[noisePattern+2],np[noisePattern+3]);
-                glVertex2f( radarRange, radarRange);
-            }
-            glEnd();
+            glMatrixMode(GL_TEXTURE);
+            glPushMatrix();
+            glTranslatef(np[noisePattern], np[noisePattern + 1], 0.0f);
+            glScalef(np[noisePattern + 2], np[noisePattern + 3], 0.0f);
+            DRAWER.simmetricTexturedRect();
+            glPopMatrix();
+            glMatrixMode(GL_MODELVIEW);
 
             glDisable(GL_TEXTURE_2D);
         }
@@ -473,18 +582,7 @@ void RadarRenderer::render(SceneRenderer& renderer, bool blank, bool observer)
             glEnable(GL_TEXTURE_2D);
             tm.bind(noiseTexture);
 
-            glBegin(GL_TRIANGLE_STRIP);
-            {
-                glTexCoord2f(0,0);
-                glVertex2f(-radarRange,-radarRange);
-                glTexCoord2f(1,0);
-                glVertex2f( radarRange,-radarRange);
-                glTexCoord2f(0,1);
-                glVertex2f(-radarRange, radarRange);
-                glTexCoord2f(1,1);
-                glVertex2f( radarRange, radarRange);
-            }
-            glEnd();
+            DRAWER.simmetricTexturedRect();
 
             glDisable(GL_TEXTURE_2D);
         }
@@ -984,22 +1082,11 @@ void RadarRenderer::renderBoxPyrMesh()
     for (i = 0; i < count; i++)
     {
         const BoxBuilding& box = *((const BoxBuilding*) boxes[i]);
-        if (box.isInvisible())
-            continue;
         const float z = box.getPosition()[2];
         const float bh = box.getHeight();
         const float cs = colorScale(z, bh);
         glColor4f(0.25f * cs, 0.5f * cs, 0.5f * cs, transScale(z, bh));
-        const float wx = box.getWidth();
-        const float hy = box.getBreadth();
-        const float* pos = box.getPosition();
-        const float  rot = RAD2DEG * box.getRotation();
-        glPushMatrix();
-        glTranslatef(pos[0], pos[1], 0.0f);
-        glRotatef(rot, 0.0f, 0.0f, 1.0f);
-        glScalef(wx, hy, 0.0f);
-        DRAWER.simmetricRect();
-        glPopMatrix();
+        boxVBO[i].draw(GL_TRIANGLE_STRIP);
     }
 
     // draw pyramid buildings
@@ -1012,16 +1099,7 @@ void RadarRenderer::renderBoxPyrMesh()
         const float bh = pyr.getHeight();
         const float cs = colorScale(z, bh);
         glColor4f(0.25f * cs, 0.5f * cs, 0.5f * cs, transScale(z, bh));
-        const float wx = pyr.getWidth();
-        const float hy = pyr.getBreadth();
-        const float* pos = pyr.getPosition();
-        const float  rot = RAD2DEG * pyr.getRotation();
-        glPushMatrix();
-        glTranslatef(pos[0], pos[1], 0.0f);
-        glRotatef(rot, 0.0f, 0.0f, 1.0f);
-        glScalef(wx, hy, 0.0f);
-        DRAWER.simmetricRect();
-        glPopMatrix();
+        pyrVBO[i].draw(GL_TRIANGLE_STRIP);
     }
 
     // draw mesh obstacles
@@ -1030,13 +1108,11 @@ void RadarRenderer::renderBoxPyrMesh()
     if (!enhanced)
         glDisable(GL_CULL_FACE);
     const ObstacleList& meshes = OBSTACLEMGR.getMeshes();
-    count = meshes.size();
-    for (i = 0; i < count; i++)
+    for (i = 0; i < (int)meshVBO.size(); i++)
     {
         const MeshObstacle* mesh = (const MeshObstacle*) meshes[i];
-        int faces = mesh->getFaceCount();
 
-        for (int f = 0; f < faces; f++)
+        for (int f = 0; f < (int)meshVBO[i].size(); f++)
         {
             const MeshFace* face = mesh->getFace(f);
             if (enhanced)
@@ -1064,14 +1140,7 @@ void RadarRenderer::renderBoxPyrMesh()
             else
                 glColor4f(0.25f * cs, 0.5f * cs, 0.5f * cs, transScale(z, bh));
             // draw the face as a triangle fan
-            int vertexCount = face->getVertexCount();
-            glBegin(GL_TRIANGLE_FAN);
-            for (int v = 0; v < vertexCount; v++)
-            {
-                const float* pos = face->getVertex(v);
-                glVertex2f(pos[0], pos[1]);
-            }
-            glEnd();
+            meshVBO[i][f].draw(GL_TRIANGLE_STRIP);
         }
     }
     if (!enhanced)
@@ -1091,22 +1160,11 @@ void RadarRenderer::renderBoxPyrMesh()
         for (i = 0; i < count; i++)
         {
             const BoxBuilding& box = *((const BoxBuilding*) boxes[i]);
-            if (box.isInvisible())
-                continue;
             const float z = box.getPosition()[2];
             const float bh = box.getHeight();
             const float cs = colorScale(z, bh);
             glColor4f(0.25f * cs, 0.5f * cs, 0.5f * cs, transScale(z, bh));
-            const float wx = box.getWidth();
-            const float hy = box.getBreadth();
-            const float* pos = box.getPosition();
-            const float  rot = RAD2DEG * box.getRotation();
-            glPushMatrix();
-            glTranslatef(pos[0], pos[1], 0.0f);
-            glRotatef(rot, 0.0f, 0.0f, 1.0f);
-            glScalef(wx, hy, 0.0f);
-            DRAWER.simmetricSquareLoop();
-            glPopMatrix();
+            boxOutVBO[i].draw(GL_LINE_LOOP);
         }
 
         count = pyramids.size();
@@ -1117,16 +1175,7 @@ void RadarRenderer::renderBoxPyrMesh()
             const float bh = pyr.getHeight();
             const float cs = colorScale(z, bh);
             glColor4f(0.25f * cs, 0.5f * cs, 0.5f * cs, transScale(z, bh));
-            const float wx = pyr.getWidth();
-            const float hy = pyr.getBreadth();
-            const float* pos = pyr.getPosition();
-            const float  rot = RAD2DEG * pyr.getRotation();
-            glPushMatrix();
-            glTranslatef(pos[0], pos[1], 0.0f);
-            glRotatef(rot, 0.0f, 0.0f, 1.0f);
-            glScalef(wx, hy, 0.0f);
-            DRAWER.simmetricSquareLoop();
-            glPopMatrix();
+            pyrOutVBO[i].draw(GL_LINE_LOOP);
         }
     }
 
