@@ -35,7 +35,8 @@ public:
     VBO_Vertex(
         bool handleTexture,
         bool handleNormal,
-        bool handleColor);
+        bool handleColor,
+        bool interlaced);
     ~VBO_Vertex() = default;
 
     // Increase the size
@@ -75,6 +76,7 @@ private:
     static GLuint actTxcds;
     static GLuint actNorms;
     static GLuint actColrs;
+    static GLuint actIntrs;
 
     // Last bounded buffer
     static GLuint actBounded;
@@ -90,6 +92,7 @@ private:
     GLuint txcds;
     GLuint norms;
     GLuint colrs;
+    GLuint intrs;
 
     // Bind vertex Buffer
     void enableVertex();
@@ -110,8 +113,15 @@ private:
     std::vector<GLfloat> hostedTextures;
     std::vector<GLfloat> hostedNormals;
     std::vector<GLfloat> hostedColors;
+    std::vector<GLfloat> hostedInterlaced;
 
     bool vbosReady;
+
+    bool interlaced;
+    int  interlacedSize;
+    int  strideTexture;
+    int  strideNormal;
+    int  strideColor;
 };
 
 // Local Variables: ***
