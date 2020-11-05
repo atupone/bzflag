@@ -36,6 +36,7 @@ Vertex_Chunk::Vertex_Chunk(Component comp, unsigned int size)
     , indexSize(size)
     , myComp(comp)
 {
+    const bool interlaced = true;
     if (!size)
     {
         myVBO = nullptr;
@@ -56,25 +57,25 @@ Vertex_Chunk::Vertex_Chunk(Component comp, unsigned int size)
     switch (comp)
     {
     case Component::V:
-        myVBO = new VBO_Vertex(false, false, false);
+        myVBO = new VBO_Vertex(false, false, false, interlaced);
         break;
     case Component::VC:
-        myVBO = new VBO_Vertex(false, false, true);
+        myVBO = new VBO_Vertex(false, false, true, interlaced);
         break;
     case Component::VN:
-        myVBO = new VBO_Vertex(false, true, false);
+        myVBO = new VBO_Vertex(false, true, false, interlaced);
         break;
     case Component::VT:
-        myVBO = new VBO_Vertex(true, false, false);
+        myVBO = new VBO_Vertex(true, false, false, interlaced);
         break;
     case Component::VTC:
-        myVBO = new VBO_Vertex(true, false, true);
+        myVBO = new VBO_Vertex(true, false, true, interlaced);
         break;
     case Component::VTN:
-        myVBO = new VBO_Vertex(true, true, false);
+        myVBO = new VBO_Vertex(true, true, false, interlaced);
         break;
     case Component::VTNC:
-        myVBO = new VBO_Vertex(true, true, true);
+        myVBO = new VBO_Vertex(true, true, true, true);
         break;
     default:
         break;
