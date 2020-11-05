@@ -23,17 +23,30 @@ GLuint VBO_Vertex::actVerts     = 0;
 GLuint VBO_Vertex::actNorms     = 0;
 GLuint VBO_Vertex::actTxcds     = 0;
 GLuint VBO_Vertex::actColrs     = 0;
+GLuint VBO_Vertex::actIntrs     = 0;
 GLuint VBO_Vertex::actBounded   = 0;
 
 VBO_Vertex::VBO_Vertex(
     bool handleTexture_,
     bool handleNormal_,
-    bool handleColor_) :
+    bool handleColor_,
+    bool interlaced_) :
     VBO_Handler(),
     handleTexture(handleTexture_), handleNormal(handleNormal_),
     handleColor(handleColor_), verts(0), txcds(0), norms(0), colrs(0),
-    vbosReady(false)
+    vbosReady(false), interlaced(interlaced_)
 {
+    interlaced = false;
+    interlacedSize = 3;
+    strideTexture = interlacedSize;
+    if (handleTexture)
+        interlacedSize += 2;
+    strideNormal = interlacedSize;
+    if (handleNormal)
+        interlacedSize += 3;
+    strideColor = interlacedSize;
+    if (handleColor)
+        interlacedSize += 4;
 }
 
 void VBO_Vertex::resize()
@@ -48,6 +61,8 @@ void VBO_Vertex::resize()
         hostedNormals.resize(3 * vboSize);
     if (!hostedColors.empty())
         hostedColors.resize(4 * vboSize);
+    if (!hostedInterlaced.empty())
+        hostedInterlaced.resize(interlacedSize * vboSize);
     if (!vbosReady)
         return;
     destroy();
@@ -59,46 +74,59 @@ void VBO_Vertex::init()
     vbosReady = true;
     if (!vboSize)
         return;
-    glGenBuffers(1, &verts);
-    if (handleTexture)
-        glGenBuffers(1, &txcds);
-    if (handleNormal)
-        glGenBuffers(1, &norms);
-    if (handleColor)
-        glGenBuffers(1, &colrs);
-
-    bindBuffer(verts);
-    glBufferData(
-        GL_ARRAY_BUFFER,
-        vboSize * sizeof(GLfloat[3]),
-        hostedVertices.data(),
-        GL_DYNAMIC_DRAW);
-    if (handleTexture)
+    if (interlaced)
     {
-        bindBuffer(txcds);
+        glGenBuffers(1, &intrs);
+        bindBuffer(intrs);
         glBufferData(
             GL_ARRAY_BUFFER,
-            vboSize * sizeof(GLfloat[2]),
-            hostedTextures.data(),
+            vboSize * interlacedSize * sizeof(GLfloat),
+            hostedInterlaced.data(),
             GL_DYNAMIC_DRAW);
     }
-    if (handleNormal)
+    else
     {
-        bindBuffer(norms);
+        glGenBuffers(1, &verts);
+        if (handleTexture)
+            glGenBuffers(1, &txcds);
+        if (handleNormal)
+            glGenBuffers(1, &norms);
+        if (handleColor)
+            glGenBuffers(1, &colrs);
+
+        bindBuffer(verts);
         glBufferData(
             GL_ARRAY_BUFFER,
             vboSize * sizeof(GLfloat[3]),
-            hostedNormals.data(),
+            hostedVertices.data(),
             GL_DYNAMIC_DRAW);
-    }
-    if (handleColor)
-    {
-        bindBuffer(colrs);
-        glBufferData(
-            GL_ARRAY_BUFFER,
-            vboSize * sizeof(GLfloat[4]),
-            hostedColors.data(),
-            GL_DYNAMIC_DRAW);
+        if (handleTexture)
+        {
+            bindBuffer(txcds);
+            glBufferData(
+                GL_ARRAY_BUFFER,
+                vboSize * sizeof(GLfloat[2]),
+                hostedTextures.data(),
+                GL_DYNAMIC_DRAW);
+        }
+        if (handleNormal)
+        {
+            bindBuffer(norms);
+            glBufferData(
+                GL_ARRAY_BUFFER,
+                vboSize * sizeof(GLfloat[3]),
+                hostedNormals.data(),
+                GL_DYNAMIC_DRAW);
+        }
+        if (handleColor)
+        {
+            bindBuffer(colrs);
+            glBufferData(
+                GL_ARRAY_BUFFER,
+                vboSize * sizeof(GLfloat[4]),
+                hostedColors.data(),
+                GL_DYNAMIC_DRAW);
+        }
     }
 }
 
@@ -107,13 +135,18 @@ void VBO_Vertex::destroy()
     vbosReady = false;
     if (!vboSize)
         return;
-    deleteBuffer(verts);
-    if (handleTexture)
-        deleteBuffer(txcds);
-    if (handleNormal)
-        deleteBuffer(norms);
-    if (handleColor)
-        deleteBuffer(colrs);
+    if (interlaced)
+        deleteBuffer(intrs);
+    else
+    {
+        deleteBuffer(verts);
+        if (handleTexture)
+            deleteBuffer(txcds);
+        if (handleNormal)
+            deleteBuffer(norms);
+        if (handleColor)
+            deleteBuffer(colrs);
+    }
 }
 
 std::string VBO_Vertex::vboName()
@@ -130,76 +163,191 @@ std::string VBO_Vertex::vboName()
 
 void VBO_Vertex::vertexData(int index, int size, const GLfloat vertices[])
 {
-    if (hostedVertices.empty())
-        hostedVertices.resize(3 * vboSize);
-    memcpy(&hostedVertices[index * 3],
-           vertices,
-           size * sizeof(GLfloat[3]));
+    if (interlaced)
+    {
+        if (hostedInterlaced.empty())
+            hostedInterlaced.resize(interlacedSize * vboSize);
+        auto dataP = &hostedInterlaced[index * interlacedSize];
+        auto vertP = vertices;
+        for (int i = 0; i < size; i++)
+        {
+            memcpy(dataP, vertP, sizeof(GLfloat[3]));
+            dataP += interlacedSize;
+            vertP += 3;
+        }
+    }
+    else
+    {
+        if (hostedVertices.empty())
+            hostedVertices.resize(3 * vboSize);
+        memcpy(&hostedVertices[index * 3],
+               vertices,
+               size * sizeof(GLfloat[3]));
+    }
     if (!vbosReady)
         return;
-    bindBuffer(verts);
-    glBufferSubData(
-        GL_ARRAY_BUFFER,
-        index * sizeof(GLfloat[3]),
-        size * sizeof(GLfloat[3]),
-        vertices);
+    if (interlaced)
+    {
+        bindBuffer(intrs);
+        glBufferSubData(
+            GL_ARRAY_BUFFER,
+            index * interlacedSize * sizeof(GLfloat),
+            size * interlacedSize * sizeof(GLfloat),
+            &hostedInterlaced[index * interlacedSize]);
+    }
+    else
+    {
+        bindBuffer(verts);
+        glBufferSubData(
+            GL_ARRAY_BUFFER,
+            index * sizeof(GLfloat[3]),
+            size * sizeof(GLfloat[3]),
+            vertices);
+    }
 }
 
 void VBO_Vertex::textureData(int index, int size, const GLfloat textures[])
 {
     if (!handleTexture)
         return;
-    if (hostedTextures.empty())
-        hostedTextures.resize(2 * vboSize);
-    memcpy(&hostedTextures[index * 2],
-           textures,
-           size * sizeof(GLfloat[2]));
+    if (interlaced)
+    {
+        if (hostedInterlaced.empty())
+            hostedInterlaced.resize(interlacedSize * vboSize);
+        auto dataP = &hostedInterlaced[index * interlacedSize];
+        auto textP = textures;
+        dataP += strideTexture;
+        for (int i = 0; i < size; i++)
+        {
+            memcpy(dataP, textP, sizeof(GLfloat[2]));
+            dataP += interlacedSize;
+            textP += 2;
+        }
+    }
+    else
+    {
+        if (hostedTextures.empty())
+            hostedTextures.resize(2 * vboSize);
+        memcpy(&hostedTextures[index * 2],
+               textures,
+               size * sizeof(GLfloat[2]));
+    }
     if (!vbosReady)
         return;
-    bindBuffer(txcds);
-    glBufferSubData(
-        GL_ARRAY_BUFFER,
-        index * sizeof(GLfloat[2]),
-        size * sizeof(GLfloat[2]),
-        textures);
+    if (interlaced)
+    {
+        bindBuffer(intrs);
+        glBufferSubData(
+            GL_ARRAY_BUFFER,
+            index * interlacedSize * sizeof(GLfloat),
+            size * interlacedSize * sizeof(GLfloat),
+            &hostedInterlaced[index * interlacedSize]);
+    }
+    else
+    {
+        bindBuffer(txcds);
+        glBufferSubData(
+            GL_ARRAY_BUFFER,
+            index * sizeof(GLfloat[2]),
+            size * sizeof(GLfloat[2]),
+            textures);
+    }
 }
 
 void VBO_Vertex::normalData(int index, int size, const GLfloat normals[])
 {
     if (!handleNormal)
         return;
-    if (hostedNormals.empty())
-        hostedNormals.resize(3 * vboSize);
-    memcpy(&hostedNormals[index * 3],
-           normals,
-           size * sizeof(GLfloat[3]));
+    if (interlaced)
+    {
+        if (hostedInterlaced.empty())
+            hostedInterlaced.resize(interlacedSize * vboSize);
+        auto dataP = &hostedInterlaced[index * interlacedSize];
+        auto normP = normals;
+        dataP += strideNormal;
+        for (int i = 0; i < size; i++)
+        {
+            memcpy(dataP, normP, sizeof(GLfloat[3]));
+            dataP += interlacedSize;
+            normP += 3;
+        }
+    }
+    else
+    {
+        if (hostedNormals.empty())
+            hostedNormals.resize(3 * vboSize);
+        memcpy(&hostedNormals[index * 3],
+               normals,
+               size * sizeof(GLfloat[3]));
+    }
     if (!vbosReady)
         return;
-    bindBuffer(norms);
-    glBufferSubData(
-        GL_ARRAY_BUFFER,
-        index * sizeof(GLfloat[3]),
-        size * sizeof(GLfloat[3]),
-        normals);
+    if (interlaced)
+    {
+        bindBuffer(intrs);
+        glBufferSubData(
+            GL_ARRAY_BUFFER,
+            index * interlacedSize * sizeof(GLfloat),
+            size * interlacedSize * sizeof(GLfloat),
+            &hostedInterlaced[index * interlacedSize]);
+    }
+    else
+    {
+        bindBuffer(norms);
+        glBufferSubData(
+            GL_ARRAY_BUFFER,
+            index * sizeof(GLfloat[3]),
+            size * sizeof(GLfloat[3]),
+            normals);
+    }
 }
 
 void VBO_Vertex::colorData(int index, int size, const GLfloat colors[])
 {
     if (!handleColor)
         return;
-    if (hostedColors.empty())
-        hostedColors.resize(4 * vboSize);
-    memcpy(&hostedColors[index * 4],
-           colors,
-           size * sizeof(GLfloat[4]));
+    if (interlaced)
+    {
+        if (hostedInterlaced.empty())
+            hostedInterlaced.resize(interlacedSize * vboSize);
+        auto dataP = &hostedInterlaced[index * interlacedSize];
+        auto coloP = colors;
+        dataP += strideColor;
+        for (int i = 0; i < size; i++)
+        {
+            memcpy(dataP, coloP, sizeof(GLfloat[4]));
+            dataP += interlacedSize;
+            coloP += 4;
+        }
+    }
+    else
+    {
+        if (hostedColors.empty())
+            hostedColors.resize(4 * vboSize);
+        memcpy(&hostedColors[index * 4],
+               colors,
+               size * sizeof(GLfloat[4]));
+    }
     if (!vbosReady)
         return;
-    bindBuffer(colrs);
-    glBufferSubData(
-        GL_ARRAY_BUFFER,
-        index * sizeof(GLfloat[4]),
-        size * sizeof(GLfloat[4]),
-        colors);
+    if (interlaced)
+    {
+        bindBuffer(intrs);
+        glBufferSubData(
+            GL_ARRAY_BUFFER,
+            index * interlacedSize * sizeof(GLfloat),
+            size * interlacedSize * sizeof(GLfloat),
+            &hostedInterlaced[index * interlacedSize]);
+    }
+    else
+    {
+        bindBuffer(colrs);
+        glBufferSubData(
+            GL_ARRAY_BUFFER,
+            index * sizeof(GLfloat[4]),
+            size * sizeof(GLfloat[4]),
+            colors);
+    }
 }
 
 void VBO_Vertex::enableArrays(bool texture, bool normal, bool color)
@@ -234,11 +382,31 @@ void VBO_Vertex::enableVertexOnly()
 
 void VBO_Vertex::enableVertex()
 {
-    if (actVerts == verts)
-        return;
-    actVerts = verts;
-    bindBuffer(verts);
-    glVertexPointer(3, GL_FLOAT, 0, 0);
+    if (interlaced)
+    {
+        if (actIntrs == intrs)
+            return;
+        actIntrs = intrs;
+        bindBuffer(intrs);
+        glVertexPointer(3, GL_FLOAT, interlacedSize * sizeof(GLfloat), 0);
+        glTexCoordPointer(2, GL_FLOAT,
+                          interlacedSize * sizeof(GLfloat),
+                          (void *)(strideTexture * sizeof(GLfloat)));
+        glNormalPointer(GL_FLOAT,
+                        interlacedSize * sizeof(GLfloat),
+                        (void *)(strideNormal * sizeof(GLfloat)));
+        glColorPointer(4, GL_FLOAT,
+                       interlacedSize * sizeof(GLfloat),
+                       (void *)(strideColor * sizeof(GLfloat)));
+    }
+    else
+    {
+        if (actVerts == verts)
+            return;
+        actVerts = verts;
+        bindBuffer(verts);
+        glVertexPointer(3, GL_FLOAT, 0, 0);
+    }
 }
 
 void VBO_Vertex::disableTextures()
@@ -258,8 +426,11 @@ void VBO_Vertex::enableTextures()
     if (actTxcds == txcds)
         return;
     actTxcds = txcds;
-    bindBuffer(txcds);
-    glTexCoordPointer(2, GL_FLOAT, 0, 0);
+    if (!interlaced)
+    {
+        bindBuffer(txcds);
+        glTexCoordPointer(2, GL_FLOAT, 0, 0);
+    }
 }
 
 void VBO_Vertex::disableNormals()
@@ -279,8 +450,11 @@ void VBO_Vertex::enableNormals()
     if (actNorms == norms)
         return;
     actNorms = norms;
-    bindBuffer(norms);
-    glNormalPointer(GL_FLOAT, 0, 0);
+    if (!interlaced)
+    {
+        bindBuffer(norms);
+        glNormalPointer(GL_FLOAT, 0, 0);
+    }
 }
 
 void VBO_Vertex::disableColors()
@@ -300,8 +474,11 @@ void VBO_Vertex::enableColors()
     if (actColrs == colrs)
         return;
     actColrs = colrs;
-    bindBuffer(colrs);
-    glColorPointer(4, GL_FLOAT, 0, 0);
+    if (!interlaced)
+    {
+        bindBuffer(colrs);
+        glColorPointer(4, GL_FLOAT, 0, 0);
+    }
 }
 
 void VBO_Vertex::bindBuffer(GLuint buffer)
@@ -317,14 +494,22 @@ void VBO_Vertex::deleteBuffer(GLuint buffer)
     glDeleteBuffers(1, &buffer);
     if (actBounded == buffer)
         actBounded = 0;
-    if (actVerts == buffer)
-        actVerts = 0;
-    if (actNorms == buffer)
-        actNorms = 0;
-    if (actTxcds == buffer)
-        actTxcds = 0;
-    if (actColrs == buffer)
-        actColrs = 0;
+    if (interlaced)
+    {
+        if (actIntrs == buffer)
+            actIntrs = 0;
+    }
+    else
+    {
+        if (actVerts == buffer)
+            actVerts = 0;
+        if (actNorms == buffer)
+            actNorms = 0;
+        if (actTxcds == buffer)
+            actTxcds = 0;
+        if (actColrs == buffer)
+            actColrs = 0;
+    }
 }
 
 // Local Variables: ***
