@@ -942,7 +942,7 @@ void ColDetNode::tallyStats()
 void ColDetNode::draw(DrawLinesFunc drawLinesFunc)
 {
     int x, y, z, c;
-    float points[5][3];
+    glm::vec3 points[5];
     const glm::vec3 exts[2] = { extents.mins, extents.maxs };
 
     // pick a color
@@ -968,7 +968,7 @@ void ColDetNode::draw(DrawLinesFunc drawLinesFunc)
             points[c][1] = exts[y][1];
             points[c][2] = exts[z][2];
         }
-        memcpy (points[4], points[0], sizeof (points[4]));
+        points[4] = points[0];
         drawLinesFunc (5, points, color);
     }
 
