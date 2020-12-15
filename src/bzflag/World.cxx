@@ -1233,7 +1233,7 @@ bool World::writeWorld(const std::string& filename, std::string& fullname)
     return true;
 }
 
-static void drawLines (int count, float (*vertices)[3], int color)
+static void drawLines (int count, const glm::vec3 vertices[], int color)
 {
     const float colors[][4] =
     {
@@ -1253,10 +1253,9 @@ static void drawLines (int count, float (*vertices)[3], int color)
               colors[color][2],
               colors[color][3]);
 
-    glBegin (GL_LINE_STRIP);
-    for (int i = 0; i < count; i++)
-        glVertex3fv (vertices[i]);
-    glEnd ();
+    Vertex_Chunk chunk(Vertex_Chunk::V, count);
+    chunk.vertexData(vertices);
+    chunk.draw(GL_LINE_STRIP);
 
     return;
 }
@@ -1264,8 +1263,10 @@ static void drawLines (int count, float (*vertices)[3], int color)
 
 static void drawInsideOutsidePoints()
 {
-    std::vector<const glm::vec3*> insides;
-    std::vector<const glm::vec3*> outsides;
+    std::vector<glm::vec3> insides;
+    std::vector<glm::vec3> outsides;
+    std::vector<glm::vec3> insidesLine;
+    std::vector<glm::vec3> outsidesLine;
 
     const ObstacleList& meshes = OBSTACLEMGR.getMeshes();
     for (unsigned int i = 0; i < meshes.size(); i++)
@@ -1276,16 +1277,28 @@ static void drawInsideOutsidePoints()
         const auto   checkPoints = mesh->getCheckPoints();
         for (int c = 0; c < checkCount; c++)
         {
+            const glm::vec3 point = glm::vec3(
+                                        checkPoints[c][0],
+                                        checkPoints[c][1],
+                                        checkPoints[c][2]);
+            const glm::vec3 point0 = glm::vec3(
+                                         checkPoints[c][0],
+                                         checkPoints[c][1],
+                                         0.0f);
             switch (checkTypes[c])
             {
             case MeshObstacle::CheckInside:
             {
-                insides.push_back(&checkPoints[c]);
+                insides.push_back(point);
+                insidesLine.push_back(point0);
+                insidesLine.push_back(point);
                 break;
             }
             case MeshObstacle::CheckOutside:
             {
-                outsides.push_back(&checkPoints[c]);
+                outsides.push_back(point);
+                outsidesLine.push_back(point0);
+                outsidesLine.push_back(point);
                 break;
             }
             default:
@@ -1295,6 +1308,15 @@ static void drawInsideOutsidePoints()
             }
         }
     }
+    Vertex_Chunk vboInside(Vertex_Chunk::V, insides.size());
+    Vertex_Chunk vboOutside(Vertex_Chunk::V, outsides.size());
+    Vertex_Chunk vboInsideLine(Vertex_Chunk::V, insidesLine.size());
+    Vertex_Chunk vboOutsideLine(Vertex_Chunk::V, outsidesLine.size());
+    vboInside.vertexData(insides);
+    vboOutside.vertexData(outsides);
+    vboInsideLine.vertexData(insidesLine);
+    vboOutsideLine.vertexData(outsidesLine);
+
 
     glPushAttrib(GL_DEPTH_BUFFER_BIT | GL_POINT_BIT | GL_LINE_BIT);
 
@@ -1304,33 +1326,15 @@ static void drawInsideOutsidePoints()
     glLineWidth(1.49f);
     glPointSize(4.49f);
 
-    glBegin(GL_POINTS);
-    {
-        glColor4f(0.0f, 1.0f, 0.0f, 0.8f);
-        for (const auto pt : insides)
-            glVertex(*pt);
-        glColor4f(1.0f, 0.0f, 0.0f, 0.8f);
-        for (const auto pt : outsides)
-            glVertex(*pt);
-    }
-    glEnd();
+    glColor4f(0.0f, 1.0f, 0.0f, 0.8f);
+    vboInside.draw(GL_POINTS);
+    glColor4f(1.0f, 0.0f, 0.0f, 0.8f);
+    vboOutside.draw(GL_POINTS);
 
-    glBegin(GL_LINES);
-    {
-        glColor4f(0.0f, 1.0f, 0.0f, 0.2f);
-        for (const auto pt : insides)
-        {
-            glVertex3f(pt->x, pt->y, 0.0f);
-            glVertex(*pt);
-        }
-        glColor4f(1.0f, 0.0f, 0.0f, 0.2f);
-        for (const auto pt : outsides)
-        {
-            glVertex3f(pt->x, pt->y, 0.0f);
-            glVertex(*pt);
-        }
-    }
-    glEnd();
+    glColor4f(0.0f, 1.0f, 0.0f, 0.2f);
+    vboInsideLine.draw(GL_LINES);
+    glColor4f(1.0f, 0.0f, 0.0f, 0.2f);
+    vboOutsideLine.draw(GL_LINES);
 
     glPopAttrib();
 }

@@ -17,6 +17,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <glm/geometric.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 // Common headers
 #include "SceneNode.h"
@@ -24,6 +25,7 @@
 #include "Intersect.h"
 #include "StateDatabase.h"
 #include "OpenGLAPI.h"
+#include "Vertex_Chunk.h"
 
 
 //////////////////////////////////////////////////////////////////////////////
@@ -414,16 +416,21 @@ void Occluder::draw() const
         auto outwards = center - length * glm::vec3(planes[0]);
 
         // draw the plane normal
-        glBegin (GL_LINES);
+        glm::vec3 ver[2];
+        ver[0] = center;
+        ver[1] = outwards;
+
         glColor(colors[0]);
-        glVertex(center);
-        glVertex(outwards);
-        glEnd ();
+        // draw the plane normal
+        Vertex_Chunk vbo(Vertex_Chunk::V, 2);
+        vbo.vertexData(ver);
+        vbo.draw(GL_LINES);
     }
 
     // drawn the edges and normals
     if (DrawEdges || DrawNormals)
     {
+        std::vector<glm::vec3> ver;
         for (v = 0; v < vertexCount; v++)
         {
             glm::vec3 midpoint;
@@ -432,32 +439,36 @@ void Occluder::draw() const
                 midpoint[a] = 0.5f * (vertices[v][a] + vertices[vn][a]);
             auto outwards = midpoint - length * glm::vec3(planes[vn + 1]);
             int index = (v % 4) + 1;
-            glBegin (GL_LINES);
             glColor(colors[index]);
+            ver.clear();
             if (DrawEdges)
             {
-                glVertex3fv (vertices[v]);
-                glVertex3fv (vertices[vn]);
+                ver.push_back(glm::make_vec3(vertices[v]));
+                ver.push_back(glm::make_vec3(vertices[vn]));
             }
             if (DrawNormals)
             {
-                glVertex3f (midpoint.x, midpoint.y, midpoint.z);
-                glVertex3f (outwards.x, outwards.y, outwards.z);
+                ver.push_back(midpoint);
+                ver.push_back(outwards);
             }
-            glEnd();
+            Vertex_Chunk vbo(Vertex_Chunk::V, ver.size());
+            vbo.vertexData(ver);
+            vbo.draw(GL_LINES);
         }
     }
 
     // draw some nice vertex points
     if (DrawVertices)
     {
+        glm::vec3 ver[1];
         for (v = 0; v < vertexCount; v++)
         {
             int index = (v % 4) + 1;
-            glBegin (GL_POINTS);
+            ver[0] = glm::make_vec3(vertices[v]);
             glColor4f(colors[index][0], colors[index][1], colors[index][2], colors[index][3]);
-            glVertex3fv (vertices[v]);
-            glEnd();
+            Vertex_Chunk vbo(Vertex_Chunk::V, 1);
+            vbo.vertexData(ver);
+            vbo.draw(GL_POINTS);
         }
     }
 
