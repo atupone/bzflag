@@ -10,22 +10,22 @@
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#include "common.h"
-
-// system headers
-#include <math.h>
 
 // implementation header
 #include "Octree.h"
 
-// local headers
-#include "Occluder.h"
+// system headers
+#include <math.h>
 
 // common headers
 #include "Extents.h"
 #include "Intersect.h"
-
 #include "StateDatabase.h"
+#include "Vertex_Chunk.h"
+
+// local headers
+#include "Occluder.h"
+
 static bool F2BSORT = true;//FIXME
 
 
@@ -831,7 +831,7 @@ void OctreeNode::draw()
     GLfloat purple[4] = { 1.0f, 0.0f, 1.0f, 0.75f }; // purple
     GLfloat *color = purple;
     int x, y, z, c;
-    float points[5][3];
+    glm::vec3 points[5];
     IntersectLevel frustumCull = Contained;
     bool occludeCull = false;
 
@@ -875,13 +875,11 @@ void OctreeNode::draw()
             points[c][1] = exts[y][1];
             points[c][2] = exts[z][2];
         }
-        memcpy(points[4], points[0], sizeof(points[4]));
-        glBegin(GL_LINE_STRIP);
+        points[4] = points[0];
 
-        for (int i = 0; i < 5; i++)
-            glVertex3fv(points[i]);
-
-        glEnd();
+        Vertex_Chunk vbo(Vertex_Chunk::V, 5);
+        vbo.vertexData(points);
+        vbo.draw(GL_LINE_STRIP);
     }
 
     // draw the corner edges
@@ -895,10 +893,9 @@ void OctreeNode::draw()
             points[z][1] = exts[y][1];
             points[z][2] = exts[z][2];
         }
-        glBegin(GL_LINE_STRIP);
-        glVertex3fv(points[0]);
-        glVertex3fv(points[1]);
-        glEnd();
+        Vertex_Chunk vbo(Vertex_Chunk::V, 2);
+        vbo.vertexData(points);
+        vbo.draw(GL_LINE_STRIP);
     }
 
     // draw the kids
