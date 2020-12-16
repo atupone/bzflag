@@ -99,7 +99,9 @@ void            LaserSceneNode::addRenderNodes(
 // LaserSceneNode::LaserRenderNode
 //
 
-GLfloat         LaserSceneNode::LaserRenderNode::geom[6][2];
+Vertex_Chunk LaserSceneNode::LaserRenderNode::laserTexture1;
+Vertex_Chunk LaserSceneNode::LaserRenderNode::laserTexture2;
+Vertex_Chunk LaserSceneNode::LaserRenderNode::laserNoTexture1;
 
 LaserSceneNode::LaserRenderNode::LaserRenderNode(
     const LaserSceneNode* _sceneNode) :
@@ -110,11 +112,73 @@ LaserSceneNode::LaserRenderNode::LaserRenderNode(
     if (!init)
     {
         init = true;
+        glm::vec2 geom[6];
         for (int i = 0; i < 6; i++)
         {
             geom[i][0] = -LaserRadius * cosf((float)(2.0 * M_PI * double(i) / 6.0));
             geom[i][1] =  LaserRadius * sinf((float)(2.0 * M_PI * double(i) / 6.0));
         }
+        glm::vec3 v[14];
+        glm::vec2 t[10];
+        v[ 0] = glm::vec3(0.0f, geom[0]);
+        v[ 1] = glm::vec3(1.0f, geom[0]);
+        v[ 2] = glm::vec3(0.0f, geom[1]);
+        v[ 3] = glm::vec3(1.0f, geom[1]);
+        v[ 4] = glm::vec3(0.0f, geom[2]);
+        v[ 5] = glm::vec3(1.0f, geom[2]);
+        v[ 6] = glm::vec3(0.0f, geom[3]);
+        v[ 7] = glm::vec3(1.0f, geom[3]);
+        v[ 8] = glm::vec3(0.0f, geom[4]);
+        v[ 9] = glm::vec3(1.0f, geom[4]);
+        v[10] = glm::vec3(0.0f, geom[5]);
+        v[11] = glm::vec3(1.0f, geom[5]);
+        v[12] = glm::vec3(0.0f, geom[0]);
+        v[13] = glm::vec3(1.0f, geom[0]);
+        laserNoTexture1 = Vertex_Chunk(Vertex_Chunk::V, 14);
+        laserNoTexture1.vertexData(v);
+
+        t[0] = glm::vec2(0.5f,  0.5f);
+        v[0] = glm::vec3(  0.0f,  0.0f,  0.0f);
+        t[1] = glm::vec2(0.0f,  0.0f);
+        v[1] = glm::vec3(  0.0f,  0.0f,  1.0f);
+        t[2] = glm::vec2(0.0f,  0.0f);
+        v[2] = glm::vec3(  0.0f,  1.0f,  0.0f);
+        t[3] = glm::vec2(0.0f,  0.0f);
+        v[3] = glm::vec3(  0.0f,  0.0f, -1.0f);
+        t[4] = glm::vec2(0.0f,  0.0f);
+        v[4] = glm::vec3(  0.0f, -1.0f,  0.0f);
+        t[5] = glm::vec2(0.0f,  0.0f);
+        v[5] = glm::vec3(  0.0f,  0.0f,  1.0f);
+        laserTexture1 = Vertex_Chunk(Vertex_Chunk::VT, 6);
+        laserTexture1.textureData(t);
+        laserTexture1.vertexData(v);
+
+        t[0] = glm::vec2(0.0f,  0.0f);
+        v[0] = glm::vec3(0.0f,  0.0f,  1.0f);
+        t[1] = glm::vec2(0.0f,  1.0f);
+        v[1] = glm::vec3(1.0f,  0.0f,  1.0f);
+        t[2] = glm::vec2(1.0f,  0.0f);
+        v[2] = glm::vec3(0.0f,  0.0f, -1.0f);
+        t[3] = glm::vec2(1.0f,  1.0f);
+        v[3] = glm::vec3(1.0f,  0.0f, -1.0f);
+
+        // Degenerate triangles
+        t[4] = glm::vec2(1.0f,  1.0f);
+        v[4] = glm::vec3(1.0f,  0.0f, -1.0f);
+        t[5] = glm::vec2(0.0f,  0.0f);
+        v[5] = glm::vec3(0.0f,  1.0f,  0.0f);
+
+        t[6] = glm::vec2(0.0f,  0.0f);
+        v[6] = glm::vec3(0.0f,  1.0f,  0.0f);
+        t[7] = glm::vec2(0.0f,  1.0f);
+        v[7] = glm::vec3(1.0f,  1.0f,  0.0f);
+        t[8] = glm::vec2(1.0f,  0.0f);
+        v[8] = glm::vec3(0.0f, -1.0f,  0.0f);
+        t[9] = glm::vec2(1.0f,  1.0f);
+        v[9] = glm::vec3(1.0f, -1.0f,  0.0f);
+        laserTexture2 = Vertex_Chunk(Vertex_Chunk::VT, 10);
+        laserTexture2.textureData(t);
+        laserTexture2.vertexData(v);
     }
 }
 
@@ -129,10 +193,16 @@ void LaserSceneNode::LaserRenderNode::render()
     if (blackFog)
         glFogfv(GL_FOG_COLOR, glm::value_ptr(glm::vec4(0.0f, 0.0f, 0.0f, 0.0f)));
 
+    glPushMatrix();
+    const auto &sphere = sceneNode->getCenter();
+    glTranslatef(sphere[0], sphere[1], sphere[2]);
+    glRotatef(sceneNode->azimuth, 0.0f, 0.0f, 1.0f);
+    glRotatef(sceneNode->elevation, 0.0f, 1.0f, 0.0f);
     if (RENDERER.useQuality() >= 3)
         renderGeoLaser();
     else
         renderFlatLaser();
+    glPopMatrix();
 
     if (blackFog)
         glFogfv(GL_FOG_COLOR, glm::value_ptr(RENDERER.getFogColor()));
@@ -147,11 +217,6 @@ const glm::vec3 LaserSceneNode::LaserRenderNode::getPosition() const
 void LaserSceneNode::LaserRenderNode::renderGeoLaser()
 {
     const float len = sceneNode->length;
-    const auto &sphere = sceneNode->getCenter();
-    glPushMatrix();
-    glTranslatef(sphere[0], sphere[1], sphere[2]);
-    glRotatef(sceneNode->azimuth, 0.0f, 0.0f, 1.0f);
-    glRotatef(sceneNode->elevation, 0.0f, 1.0f, 0.0f);
     glRotatef(90, 0.0f, 1.0f, 0.0f);
 
     glDisable(GL_TEXTURE_2D);
@@ -204,54 +269,23 @@ void LaserSceneNode::LaserRenderNode::renderGeoLaser()
     glPopMatrix();
 
     glEnable(GL_TEXTURE_2D);
-    glPopMatrix();
 }
 
 
 void LaserSceneNode::LaserRenderNode::renderFlatLaser()
 {
     const float len = sceneNode->length;
-    const auto &sphere = sceneNode->getCenter();
-    glPushMatrix();
-    glTranslatef(sphere[0], sphere[1], sphere[2]);
-    glRotatef(sceneNode->azimuth, 0.0f, 0.0f, 1.0f);
-    glRotatef(sceneNode->elevation, 0.0f, 1.0f, 0.0f);
+    glScalef(len, 1.0f, 1.0f);
 
     if (sceneNode->texturing)
     {
-        myColor3f(1.0f, 1.0f, 1.0f);
-        glBegin(GL_TRIANGLE_FAN);
-        glTexCoord2f(0.5f,  0.5f);
-        glVertex3f(  0.0f,  0.0f,  0.0f);
-        glTexCoord2f(0.0f,  0.0f);
-        glVertex3f(  0.0f,  0.0f,  1.0f);
-        glVertex3f(  0.0f,  1.0f,  0.0f);
-        glVertex3f(  0.0f,  0.0f, -1.0f);
-        glVertex3f(  0.0f, -1.0f,  0.0f);
-        glVertex3f(  0.0f,  0.0f,  1.0f);
-        glEnd(); // 6 verts -> 4 tris
+        if (!colorOverride)
+            glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
-        glBegin(GL_TRIANGLE_STRIP);
-        glTexCoord2f(0.0f,  0.0f);
-        glVertex3f(  0.0f,  0.0f,  1.0f);
-        glTexCoord2f(0.0f,  1.0f);
-        glVertex3f(   len,  0.0f,  1.0f);
-        glTexCoord2f(1.0f,  0.0f);
-        glVertex3f(  0.0f,  0.0f, -1.0f);
-        glTexCoord2f(1.0f,  1.0f);
-        glVertex3f(   len,  0.0f, -1.0f);
-        glEnd();
-
-        glBegin(GL_TRIANGLE_STRIP);
-        glTexCoord2f(0.0f,  0.0f);
-        glVertex3f(  0.0f,  1.0f,  0.0f);
-        glTexCoord2f(0.0f,  1.0f);
-        glVertex3f(   len,  1.0f,  0.0f);
-        glTexCoord2f(1.0f,  0.0f);
-        glVertex3f(  0.0f, -1.0f,  0.0f);
-        glTexCoord2f(1.0f,  1.0f);
-        glVertex3f(   len, -1.0f,  0.0f);
-        glEnd(); // 8 verts -> 4 tris
+        laserTexture1.draw(GL_TRIANGLE_FAN);
+        // 6 verts -> 4 tris
+        laserTexture2.draw(GL_TRIANGLE_STRIP);
+        // 8 verts -> 4 tris
 
         addTriangleCount(8);
     }
@@ -261,39 +295,18 @@ void LaserSceneNode::LaserRenderNode::renderFlatLaser()
         // draw beam
         if (!colorOverride)
             glColor4f(1.0f, 0.25f, 0.0f, 0.85f);
-        glBegin(GL_TRIANGLE_STRIP);
-        {
-            glVertex3f(  0.0f, geom[0][0], geom[0][1]);
-            glVertex3f(   len, geom[0][0], geom[0][1]);
-            glVertex3f(  0.0f, geom[1][0], geom[1][1]);
-            glVertex3f(   len, geom[1][0], geom[1][1]);
-            glVertex3f(  0.0f, geom[2][0], geom[2][1]);
-            glVertex3f(   len, geom[2][0], geom[2][1]);
-            glVertex3f(  0.0f, geom[3][0], geom[3][1]);
-            glVertex3f(   len, geom[3][0], geom[3][1]);
-            glVertex3f(  0.0f, geom[4][0], geom[4][1]);
-            glVertex3f(   len, geom[4][0], geom[4][1]);
-            glVertex3f(  0.0f, geom[5][0], geom[5][1]);
-            glVertex3f(   len, geom[5][0], geom[5][1]);
-            glVertex3f(  0.0f, geom[0][0], geom[0][1]);
-            glVertex3f(   len, geom[0][0], geom[0][1]);
-        }
-        glEnd(); // 14 verts -> 12 tris
+
+        laserNoTexture1.draw(GL_TRIANGLE_STRIP);
+        // 14 verts -> 12 tris
 
         // also draw a line down the middle (so the beam is visible even
         // if very far away).  this will also give the beam an extra bright
         // center.
-        glBegin(GL_LINES);
-        {
-            glVertex3f(  0.0f, 0.0f, 0.0f);
-            glVertex3f(   len, 0.0f, 0.0f);
-        }
-        glEnd(); // count 1 line as 1 tri
+        DRAWER.asimmetricLineX();
+        // count 1 line as 1 tri
 
         addTriangleCount(13);
     }
-
-    glPopMatrix();
 }
 
 // Local Variables: ***
