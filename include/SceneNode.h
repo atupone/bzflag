@@ -128,17 +128,17 @@ public:
 
     static void     glTexCoord2fv(const GLfloat *coord)
     {
-        ::glTexCoord2fv(coord);
+        ::glMultiTexCoord4f(GL_TEXTURE0, coord[0], coord[1], 0, 1);
     };
 
     static void     glTexCoord2fv(const glm::vec2 &coord)
     {
-        ::glTexCoord2f(coord.s, coord.t);
+        ::glMultiTexCoord4f(GL_TEXTURE0, coord.s, coord.t, 0, 1);
     };
 
     static void     glNormal3fv(const GLfloat *normal)
     {
-        ::glNormal3fv(normal);
+        ::glNormal3f(normal[0], normal[1], normal[2]);
     };
 
     static void     glNormal3fv(const glm::vec3 &normal)
