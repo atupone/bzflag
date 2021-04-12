@@ -22,6 +22,7 @@
 #include "TextureManager.h"
 #include "Intersect.h"
 #include "VBO_Drawing.h"
+#include "RadarShader.h"
 
 /* local implementation headers */
 #include "LocalPlayer.h"
@@ -497,19 +498,19 @@ void GuidedMissileStrategy::expire()
 
 void GuidedMissileStrategy::radarRender()
 {
+    RADARSHADER.setShotType(RADARSHADER.segmentedType);
     const float *orig = getPath().getPosition();
     const float length = BZDBCache::linedRadarShots;
     const int size   = (int)BZDBCache::sizedRadarShots;
 
     float shotTailLength = BZDB.eval(StateDatabase::BZDB_SHOTTAILLENGTH);
-    glPushMatrix();
-    glTranslatef(orig[0], orig[1], 0.0f);
+    auto vel = glm::make_vec3(getPath().getVelocity());
+    auto dir = glm::normalize(vel) * shotTailLength * length;
+    RADARSHADER.setSegmentedData(orig, dir, size, length);
+
     // Display leading lines
     if (length > 0.0f)
     {
-        auto vel = glm::make_vec3(getPath().getVelocity());
-        auto dir = glm::normalize(vel) * shotTailLength * length;
-        glScalef(dir[0], dir[1], 0.0f);
         if (BZDBCache::leadingShotLine == 1)   //leading
             DRAWER.leadingLine();
         else if (BZDBCache::leadingShotLine == 0)     //lagging
@@ -520,28 +521,14 @@ void GuidedMissileStrategy::radarRender()
         // draw a "bright reddish" missle tip
         if (size > 0)
         {
-            glColor4f(1.0f, 0.75f, 0.75f, 1.0f);
-            glPointSize((float)size);
+            RADARSHADER.setShotType(RADARSHADER.missileBullet);
             DRAWER.point();
-            glPointSize(1.0f);
         }
     }
     else
-    {
-        if (size > 0)
-        {
-            // draw a sized missle
-            glPointSize((float)size);
-            DRAWER.point();
-            glPointSize(1.0f);
-        }
-        else
-        {
-            // draw the tiny missle
-            DRAWER.point();
-        }
-    }
-    glPopMatrix();
+        // draw a sized missle or
+        // draw the tiny missle
+        DRAWER.point();
 }
 
 // Local Variables: ***

@@ -61,26 +61,15 @@ private:
     RadarRenderer(const RadarRenderer&);
     RadarRenderer&  operator=(const RadarRenderer&);
 
-    void        setTankColor(const class Player* player);
-    void        drawTank(const float pos[3],
+    glm::vec3   getTankColor(const class Player* player);
+    void        drawTank(const float pos[3], float myAngle,
+                         float tankSize, float flagSize,
                          const class Player* player,
-                         bool useSquares);
+                         bool useDimensions);
     void        drawFancyTank(const class Player* player);
     void        drawFlag(const float pos[3]);
     void        drawFlagOnTank();
     void        buildBoxPyrMeshVBO();
-
-    static float    colorScale(const float z, const float h);
-    static float    transScale(const float z, const float h);
-
-    void        renderFrame(SceneRenderer&);
-
-    void        renderObstacles(bool fastRadar, float range);
-    void        renderWalls();
-    void        renderBoxPyrMesh();
-    void        renderBoxPyrMeshFast(float range);
-    void        renderBasesAndTeles();
-
 
 private:
     World*      world;
@@ -96,11 +85,12 @@ private:
     bool        useTankModels;
     bool        useTankDimensions;
     int         triangleCount;
-    std::vector<std::vector<Vertex_Chunk>> meshVBO;
     std::vector<Vertex_Chunk>              boxVBO;
     std::vector<Vertex_Chunk>              boxOutVBO;
     std::vector<Vertex_Chunk>              pyrVBO;
     std::vector<Vertex_Chunk>              pyrOutVBO;
+    std::vector<Vertex_Chunk> meshVBO;
+    std::vector<Vertex_Chunk> meshVBOEnhanced;
     static const float  colorFactor;
 };
 

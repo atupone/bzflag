@@ -22,7 +22,9 @@ libGLKit_la_SOURCES =			\
 	OpenGLMaterial.cxx		\
 	OpenGLTexture.cxx		\
 	OpenGLUtils.cxx			\
+	RadarShader.cxx			\
 	RenderNode.cxx			\
+	Shader.cxx			\
 	Vertex_Chunk.cxx                \
 	VBO_Element.h			\
 	VBO_Element.cxx                 \
