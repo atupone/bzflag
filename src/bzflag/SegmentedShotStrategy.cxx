@@ -22,6 +22,7 @@
 #include "BZDBCache.h"
 #include "WallObstacle.h"
 #include "VBO_Drawing.h"
+#include "RadarShader.h"
 
 /* local implementation headers */
 #include "sound.h"
@@ -329,44 +330,37 @@ void  SegmentedShotStrategy::addShot(SceneDatabase* scene, bool colorblind)
 
 void  SegmentedShotStrategy::radarRender()
 {
+    RADARSHADER.setShotType(RADARSHADER.segmentedType);
     const float *orig = getPath().getPosition();
     const float length = BZDBCache::linedRadarShots;
     const int size = (int)BZDBCache::sizedRadarShots;
 
     float shotTailLength = BZDB.eval(StateDatabase::BZDB_SHOTTAILLENGTH);
+    auto vel = glm::make_vec3(getPath().getVelocity());
+    auto dir = glm::normalize(vel) * shotTailLength * length;
+    RADARSHADER.setSegmentedData(orig, dir, size, length);
 
-    glPushMatrix();
-    glTranslatef(orig[0], orig[1], 0.0f);
     // Display leading lines
     if (length > 0.0f)
     {
-        auto vel = glm::make_vec3(getPath().getVelocity());
-        auto dir = glm::normalize(vel) * shotTailLength * length;
-        glPushMatrix();
-        glScalef(dir[0], dir[1], 0.0f);
         if (BZDBCache::leadingShotLine == 0)   //lagging
             DRAWER.laggingLine();
         else if (BZDBCache::leadingShotLine == 2)     //both
             DRAWER.leadlagLine();
         else     //leading
             DRAWER.leadingLine();
-        glPopMatrix();
+        // draw a "bright" bullet tip
+        if (size > 0)
+        {
+            RADARSHADER.setShotType(RADARSHADER.sizedBullet);
+            // draw a sized bullet
+            DRAWER.point();
+        }
     }
-
-    // draw a "bright" bullet tip
-    if (size > 0)
-    {
-        if (length > 0)
-            glColor4f(0.75, 0.75, 0.75, 1.0f);
-        // draw a sized bullet
-        glPointSize((float)size);
-        DRAWER.point();
-        glPointSize(1.0f);
-    }
-    else if (length <= 0)
+    else
+        // draw a sized bullet or
         // draw the tiny little bullet
         DRAWER.point();
-    glPopMatrix();
 }
 
 void  SegmentedShotStrategy::makeSegments(ObstacleEffect e)
@@ -668,10 +662,10 @@ ThiefStrategy::ThiefStrategy(ShotPath *_path) :
 
         thiefNodes[i]->setColor(0, 1, 1);
         thiefNodes[i]->setCenterColor(0, 0, 0);
-        vertices.push_back(
-            glm::vec3(origin[0], origin[1], 0.0f));
-        vertices.push_back(
-            glm::vec3(origin[0] + dir[0], origin[1] + dir[1], 0.0f));
+        const auto orig      = glm::make_vec3(origin);
+        const auto direction = glm::make_vec3(dir);
+        vertices.push_back(orig);
+        vertices.push_back(orig + direction);
     }
     radarChunk.vertexData(vertices);
     setCurrentSegment(numSegments - 1);
@@ -701,6 +695,7 @@ void  ThiefStrategy::addShot(SceneDatabase* scene, bool)
 
 void  ThiefStrategy::radarRender()
 {
+    RADARSHADER.setShotType(RADARSHADER.noType);
     // draw all segments
     radarChunk.draw(GL_LINES);
 }
@@ -837,10 +832,10 @@ LaserStrategy::LaserStrategy(ShotPath* _path) :
 
         if (i == 0)
             laserNodes[i]->setFirst();
-        vertices.push_back(
-            glm::vec3(origin[0], origin[1], 0.0f));
-        vertices.push_back(
-            glm::vec3(origin[0] + dir[0], origin[1] + dir[1], 0.0f));
+        const auto orig      = glm::make_vec3(origin);
+        const auto direction = glm::make_vec3(dir);
+        vertices.push_back(orig);
+        vertices.push_back(orig + direction);
     }
     radarChunk.vertexData(vertices);
     setCurrentSegment(numSegments - 1);
@@ -870,6 +865,7 @@ void  LaserStrategy::addShot(SceneDatabase* scene, bool)
 
 void  LaserStrategy::radarRender()
 {
+    RADARSHADER.setShotType(RADARSHADER.noType);
     // draw all segments
     radarChunk.draw(GL_LINES);
 }

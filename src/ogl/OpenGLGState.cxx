@@ -28,6 +28,7 @@
 #include "OpenGLMaterial.h"
 #include "RenderNode.h"
 #include "OpenGLCommon.h"
+#include "RadarShader.h"
 
 
 //
@@ -445,7 +446,10 @@ void            OpenGLGStateState::setNeedsSorting(bool value)
 void            OpenGLGStateState::resetOpenGLState() const
 {
     if (sorted.hasTexture)
+    {
         glDisable(GL_TEXTURE_2D);
+        RADARSHADER.setTexturing(false);
+    }
     if (sorted.textureEnvMode != GL_MODULATE)
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
     if (sorted.hasTextureMatrix)
@@ -513,6 +517,7 @@ void            OpenGLGStateState::setOpenGLState(
             {
                 tm.bind(sorted.texture);
                 glEnable(GL_TEXTURE_2D);
+                RADARSHADER.setTexturing(true);
                 glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, sorted.textureEnvMode);
             }
         }
@@ -521,6 +526,7 @@ void            OpenGLGStateState::setOpenGLState(
             if (oldState->sorted.hasTexture)
             {
                 glDisable(GL_TEXTURE_2D);
+                RADARSHADER.setTexturing(false);
                 if (oldState->sorted.textureEnvMode != GL_MODULATE)
                     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
             }
@@ -713,11 +719,13 @@ void            OpenGLGStateState::setOpenGLState(
         {
             tm.bind(sorted.texture);
             glEnable(GL_TEXTURE_2D);
+            RADARSHADER.setTexturing(true);
             glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, sorted.textureEnvMode);
         }
         else
         {
             glDisable(GL_TEXTURE_2D);
+            RADARSHADER.setTexturing(false);
             glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
         }
 
@@ -1326,6 +1334,7 @@ void OpenGLGState::initGLState()
 {
     // initialize GL state to what we expect
     glDisable(GL_TEXTURE_2D);
+    RADARSHADER.setTexturing(false);
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
     glDisable(GL_LIGHTING);
     glDisable(GL_COLOR_MATERIAL);

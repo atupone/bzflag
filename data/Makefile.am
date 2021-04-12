@@ -1,5 +1,9 @@
 SUBDIRS = l10n fonts
 
+validate:
+	glslangValidator radar.vert
+	glslangValidator radar.frag
+
 dist_pkgdata_DATA =		\
 	automatic_icon.png	\
 	blue_basetop.png	\
@@ -83,7 +87,9 @@ dist_pkgdata_DATA =		\
 	rabbit_laser.png	\
 	rabbit_super_bolt.png	\
 	rabbit_tank.png		\
+	radar.frag		\
 	radar.png		\
+	radar.vert		\
 	raindrop.png		\
 	red_basetop.png		\
 	red_basewall.png	\
