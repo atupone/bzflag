@@ -97,6 +97,7 @@ noinst_HEADERS =			\
 	PyramidBuilding.h		\
 	PyramidSceneNodeGenerator.h	\
 	QuadWallSceneNode.h		\
+	RadarShader.h			\
 	Ray.h				\
 	RenderNode.h			\
 	SceneDatabase.h			\
@@ -105,6 +106,7 @@ noinst_HEADERS =			\
 	ServerItem.h			\
 	ServerList.h			\
 	ServerListCache.h		\
+	Shader.h			\
 	ShotUpdate.h			\
 	Singleton.h			\
 	SphereObstacle.h		\
