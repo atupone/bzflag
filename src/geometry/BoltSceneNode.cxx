@@ -24,6 +24,7 @@
 #include "VBO_Drawing.h"
 #include "Singleton.h"
 #include "OpenGLCommon.h"
+#include "PlayingShader.h"
 
 // local implementation headers
 #include "ViewFrustum.h"
@@ -752,8 +753,7 @@ void BoltSceneNode::BoltRenderNode::renderGeoGMBolt()
     glRotatef(sceneNode->elevation, 0.0f, 1.0f, 0.0f);
     glRotatef(90, 0.0f, 1.0f, 0.0f);
 
-    glDisable(GL_TEXTURE_2D);
-    //glEnable(GL_LIGHTING);
+    SHADER.setTexturing(false);
 
     glm::vec4 noseColor = sceneNode->teamColor;
     glm::vec4 finColor(noseColor.r*0.5f,noseColor.g*0.5f,noseColor.b*0.5f,1);
@@ -834,8 +834,7 @@ void BoltSceneNode::BoltRenderNode::renderGeoGMBolt()
 
     glPopMatrix();
 
-    glEnable(GL_TEXTURE_2D);
-    // glDisable(GL_LIGHTING);
+    SHADER.setTexturing(true);
 
     glDepthMask(GL_FALSE);
 }
@@ -856,7 +855,7 @@ void BoltSceneNode::BoltRenderNode::renderGeoBolt()
 // if (sceneNode->phasingShot)
 //   alphaMod = 0.85f;
 
-    glDisable(GL_TEXTURE_2D);
+    SHADER.setTexturing(false);
 
     float coreBleed = 4.5f;
     float minimumChannelVal = 0.45f;
@@ -894,7 +893,7 @@ void BoltSceneNode::BoltRenderNode::renderGeoBolt()
     renderGeoPill(3.8f * baseRadius, len + radInc, 48);
     glPopMatrix();
 
-    glEnable(GL_TEXTURE_2D);
+    SHADER.setTexturing(true);
 }
 
 
@@ -970,7 +969,7 @@ void            BoltSceneNode::BoltRenderNode::render()
                 }
             }
 
-            if (sceneNode->texturing) glDisable(GL_TEXTURE_2D);
+            bool oldTexturing = SHADER.setTexturing(false);
             if (!colorOverride)
                 glColor4f(flareColor.r, flareColor.g, flareColor.b, flareColor.a);
             for (int i = 0; i < numFlares; i++)
@@ -988,7 +987,7 @@ void            BoltSceneNode::BoltRenderNode::render()
                 BOLTDRAWER.drawFlare();
                 glPopMatrix();
             }
-            if (sceneNode->texturing) glEnable(GL_TEXTURE_2D);
+            SHADER.setTexturing(oldTexturing);
 
             addTriangleCount(numFlares * 2);
         }

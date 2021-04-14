@@ -23,6 +23,7 @@ libGLKit_la_SOURCES =			\
 	OpenGLTexture.cxx		\
 	OpenGLUtils.cxx			\
 	RadarShader.cxx			\
+	PlayingShader.cxx		\
 	RenderNode.cxx			\
 	Shader.cxx			\
 	HUDShader.cxx			\

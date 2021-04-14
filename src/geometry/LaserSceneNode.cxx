@@ -20,6 +20,7 @@
 #include "StateDatabase.h"
 #include "BZDBCache.h"
 #include "VBO_Drawing.h"
+#include "PlayingShader.h"
 
 // FIXME (SceneRenderer.cxx is in src/bzflag)
 #include "SceneRenderer.h"
@@ -219,7 +220,7 @@ void LaserSceneNode::LaserRenderNode::renderGeoLaser()
     const float len = sceneNode->length;
     glRotatef(90, 0.0f, 1.0f, 0.0f);
 
-    glDisable(GL_TEXTURE_2D);
+    SHADER.setTexturing(false);
 
     glm::vec4 coreColor = sceneNode->centerColor;
     coreColor.a     = 0.85f;
@@ -268,7 +269,7 @@ void LaserSceneNode::LaserRenderNode::renderGeoLaser()
     }
     glPopMatrix();
 
-    glEnable(GL_TEXTURE_2D);
+    SHADER.setTexturing(true);
 }
 
 

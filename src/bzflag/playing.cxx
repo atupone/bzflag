@@ -63,6 +63,7 @@
 #include "ZSceneDatabase.h"
 #include "VBO_Drawing.h"
 #include "HUDShader.h"
+#include "PlayingShader.h"
 
 // local implementation headers
 #include "AutoPilot.h"
@@ -7739,8 +7740,12 @@ void            startPlaying(BzfDisplay* _display,
 
     worldDownLoader = new WorldDownLoader;
 
+    SHADER.push();
+
     // start game loop
     playingLoop();
+
+    SHADER.pop();
 
     delete worldDownLoader;
 

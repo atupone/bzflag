@@ -93,6 +93,7 @@ noinst_HEADERS =			\
 	PlatformFactory.h		\
 	PlayerInfo.h			\
 	PlayerState.h			\
+	PlayingShader.h			\
 	Protocol.h			\
 	PyramidBuilding.h		\
 	PyramidSceneNodeGenerator.h	\
