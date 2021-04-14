@@ -30,6 +30,7 @@
 #include "BZDBCache.h"
 #include "OpenGLCommon.h"
 #include "VBO_Drawing.h"
+#include "PlayingShader.h"
 
 // local headers
 #include "daylight.h"
@@ -941,7 +942,7 @@ void BackgroundRenderer::drawSkybox()
 
     OpenGLGState::resetState();
 
-    glEnable(GL_TEXTURE_2D);
+    SHADER.setTexturing(true);
     glDisable(GL_CULL_FACE);
     glShadeModel(GL_SMOOTH);
 
@@ -984,7 +985,7 @@ void BackgroundRenderer::drawSkybox()
 
     glShadeModel(GL_FLAT);
     glEnable(GL_CULL_FACE);
-    glDisable(GL_TEXTURE_2D);
+    SHADER.setTexturing(false);
 }
 
 

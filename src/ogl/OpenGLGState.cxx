@@ -28,6 +28,7 @@
 #include "OpenGLMaterial.h"
 #include "RenderNode.h"
 #include "OpenGLCommon.h"
+#include "PlayingShader.h"
 #include "RadarShader.h"
 
 
@@ -48,7 +49,7 @@ public:
     void        enableMaterial(bool);
     void        setTexture(const int tex);
     void        setTextureMatrix(const GLfloat* matrix);
-    void        setTextureEnvMode(GLenum mode);
+    void        setTextureEnvMode(bool mode);
     void        setMaterial(const OpenGLMaterial&);
     void        setBlending(GLenum sFactor, GLenum dFactor);
     void        setStipple(float alpha);
@@ -214,7 +215,7 @@ OpenGLGStateState::Sorted::Sorted() :
     hasMaterial(false),
     texture(-1),
     textureMatrix(NULL),
-    textureEnvMode(GL_MODULATE),
+    textureEnvMode(false),
     material(OpenGLMaterial())
 {
     // do nothing
@@ -233,7 +234,7 @@ void            OpenGLGStateState::Sorted::reset()
     hasMaterial = false;
     texture = -1;
     textureMatrix = NULL;
-    textureEnvMode = GL_MODULATE;
+    textureEnvMode = false;
     material = OpenGLMaterial();
 }
 
@@ -381,7 +382,7 @@ void            OpenGLGStateState::setTextureMatrix(
 }
 
 void            OpenGLGStateState::setTextureEnvMode(
-    GLenum mode)
+    bool mode)
 {
     sorted.textureEnvMode = mode;
 }
@@ -447,11 +448,11 @@ void            OpenGLGStateState::resetOpenGLState() const
 {
     if (sorted.hasTexture)
     {
-        glDisable(GL_TEXTURE_2D);
+        SHADER.setTexturing(false);
         RADARSHADER.setTexturing(false);
     }
-    if (sorted.textureEnvMode != GL_MODULATE)
-        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+    if (sorted.textureEnvMode)
+        SHADER.setReplaceTexture(false);
     if (sorted.hasTextureMatrix)
     {
         glMatrixMode(GL_TEXTURE);
@@ -459,13 +460,10 @@ void            OpenGLGStateState::resetOpenGLState() const
         glMatrixMode(GL_MODELVIEW);
     }
     if (sorted.hasSphereMap)
-    {
-        glDisable(GL_TEXTURE_GEN_S);
-        glDisable(GL_TEXTURE_GEN_T);
-    }
+        SHADER.setSphereMap(false);
     if (sorted.hasMaterial)
     {
-        glDisable(GL_LIGHTING);
+        SHADER.setLighting(false);
         glDisable(GL_COLOR_MATERIAL);
     }
     if (unsorted.hasBlending)
@@ -511,24 +509,24 @@ void            OpenGLGStateState::setOpenGLState(
                 if (sorted.texture != oldState->sorted.texture)
                     tm.bind(sorted.texture);
                 if (oldState->sorted.textureEnvMode != sorted.textureEnvMode)
-                    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, sorted.textureEnvMode);
+                    SHADER.setReplaceTexture(sorted.textureEnvMode);
             }
             else
             {
                 tm.bind(sorted.texture);
-                glEnable(GL_TEXTURE_2D);
+                SHADER.setTexturing(true);
                 RADARSHADER.setTexturing(true);
-                glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, sorted.textureEnvMode);
+                SHADER.setReplaceTexture(sorted.textureEnvMode);
             }
         }
         else
         {
             if (oldState->sorted.hasTexture)
             {
-                glDisable(GL_TEXTURE_2D);
+                SHADER.setTexturing(false);
                 RADARSHADER.setTexturing(false);
-                if (oldState->sorted.textureEnvMode != GL_MODULATE)
-                    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+                if (oldState->sorted.textureEnvMode)
+                    SHADER.setReplaceTexture(false);
             }
         }
 
@@ -556,20 +554,12 @@ void            OpenGLGStateState::setOpenGLState(
         if (sorted.hasSphereMap)
         {
             if (!oldState->sorted.hasSphereMap)
-            {
-                glTexGenf(GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
-                glTexGenf(GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
-                glEnable(GL_TEXTURE_GEN_S);
-                glEnable(GL_TEXTURE_GEN_T);
-            }
+                SHADER.setSphereMap(true);
         }
         else
         {
             if (oldState->sorted.hasSphereMap)
-            {
-                glDisable(GL_TEXTURE_GEN_S);
-                glDisable(GL_TEXTURE_GEN_T);
-            }
+                SHADER.setSphereMap(false);
         }
 
         // lighting and material
@@ -583,7 +573,7 @@ void            OpenGLGStateState::setOpenGLState(
             else
             {
                 sorted.material.execute();
-                glEnable(GL_LIGHTING);
+                SHADER.setLighting(true);
                 glEnable(GL_COLOR_MATERIAL);
             }
         }
@@ -591,7 +581,7 @@ void            OpenGLGStateState::setOpenGLState(
         {
             if (oldState->sorted.hasMaterial)
             {
-                glDisable(GL_LIGHTING);
+                SHADER.setLighting(false);
                 glDisable(GL_COLOR_MATERIAL);
             }
         }
@@ -718,15 +708,15 @@ void            OpenGLGStateState::setOpenGLState(
         if (sorted.hasTexture)
         {
             tm.bind(sorted.texture);
-            glEnable(GL_TEXTURE_2D);
+            SHADER.setTexturing(true);
             RADARSHADER.setTexturing(true);
-            glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, sorted.textureEnvMode);
+            SHADER.setReplaceTexture(sorted.textureEnvMode);
         }
         else
         {
-            glDisable(GL_TEXTURE_2D);
+            SHADER.setTexturing(false);
             RADARSHADER.setTexturing(false);
-            glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+            SHADER.setReplaceTexture(false);
         }
 
         // texture transformation matrix
@@ -744,29 +734,18 @@ void            OpenGLGStateState::setOpenGLState(
         }
 
         // spherical texture mapping
-        if (sorted.hasSphereMap)
-        {
-            glTexGenf(GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
-            glTexGenf(GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
-            glEnable(GL_TEXTURE_GEN_S);
-            glEnable(GL_TEXTURE_GEN_T);
-        }
-        else
-        {
-            glDisable(GL_TEXTURE_GEN_S);
-            glDisable(GL_TEXTURE_GEN_T);
-        }
+        SHADER.setSphereMap(sorted.hasSphereMap);
 
         // lighting and material
         if (sorted.hasMaterial)
         {
             sorted.material.execute();
-            glEnable(GL_LIGHTING);
+            SHADER.setLighting(true);
             glEnable(GL_COLOR_MATERIAL);
         }
         else
         {
-            glDisable(GL_LIGHTING);
+            SHADER.setLighting(false);
             glDisable(GL_COLOR_MATERIAL);
         }
 
@@ -1333,10 +1312,12 @@ void OpenGLGState::initContext()
 void OpenGLGState::initGLState()
 {
     // initialize GL state to what we expect
-    glDisable(GL_TEXTURE_2D);
-    RADARSHADER.setTexturing(false);
-    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-    glDisable(GL_LIGHTING);
+    SHADER.setTexturing(false);
+    SHADER.setLighting(false);
+    SHADER.setRescaleNormal(false);
+    SHADER.setNormalizeNormal(false);
+    SHADER.setSphereMap(false);
+    SHADER.setReplaceTexture(false);
     glDisable(GL_COLOR_MATERIAL);
     glDisable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -1454,7 +1435,7 @@ void            OpenGLGStateBuilder::setTextureMatrix(
 }
 
 void            OpenGLGStateBuilder::setTextureEnvMode(
-    GLenum mode)
+    bool mode)
 {
     state->setTextureEnvMode(mode);
 }

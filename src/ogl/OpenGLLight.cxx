@@ -10,11 +10,16 @@
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#include <math.h>
-#include "common.h"
+// Interface header
 #include "OpenGLLight.h"
+
+// System headers
+#include <math.h>
+
+// Common headers
 #include "OpenGLGState.h"
 #include "ViewFrustum.h"
+#include "PlayingShader.h"
 
 
 GLint OpenGLLight::maxLights = 0;
@@ -245,10 +250,7 @@ void OpenGLLight::calculateImportance(const ViewFrustum& frustum)
 
 void OpenGLLight::enableLight(int index, bool on) // const
 {
-    if (on)
-        glEnable((GLenum)(GL_LIGHT0 + index));
-    else
-        glDisable((GLenum)(GL_LIGHT0 + index));
+    SHADER.enableLight(index, on);
     return;
 }
 

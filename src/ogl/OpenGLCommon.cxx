@@ -17,6 +17,7 @@
 
 // Common headers
 #include "bzfgl.h"
+#include "PlayingShader.h"
 
 namespace OpenGLCommon
 {
@@ -64,13 +65,12 @@ void DepthRange(float depthRange, float depthRangeSize)
 
 void LightModelLocalViewer(bool enable)
 {
-    glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, enable ? GL_TRUE : GL_FALSE);
+    SHADER.setLocalViewer(enable);
 }
 
 void LightModelSpecular(bool enable)
 {
-    const GLint model = enable ? GL_SEPARATE_SPECULAR_COLOR : GL_SINGLE_COLOR;
-    glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, model);
+    SHADER.setSeparateColor(enable);
 }
 
 void getViewPort(glm::ivec4 &viewport)

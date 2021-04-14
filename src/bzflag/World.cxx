@@ -36,6 +36,7 @@
 #include "GameTime.h"
 #include "WallObstacle.h"
 #include "MeshObstacle.h"
+#include "PlayingShader.h"
 
 //
 // World
@@ -1356,17 +1357,13 @@ static void drawInsideOutsidePoints()
 
 void World::drawCollisionGrid() const
 {
-    GLboolean usingTextures;
-
-    glGetBooleanv (GL_TEXTURE_2D, &usingTextures);
-    glDisable (GL_TEXTURE_2D);
+    bool oldTexturing = SHADER.setTexturing(false);
 
     COLLISIONMGR.draw (&drawLines);
 
     drawInsideOutsidePoints();
 
-    if (usingTextures)
-        glEnable (GL_TEXTURE_2D);
+    SHADER.setTexturing(oldTexturing);
 
     return;
 }
