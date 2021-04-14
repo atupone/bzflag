@@ -27,6 +27,7 @@
 #include "TextureManager.h"
 #include "VBO_Drawing.h"
 #include "OpenGLCommon.h"
+#include "PlayingShader.h"
 
 // local implementation headers
 #include "ViewFrustum.h"
@@ -260,7 +261,7 @@ void SphereSceneNode::SphereLodRenderNode::render()
 
     glEnable(GL_CLIP_PLANE0);
 
-    glEnable(GL_RESCALE_NORMAL);
+    SHADER.setRescaleNormal(true);
 
     const bool transparent_ = sceneNode->transparent;
 
@@ -278,7 +279,7 @@ void SphereSceneNode::SphereLodRenderNode::render()
         {
             if (transparent_)
                 glDisable(GL_BLEND);
-            glDisable(GL_LIGHTING);
+            SHADER.setLighting(false);
 
             glLogicOp(GL_INVERT);
             glEnable(GL_COLOR_LOGIC_OP);
@@ -302,7 +303,7 @@ void SphereSceneNode::SphereLodRenderNode::render()
 
             if (transparent_)
                 glEnable(GL_BLEND);
-            glEnable(GL_LIGHTING);
+            SHADER.setLighting(true);
         }
 
         // draw the surface
@@ -322,15 +323,15 @@ void SphereSceneNode::SphereLodRenderNode::render()
         }
         else
         {
-            glDisable(GL_LIGHTING);
+            SHADER.setLighting(false);
             drawFullScreenRect();
-            glEnable(GL_LIGHTING);
+            SHADER.setLighting(true);
             addTriangleCount(2);
         }
     }
     glPopMatrix();
 
-    glDisable(GL_RESCALE_NORMAL);
+    SHADER.setRescaleNormal(false);
 
     glDisable(GL_CLIP_PLANE0);
 

@@ -1,6 +1,8 @@
 SUBDIRS = l10n fonts
 
 validate:
+	glslangValidator playing.vert
+	glslangValidator playing.frag
 	glslangValidator radar.vert
 	glslangValidator radar.frag
 	glslangValidator HUD.vert
@@ -76,6 +78,8 @@ dist_pkgdata_DATA =		\
 	mountain5.png		\
 	observer_icon.png	\
 	phantom.wav		\
+	playing.frag		\
+	playing.vert		\
 	pop.wav			\
 	puddle.png		\
 	puffs.png		\

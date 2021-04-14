@@ -22,6 +22,7 @@
 #include "Intersect.h"
 #include "StateDatabase.h"
 #include "Vertex_Chunk.h"
+#include "PlayingShader.h"
 
 // local headers
 #include "Occluder.h"
@@ -308,9 +309,7 @@ void Octree::draw() const
     if (!root)
         return;
 
-    GLboolean usingTextures;
-    glGetBooleanv(GL_TEXTURE_2D, &usingTextures);
-    glDisable(GL_TEXTURE_2D);
+    bool usingTextures = SHADER.setTexturing(false);
 
     // CullFrustum needs to still be valid here
     // It should still exist in SceneRender.cxx
@@ -319,8 +318,7 @@ void Octree::draw() const
     OcclMgr->update(CullFrustum);
     OcclMgr->draw();
 
-    if (usingTextures)
-        glEnable(GL_TEXTURE_2D);
+    SHADER.setTexturing(usingTextures);
 
     return;
 }

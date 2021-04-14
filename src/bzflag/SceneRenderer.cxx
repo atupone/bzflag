@@ -32,6 +32,7 @@
 #include "MeshSceneNode.h"
 #include "OpenGLCommon.h"
 #include "VBO_Drawing.h"
+#include "PlayingShader.h"
 
 /* FIXME - local implementation dependencies */
 #include "BackgroundRenderer.h"
@@ -807,7 +808,7 @@ void SceneRenderer::render(bool _lastFrame, bool _sameFrame,
 
     // finalize dimming
     if (mapFog)
-        glDisable(GL_FOG);
+        SHADER.setFogging(false);
 
     renderDimming();
 
@@ -911,9 +912,9 @@ void SceneRenderer::renderScene(bool UNUSED(_lastFrame), bool UNUSED(_sameFrame)
         const bool avoidSkyFog = (mapFog && BZDB.isTrue("_fogNoSky"));
         if (avoidSkyFog)
         {
-            glDisable(GL_FOG);
+            SHADER.setFogging(false);
             background->renderSky(*this, fullWindow, mirror);
-            glEnable(GL_FOG);
+            SHADER.setFogging(true);
         }
         else
             background->renderSky(*this, fullWindow, mirror);
@@ -1045,7 +1046,7 @@ static bool setupMapFog()
     RENDERER.setFogActive(false);
     if (BZDB.get(StateDatabase::BZDB_FOGMODE) == "none")
     {
-        glDisable(GL_FOG);
+        SHADER.setFogging(false);
         glHint(GL_FOG_HINT, GL_FASTEST);
         return false;
     }
@@ -1080,12 +1081,12 @@ static bool setupMapFog()
         glHint(GL_FOG_HINT, GL_FASTEST);
 
     // setup GL fog
-    glFogf(GL_FOG_MODE, fogMode);
+    SHADER.setFogMode(fogMode);
     glFogf(GL_FOG_DENSITY, fogDensity);
     glFogf(GL_FOG_START, fogStart);
     glFogf(GL_FOG_END, fogEnd);
     glFogfv(GL_FOG_COLOR, fogColor);
-    glEnable(GL_FOG);
+    SHADER.setFogging(true);
 
     RENDERER.setFogColor(fogColor);
     return true;

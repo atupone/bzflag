@@ -163,7 +163,7 @@ public:
     void        resetAlphaFunc();
     void        setTexture(const int texture);
     void        setTextureMatrix(const GLfloat* matrix);
-    void        setTextureEnvMode(GLenum mode = GL_MODULATE);
+    void        setTextureEnvMode(bool mode = false);
     void        setMaterial(const OpenGLMaterial& material);
     void        setBlending(GLenum sFactor = GL_SRC_ALPHA,
                             GLenum dFactor = GL_ONE_MINUS_SRC_ALPHA);
