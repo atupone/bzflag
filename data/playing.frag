@@ -13,11 +13,97 @@
 #version 110
 
 uniform bool lighting;
+uniform bool lights[gl_MaxLights];
+uniform bool gourad;
+uniform bool separateColor;
+uniform bool localViewer;
 uniform int  fogMode;
 uniform bool fogging;
 uniform sampler2D ourTexture;
 uniform bool      texturing;
 uniform bool      replaceTexture;
+
+varying vec3 ecPosition3;
+varying vec3 normal;
+varying vec3 eye;
+
+float dotC(in vec3 d1, in vec3 d2)
+{
+    return max(dot(d1, d2), 0.0);
+}
+
+void LightD(in gl_LightProducts lightProduct,
+            in gl_LightSourceParameters lightSource,
+            inout vec4 ambient, inout vec4 diffuse,
+            inout vec4 specular)
+{
+    // Compute vector from surface to light position
+    vec3 VPpli = lightSource.position.xyz;
+
+    ambient += lightProduct.ambient;
+
+    // Normalize the vector from surface to light position
+    VPpli = normalize(VPpli);
+
+    // normal . light direction
+    float nDotVP = dotC(normal, VPpli);
+
+    diffuse += lightProduct.diffuse * nDotVP;
+
+    // direction of maximum highlights
+    vec3 halfVector = localViewer ? normalize(VPpli + eye) : lightSource.halfVector.xyz;
+
+    // normal . light half vector
+    float nDotHV = dotC(normal, halfVector);
+
+    // power factor
+    float pf = pow(nDotHV, max(gl_FrontMaterial.shininess, 0.001));
+
+    specular += nDotVP == 0.0 ? vec4(0.0) : lightProduct.specular * pf;
+}
+
+void LightP(in gl_LightProducts lightProduct,
+            in gl_LightSourceParameters lightSource,
+            inout vec4 ambient, inout vec4 diffuse,
+            inout vec4 specular)
+{
+    float attenuation;    // computed attenuation factor
+
+    // Compute vector from surface to light position
+    vec3 VPpli = lightSource.position.xyz;
+
+    VPpli -= ecPosition3;
+
+    // Compute distance between surface and light position
+    float d = length(VPpli);
+
+    // Compute attenuation
+    attenuation = 1.0 / (
+                      lightSource.constantAttenuation +
+                      (lightSource.linearAttenuation +
+                       lightSource.quadraticAttenuation * d) * d);
+
+    ambient  += lightProduct.ambient * attenuation;
+
+    // Normalize the vector from surface to light position
+    VPpli = VPpli / d;
+
+    // normal . light direction
+    float nDotVP = dotC(normal, VPpli);
+
+    diffuse += lightProduct.diffuse * nDotVP * attenuation;
+
+    // direction of maximum highlights
+    vec3 halfVector = normalize(VPpli + eye);
+
+    // normal . light half vector
+    float nDotHV = dotC(normal, halfVector);
+
+    // power factor
+    float pf = pow(nDotHV, max(gl_FrontMaterial.shininess, 0.001));
+
+    specular += nDotVP == 0.0 ? vec4(0.0) : lightProduct.specular * pf * attenuation;
+}
 
 void main(void)
 {
@@ -26,10 +112,33 @@ void main(void)
     const int FogLinear = 2;
 
     vec4 color;
-    vec3 secondaryColor;
+    vec3 secondaryColor = vec3(0.0);
 
-    color          = gl_Color;
-    secondaryColor = gl_SecondaryColor.rgb;
+    if (gourad || !lighting)
+    {
+        color          = gl_Color;
+        secondaryColor = gl_SecondaryColor.rgb;
+    }
+    else
+    {
+        vec4 ambient  = vec4(0.0);
+        vec4 diffuse  = vec4(0.0);
+        vec4 specular = vec4(0.0);
+
+        if (lights[0])
+            LightD(gl_FrontLightProduct[0], gl_LightSource[0], ambient, diffuse, specular);
+        for (int i = 1; i < gl_MaxLights; i++)
+            if (lights[i])
+                LightP(gl_FrontLightProduct[i], gl_LightSource[i], ambient, diffuse, specular);
+
+        color = gl_FrontLightModelProduct.sceneColor + ambient + diffuse;
+        color.a = gl_FrontMaterial.diffuse.a;
+        if (separateColor)
+            secondaryColor = specular.rgb;
+        else
+            color         += specular;
+        color = clamp(color, 0.0, 1.0);
+    }
 
     if (texturing)
     {

@@ -30,6 +30,7 @@
 #include "OpenGLCommon.h"
 #include "PlayingShader.h"
 #include "RadarShader.h"
+#include "HUDShader.h"
 
 
 //
@@ -1312,12 +1313,17 @@ void OpenGLGState::initContext()
 void OpenGLGState::initGLState()
 {
     // initialize GL state to what we expect
+    SHADER.push();
     SHADER.setTexturing(false);
     SHADER.setLighting(false);
     SHADER.setRescaleNormal(false);
     SHADER.setNormalizeNormal(false);
     SHADER.setSphereMap(false);
     SHADER.setReplaceTexture(false);
+    SHADER.pop();
+    HUDSHADER.push();
+    HUDSHADER.setTexturing(true);
+    HUDSHADER.pop();
     glDisable(GL_COLOR_MATERIAL);
     glDisable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
