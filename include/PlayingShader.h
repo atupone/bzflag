@@ -39,6 +39,7 @@ public:
     void setSphereMap(bool on);
     void setLocalViewer(bool on);
     void setReplaceTexture(bool on);
+    void setGourad(bool on);
 
     void setModel(int model);
 
@@ -93,6 +94,7 @@ private:
     GLint lightingUniform;
     GLint lightsUniform;
     GLint localViewerUniform;
+    GLint gouradUniform;
 
     GLint   rescaleUniform;
     GLint   normalizeUniform;

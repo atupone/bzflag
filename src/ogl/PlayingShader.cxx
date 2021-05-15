@@ -38,6 +38,7 @@ void PlayingShader::init()
     lightingUniform         = getUniformLocation("lighting");
     lightsUniform           = getUniformLocation("lights");
     localViewerUniform      = getUniformLocation("localViewer");
+    gouradUniform           = getUniformLocation("gourad");
 
     rescaleUniform          = getUniformLocation("rescaleNormal");
     normalizeUniform        = getUniformLocation("normalizeNormal");
@@ -145,6 +146,10 @@ void PlayingShader::setReplaceTexture(bool on)
     setUniform(replaceTextureUniform, on);
 }
 
+void PlayingShader::setGourad(bool on)
+{
+    setUniform(gouradUniform, on);
+}
 
 void PlayingShader::setModel(int model)
 {

@@ -78,6 +78,7 @@ DisplayMenu::DisplayMenu() : formatMenu(NULL)
     options->push_back(std::string("None"));
     options->push_back(std::string("Fast"));
     options->push_back(std::string("Best"));
+    options->push_back(std::string("PerFragment"));
     option->update();
     listHUD.push_back(option);
 
@@ -320,6 +321,8 @@ void            DisplayMenu::resize(int _width, int _height)
         {
             if (BZDB.isTrue("tesselation"))
                 ((HUDuiList*)listHUD[i++])->setIndex(2);
+            else if (BZDB.isTrue("perFragmentLight"))
+                ((HUDuiList*)listHUD[i++])->setIndex(3);
             else
                 ((HUDuiList*)listHUD[i++])->setIndex(1);
         }
@@ -415,6 +418,7 @@ void            DisplayMenu::callback(HUDuiControl* w, const void* data)
         bool oldLighting = BZDBCache::lighting;
         BZDB.set("lighting", list->getIndex() == 0 ? "0" : "1");
         BZDB.set("tesselation", list->getIndex() == 2 ? "1" : "0");
+        BZDB.set("perFragmentLight", list->getIndex() == 3 ? "1" : "0");
         if (oldLighting != BZDBCache::lighting)
         {
             BZDB.set("texturereplace", (!BZDBCache::lighting &&

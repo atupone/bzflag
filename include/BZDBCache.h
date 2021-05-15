@@ -55,6 +55,7 @@ public:
     static Bool  shadows;
     static Bool  stencilShadows;
     static Bool  tesselation;
+    static Bool  perFragmentLight;
     static Bool  lighting;
     static Bool  smooth;
     static Bool  colorful;
