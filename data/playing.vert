@@ -14,6 +14,7 @@
 
 uniform bool lighting;
 uniform bool lights[gl_MaxLights];
+uniform bool gourad;
 uniform bool rescaleNormal;
 uniform bool normalizeNormal;
 uniform bool separateColor;
@@ -42,9 +43,9 @@ uniform float groundSize;
 // a       => size
 uniform vec4  sizeColor[2];
 
-vec3 ecPosition3;
-vec3 normal;
-vec3 eye;
+varying vec3 ecPosition3;
+varying vec3 normal;
+varying vec3 eye;
 
 float dotC(in vec3 d1, in vec3 d2)
 {
@@ -53,7 +54,6 @@ float dotC(in vec3 d1, in vec3 d2)
 
 void Light(in gl_LightProducts lightProduct,
            in gl_LightSourceParameters lightSource,
-           in bool shine,
            inout vec4 ambient, inout vec4 diffuse,
            inout vec4 specular)
 {
@@ -94,9 +94,12 @@ void Light(in gl_LightProducts lightProduct,
     if (gl_FrontMaterial.shininess == 0.0)
         return;
 
+    if (lightProduct.specular == vec4(0.0))
+        return;
+
     vec3 halfVector;
     // direction of maximum highlights
-    if (lightSource.position.w != 0.0 || shine)
+    if (lightSource.position.w != 0.0 || localViewer)
         halfVector = normalize(VPpli + eye);
     else
         halfVector = lightSource.halfVector.xyz;
@@ -129,35 +132,35 @@ void setOutput(in vec4 ecPosition, in vec4 texCoord, in vec4 color)
     if (!lighting)
         return;
 
-    vec4 ambient  = vec4(0.0);
-    vec4 diffuse  = vec4(0.0);
-    vec4 specular = vec4(0.0);
-
-
-    bool shine = any(
-                     greaterThan(
-                         vec3(gl_FrontMaterial.specular),
-                         vec3(0.0))) && localViewer;
-
     vec3 u = normalize(ecPosition3);
 
-    eye = shine ? -u : vec3(0.0, 0.0, 1.0);
+    eye = localViewer ? -u : vec3(0.0, 0.0, 1.0);
 
-    for (int i = 0; i < gl_MaxLights; i++)
-        if (lights[i])
-            Light(gl_FrontLightProduct[i], gl_LightSource[i], shine,
-                  ambient, diffuse, specular);
+    if (gourad)
+    {
+        vec4 color;
+        vec3 secondaryColor;
 
-    gl_FrontColor = gl_FrontLightModelProduct.sceneColor + ambient + diffuse;
-    gl_FrontColor.a = gl_FrontMaterial.diffuse.a;
-    if (separateColor)
-        gl_FrontSecondaryColor = specular;
-    else
-        gl_FrontColor         += specular;
-    gl_FrontSecondaryColor.a = 1.0;
+        vec4 ambient  = vec4(0.0);
+        vec4 diffuse  = vec4(0.0);
+        vec4 specular = vec4(0.0);
 
-    gl_BackSecondaryColor = gl_FrontSecondaryColor;
-    gl_BackColor    = gl_FrontColor;
+        for (int i = 0; i < gl_MaxLights; i++)
+            if (lights[i])
+                Light(gl_FrontLightProduct[i], gl_LightSource[i], ambient, diffuse, specular);
+
+        color = gl_FrontLightModelProduct.sceneColor + ambient + diffuse;
+        color.a = gl_FrontMaterial.diffuse.a;
+        if (separateColor)
+            secondaryColor = specular.rgb;
+        else
+            color         += specular;
+
+        gl_FrontColor          = color;
+        gl_BackColor           = color;
+        gl_FrontSecondaryColor = vec4(secondaryColor, 1.0);
+        gl_BackSecondaryColor  = vec4(secondaryColor, 1.0);
+    }
 }
 
 void fixedPipeline()
