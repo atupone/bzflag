@@ -38,6 +38,8 @@ void PlayingShader::init()
     lightingUniform         = getUniformLocation("lighting");
     lightsUniform           = getUniformLocation("lights");
     localViewerUniform      = getUniformLocation("localViewer");
+    gouradUniform           = getUniformLocation("gourad");
+
     rescaleUniform          = getUniformLocation("rescaleNormal");
     normalizeUniform        = getUniformLocation("normalizeNormal");
     separateColorUniform    = getUniformLocation("separateColor");
@@ -158,6 +160,10 @@ void PlayingShader::setColorProcessing(int csProc)
     setUniform(csProcUniform, csProc);
 }
 
+void PlayingShader::setGourad(bool on)
+{
+    setUniform(gouradUniform, on);
+}
 
 void PlayingShader::setModel(int model)
 {

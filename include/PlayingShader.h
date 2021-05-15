@@ -50,6 +50,8 @@ public:
     const int csColor = 1;
     const int csColTr = 2;
 
+    void setGourad(bool on);
+
     void setModel(int model);
 
     void setLineRainColor(glm::vec4 color[2]);
@@ -109,6 +111,7 @@ private:
     GLint zTankUniform;
     GLint repeatUniform;
     GLint csProcUniform;
+    GLint gouradUniform;
 
     GLint modelUniform;
 

@@ -6254,6 +6254,7 @@ void drawFrame(const float dt)
                               viewFrustum.getProjectionMatrix());
         }
 
+        SHADER.setGourad(!BZDBCache::perFragmentLight);
         // draw frame
         if (viewType == SceneRenderer::ThreeChannel)
         {
