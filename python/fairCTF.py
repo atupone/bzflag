@@ -74,8 +74,7 @@ class fairCTF (bz_Plugin, bz_CustomSlashCommandHandler):
 
             # Don't allow a team flag grab
             flagtype = bz_getFlagName(eventData.flagID)
-            if flagtype == "R*" or flagtype == "G*" or flagtype == "B*" or \
-                    flagtype == "P*":
+            if flagtype in ("R*", "G*", "B*", "P*"):
                 eventData.allow = False
                 bz_sendTextMessage (eventData.playerID, \
                         "CTF play is currently disabled.")
