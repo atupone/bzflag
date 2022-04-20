@@ -1,8 +1,9 @@
 import time
 import math
 import re
-from bzEvents import *
-from bzBasic  import *
+from bzEvents  import *
+from bzBasic   import *
+from bz_Plugin import *
 
 class TankCoordinate:
     """bzflag tank coordinate"""
@@ -201,29 +202,6 @@ eBadFlag         = 1
 eLastFlagQuality = 2
 
 BZ_ALLUSERS      = -1
-
-class bz_Plugin():
-    MaxWaitTime = -1
-    Unloadable  = True
-
-    def Cleanup(self):
-        pass
-
-    def Event(self, eventData):
-        return eventData
-
-    # used for inter plugin communication
-    def GeneralCallback(self, name, data):
-        return 0
-
-    def Register (self, eventType):
-        RegisterEvent(eventType, self)
-
-    def Remove (eventType):
-        RemoveEvent(eventType, self)
-
-    def Flush (self):
-        FlushEvents(self)
 
 # Command Handler
 
