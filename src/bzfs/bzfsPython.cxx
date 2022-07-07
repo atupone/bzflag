@@ -1084,14 +1084,21 @@ static PyObject *genEvent (bz_FlagTransferredEventData_V1 &data)
 
 static PyObject *genEvent (bz_FlagGrabbedEventData_V1 &data)
 {
-    PyObject *pArg = PyUnicode_FromString(data.flagType);
-    if (!pArg)
+    PyObject *pArgs = PyTuple_New(2);
+    if (!pArgs)
         return nullptr;
 
-    PyObject *pEvent = PyObject_CallFunctionObjArgs(flagGrabbedEventData_V1,
-                       pArg,
-                       NULL);
-    Py_DECREF(pArg);
+    PyObject *pPos = PyTuple_New(3);
+    if (!pPos)
+        return nullptr;
+    for (int i = 0; i < 3; i++)
+        PyTuple_SetItem(pPos, i, PyFloat_FromDouble(data.pos[i]));
+
+    PyTuple_SetItem(pArgs, 0, PyUnicode_FromString(data.flagType));
+    PyTuple_SetItem(pArgs, 1, pPos);
+
+    PyObject *pEvent = PyObject_CallObject(flagGrabbedEventData_V1, pArgs);
+    Py_DECREF(pArgs);
     return pEvent;
 }
 

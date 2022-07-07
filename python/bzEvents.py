@@ -99,9 +99,10 @@ class bz_FlagTransferredEventData_V1 (bz_EventData):
         self.flagType = flagType
 
 class bz_FlagGrabbedEventData_V1 (bz_EventData):
-    def __init__(self, flagType):
+    def __init__(self, flagType, pos):
         super().__init__(bz_eFlagGrabbedEvent)
         self.flagType = flagType
+        self.pos      = pos
 
 class bz_FlagDroppedEventData_V1 (bz_EventData):
     def __init__(self, flagType):

@@ -152,7 +152,7 @@ class bz_CustomZoneObject():
                         'WARNING: The "BBOX" attribute has been deprecated.'\
                                 ' Please use the `position` and `size` '\
                                 'attributes instead:')
-                bz_debugMessage(0, '  position {f} {f} {f}'
+                bz_debugMessage(0, '  position {} {} {}'
                         .format(self.cX, self.cY, self.cZ))
                 bz_debugMessage(0, '  size {} {} {}'
                         .format(self.hw, self.hh, self.height))
