@@ -29,7 +29,7 @@ public:
     RandomSpawnPolicy();
     virtual ~RandomSpawnPolicy();
 
-    virtual void getPosition(float pos[3], int playerId, bool onGroundOnly, bool notNearEdges);
+    void getPosition(glm::vec3 &pos, int playerId, bool onGroundOnly, bool notNearEdges) override;
     virtual void getAzimuth(float &azimuth);
 };
 

@@ -29,7 +29,7 @@ public:
     EighthDimShellNode(SceneNode *sceneNode, bool ownTheNode);
     ~EighthDimShellNode();
 
-    bool cull(const ViewFrustum&) const;
+    bool cull(const ViewFrustum&) const override;
     void addRenderNodes(SceneRenderer&);
     void notifyStyleChange();
 
@@ -42,7 +42,7 @@ protected:
         ~ShellRenderNode();
         void render() override;
         void renderShadow() override;
-        const GLfloat* getPosition() const override;
+        const glm::vec3 &getPosition() const override;
     public:
         const OpenGLGState* getGState() const;
     private:

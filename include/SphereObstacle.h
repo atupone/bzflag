@@ -38,7 +38,7 @@ public:
 
     SphereObstacle();
     SphereObstacle(const MeshTransform& transform,
-                   const float* _pos, const float* _size,
+                   const glm::vec3 &_pos, const glm::vec3 &_size,
                    float _rotation, const float _texsize[2],
                    bool _useNormals, bool hemisphere,
                    int _divisions, const BzMaterial* mats[MaterialCount],
@@ -54,23 +54,10 @@ public:
     bool isValid() const;
 
     float intersect(const Ray&) const;
-    void getNormal(const float* p, float* n) const;
-    void get3DNormal(const float* p, float* n) const;
+    void getNormal(const glm::vec3 &p, glm::vec3 &n) const override;
+    void get3DNormal(const glm::vec3 &p, glm::vec3 &n) const override;
 
-    bool inCylinder(const float* p, float radius, float height) const;
-    bool inBox(const float* p, float angle,
-               float halfWidth, float halfBreadth, float height) const;
-    bool inMovingBox(const float* oldP, float oldAngle,
-                     const float *newP, float newAngle,
-                     float halfWidth, float halfBreadth, float height) const;
-    bool isCrossing(const float* p, float angle,
-                    float halfWidth, float halfBreadth, float height,
-                    float* plane) const;
-
-    bool getHitNormal(const float* pos1, float azimuth1,
-                      const float* pos2, float azimuth2,
-                      float halfWidth, float halfBreadth,
-                      float height, float* normal) const;
+    bool inCylinder(const glm::vec3 &p, float radius, float height) const override;
 
     int packSize() const;
     void *pack(void*) const;

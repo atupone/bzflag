@@ -159,11 +159,10 @@ static const BzMaterial* getTintedMaterial(const float tint[4],
         const BzMaterial* mat)
 {
     BzMaterial tintmat(*mat);
-    float newColor[4];
-    const float* oldColor;
+    glm::vec4 newColor;
 
     // diffuse
-    oldColor = mat->getDiffuse();
+    auto oldColor = mat->getDiffuse();
     newColor[0] = oldColor[0] * tint[0];
     newColor[1] = oldColor[1] * tint[1];
     newColor[2] = oldColor[2] * tint[2];

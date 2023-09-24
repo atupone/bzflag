@@ -24,13 +24,14 @@
 #include "Singleton.h"
 
 /* system interface headers */
+#include <string>
 #include <vector>
+#include <glm/vec4.hpp>
 
 /* common interface headers */
 #include "OpenGLLight.h"
 #include "ViewFrustum.h"
 #include "RenderNode.h"
-#include "vectors.h"
 
 #define RENDERER (SceneRenderer::instance())
 
@@ -105,7 +106,7 @@ public:
 
     void      clearRadar(float opacity);
 
-    void      getGroundUV(const float p[2], float uv[2]) const;
+    void      getGroundUV(const glm::vec2 &p, glm::vec2 &uv) const;
 
     bool      getBlank() const;
     bool      getInvert() const;
@@ -124,7 +125,7 @@ public:
     void      addFlareLight(const float* pos, const float* color);
 
     // temporarily turn off non-applicable lights for big meshes
-    void      disableLights(const float mins[3], const float maxs[3]);
+    void      disableLights(const glm::vec3 &mins, const glm::vec3 &maxs);
     void      reenableLights();
 
     void      setupSun(); // setup sun lighting params
@@ -135,7 +136,7 @@ public:
     const GLfloat*    getSunColor() const;
     const GLfloat*    getSunScaledColor() const;
     GLfloat       getSunBrightness() const;
-    const GLfloat*    getSunDirection() const;
+    const glm::vec3 *getSunDirection() const;
     const GLfloat*    getAmbientColor() const;
     const GLfloat*    getCelestialTransform() const;
 
@@ -161,11 +162,11 @@ public:
         fogActive = b;
     }
 
-    const fvec4&  getFogColor() const
+    const glm::vec4 &getFogColor() const
     {
         return fogColor;
     }
-    void      setFogColor( float *color)
+    void setFogColor(const glm::vec4 &color)
     {
         fogColor = color;
     }
@@ -258,7 +259,7 @@ private:
     bool      needStyleUpdate;
     bool      rebuildTanks;
     bool      fogActive;
-    fvec4     fogColor;
+    glm::vec4 fogColor;
 
     std::vector<FlareLight>   flareLightList;
     RenderNodeList        shadowList;

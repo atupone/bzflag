@@ -20,16 +20,20 @@
 // Inherits from
 #include "SceneNode.h"
 
+// System headers
+#include <glm/fwd.hpp>
+#include <glm/vec4.hpp>
+
 class LaserSceneNode : public SceneNode
 {
 public:
-    LaserSceneNode(const GLfloat pos[3],
-                   const GLfloat forward[3]);
+    LaserSceneNode(const glm::vec3 &pos,
+                   const glm::vec3 &forward);
     ~LaserSceneNode();
 
     void        setTexture(const int);
 
-    bool        cull(const ViewFrustum&) const;
+    bool        cull(const ViewFrustum&) const override;
 
     void        notifyStyleChange();
     void        addRenderNodes(SceneRenderer&);
@@ -48,15 +52,15 @@ protected:
         LaserRenderNode(const LaserSceneNode*);
         ~LaserRenderNode();
         void        render() override;
-        const GLfloat* getPosition() const override;
+        const glm::vec3 &getPosition() const override;
     private:
         void renderFlatLaser();
         void renderGeoLaser();
         const LaserSceneNode* sceneNode;
-        static GLfloat  geom[6][2];
+        static glm::vec2 geom[6];
     };
-    fvec4 color;
-    fvec4 centerColor;
+    glm::vec4 color;
+    glm::vec4 centerColor;
     bool first;
     friend class LaserRenderNode;
 

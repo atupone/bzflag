@@ -35,7 +35,7 @@ private:
     unsigned int cullScore;
     int planeCount;  // one more then the vertex count
     int vertexCount; // vertex count of the occluding plane
-    float (*planes)[4];
+    glm::vec4 *planes;
     float (*vertices)[3];
     static const bool DrawEdges;
     static const bool DrawNormals;

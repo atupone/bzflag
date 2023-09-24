@@ -26,7 +26,7 @@ class Teleporter : public Obstacle
 {
 public:
     Teleporter();
-    Teleporter(const float* pos, float rotation,
+    Teleporter(const glm::vec3 &pos, float rotation,
                float width, float breadth, float height,
                float borderSize = 1.0f, bool horizontal = false,
                bool drive = false, bool shoot = false, bool ricochet = false);
@@ -45,32 +45,31 @@ public:
     bool        isValid() const;
 
     float       intersect(const Ray&) const;
-    void        getNormal(const float* p, float* n) const;
+    void        getNormal(const glm::vec3 &p, glm::vec3 &n) const override;
 
-    bool        inCylinder(const float* p, float radius, float height) const;
-    bool        inBox(const float* p, float angle,
-                      float halfWidth, float halfBreadth, float height) const;
-    bool        inMovingBox(const float* oldP, float oldAngle,
-                            const float *newP, float newAngle,
-                            float halfWidth, float halfBreadth, float height) const;
-    bool        isCrossing(const float* p, float angle,
+    bool        inCylinder(const glm::vec3 &p, float radius, float height) const override;
+    bool        inBox(const glm::vec3 &p, float angle,
+                      float halfWidth, float halfBreadth, float height) const override;
+    bool        inMovingBox(const glm::vec3 &oldP, float oldAngle,
+                            const glm::vec3 &newP, float newAngle,
+                            float halfWidth, float halfBreadth, float height) const override;
+    bool        isCrossing(const glm::vec3 &p, float angle,
                            float halfWidth, float halfBreadth, float height,
-                           float* plane) const;
+                           glm::vec4 *plane) const override;
 
     bool        getHitNormal(
-        const float* pos1, float azimuth1,
-        const float* pos2, float azimuth2,
+        const glm::vec3 &pos1, float azimuth1,
+        const glm::vec3 &pos2, float azimuth2,
         float halfWidth, float halfBreadth,
         float height,
-        float* normal) const;
+        glm::vec3 &normal) const override;
 
     float       isTeleported(const Ray&, int& face) const;
-    float       getProximity(const float* p, float radius) const;
-    bool        hasCrossed(const float* p1, const float* p2,
+    float       getProximity(const glm::vec3 &p, float radius) const;
+    bool        hasCrossed(const glm::vec3 &p1, const glm::vec3 &p2,
                            int& face) const;
     void        getPointWRT(const Teleporter& t2, int face1, int face2,
-                            const float* pIn, const float* dIn, float aIn,
-                            float* pOut, float* dOut, float* aOut) const;
+                            glm::vec3 &p, glm::vec3 *d, float *a) const;
 
     void        makeLinks();
     const MeshFace* getBackLink() const;
@@ -95,13 +94,13 @@ private:
 
     float       border;
     bool        horizontal;
-    float       origSize[3];
+    glm::vec3   origSize;
 
     MeshFace*       backLink;
     MeshFace*       frontLink;
-    float       fvertices[4][3]; // front vertices
-    float       bvertices[4][3]; // back vertices
-    float       texcoords[4][2]; // shared texture coordinates
+    glm::vec3   fvertices[4]; // front vertices
+    glm::vec3   bvertices[4]; // back vertices
+    glm::vec2   texcoords[4]; // shared texture coordinates
 };
 
 //

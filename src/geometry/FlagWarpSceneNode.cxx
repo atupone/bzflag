@@ -16,10 +16,13 @@
 // system headers
 #include <stdlib.h>
 #include <math.h>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/norm.hpp>
 
 // common implementation headers
 #include "StateDatabase.h"
 #include "BZDBCache.h"
+#include "OpenGLAPI.h"
 
 // local implementation headers
 #include "ViewFrustum.h"
@@ -40,7 +43,7 @@ const GLfloat       FlagWarpSceneNode::color[7][3] =
     { 1.0, 1.0, 1.0 }
 };
 
-FlagWarpSceneNode::FlagWarpSceneNode(const GLfloat pos[3]) :
+FlagWarpSceneNode::FlagWarpSceneNode(const glm::vec3 &pos) :
     renderNode(this)
 {
     move(pos);
@@ -58,20 +61,19 @@ void            FlagWarpSceneNode::setSizeFraction(GLfloat _size)
     size = _size;
 }
 
-void            FlagWarpSceneNode::move(const GLfloat pos[3])
+void FlagWarpSceneNode::move(const glm::vec3 &pos)
 {
     setCenter(pos);
 }
 
-GLfloat         FlagWarpSceneNode::getDistance(const GLfloat* eye) const
+GLfloat FlagWarpSceneNode::getDistance(const glm::vec3 &eye) const
 {
     // shift position of warp down a little because a flag and it's warp
     // are at the same position but we want the warp to appear below the
     // flag.
-    const GLfloat* mySphere = getSphere();
-    return (eye[0] - mySphere[0]) * (eye[0] - mySphere[0]) +
-           (eye[1] - mySphere[1]) * (eye[1] - mySphere[1]) +
-           (eye[2] - mySphere[2] + 0.2f) * (eye[2] - mySphere[2] + 0.2f);
+    auto mySphere = getSphere();
+    mySphere.z -= 0.2f;
+    return glm::distance2(eye, mySphere);
 }
 
 void            FlagWarpSceneNode::notifyStyleChange()
@@ -112,7 +114,7 @@ FlagWarpSceneNode::FlagWarpRenderNode::~FlagWarpRenderNode()
     // do nothing
 }
 
-const GLfloat* FlagWarpSceneNode::FlagWarpRenderNode::getPosition() const
+const glm::vec3 &FlagWarpSceneNode::FlagWarpRenderNode::getPosition() const
 {
     return sceneNode->getSphere();
 }
@@ -128,9 +130,9 @@ void            FlagWarpSceneNode::FlagWarpRenderNode::render()
         geom[i][1] = r * sinf((float)(2.0 * M_PI * double(i) / 12.0));
     }
 
-    const GLfloat* sphere = sceneNode->getSphere();
+    const auto &sphere = getPosition();
     glPushMatrix();
-    glTranslatef(sphere[0], sphere[1], sphere[2]);
+    glTranslate(sphere);
 
     if (sphere[2] > RENDERER.getViewFrustum().getEye()[2])
     {

@@ -16,6 +16,7 @@
 // System headers
 #include <stdlib.h>
 #include <math.h>
+#include <glm/geometric.hpp>
 
 // Common headers
 #include "SceneNode.h"
@@ -296,12 +297,12 @@ Occluder::Occluder(const SceneNode* node)
     vertices = new float[vertexCount][3];
 
     planeCount = vertexCount + 1; // the occluder's plane normal
-    planes = new float[planeCount][4];
+    planes = new glm::vec4[planeCount];
 
     // counter-clockwise order as viewed from the front face
     for (int i = 0; i < vertexCount; i++)
     {
-        const float* vertex = node->getVertex(i);
+        const auto vertex = node->getVertex(i);
         vertices[i][0] = vertex[0];
         vertices[i][1] = vertex[1];
         vertices[i][2] = vertex[2];
@@ -325,8 +326,8 @@ IntersectLevel Occluder::doCullAxisBox(const Extents& exts)
 }
 
 
-static bool makePlane (const float* p1, const float* p2, const float* pc,
-                       float* r)
+static bool makePlane (const float* p1, const float* p2, const glm::vec3 &pc,
+                       glm::vec4 &r)
 {
     // make vectors from points
     float x[3] = {p1[0] - pc[0], p1[1] - pc[1], p1[2] - pc[2]};
@@ -357,19 +358,16 @@ static bool makePlane (const float* p1, const float* p2, const float* pc,
 bool Occluder::makePlanes(const Frustum* frustum)
 {
     // occluders can't have their back towards the camera
-    const float* eye = frustum->getEye();
-    const float* p = sceneNode->getPlane();
-    float tmp = (p[0] * eye[0]) + (p[1] * eye[1]) + (p[2] * eye[2]) + p[3];
+    const auto eye = glm::vec4(frustum->getEye(), 1.0f);
+    const auto &p = *sceneNode->getPlane();
+    float tmp = glm::dot(p, eye);
     if (tmp < +0.1f)
         return false;
     // FIXME - store/flag this so we don't have to do it again?
 
     // make the occluder's normal plane
-    const float* plane = sceneNode->getPlane();
-    planes[0][0] = -plane[0];
-    planes[0][1] = -plane[1];
-    planes[0][2] = -plane[2];
-    planes[0][3] = -plane[3];
+    const auto &plane = *sceneNode->getPlane();
+    planes[0] = -plane;
 
     // make the edges planes
     for (int i = 0; i < vertexCount; i++)
@@ -403,7 +401,7 @@ void Occluder::draw() const
     if (DrawNormals)
     {
         // the tri-wall 'getSphere()' center sucks...
-        float center[3];
+        glm::vec3 center;
         for (int a = 0; a < 3; a++)
         {
             center[a] = 0.0f;
@@ -412,16 +410,13 @@ void Occluder::draw() const
             center[a] = center[a] / (float) vertexCount;
         }
 
-        float outwards[3];
-        outwards[0] = center[0] - (length * planes[0][0]);
-        outwards[1] = center[1] - (length * planes[0][1]);
-        outwards[2] = center[2] - (length * planes[0][2]);
+        auto outwards = center - length * glm::vec3(planes[0]);
 
         // draw the plane normal
         glBegin (GL_LINES);
         glColor4fv (colors[0]);
-        glVertex3fv (center);
-        glVertex3fv (outwards);
+        glVertex3f (center.x, center.y, center.z);
+        glVertex3f (outwards.x, outwards.y, outwards.z);
         glEnd ();
     }
 
@@ -430,14 +425,11 @@ void Occluder::draw() const
     {
         for (v = 0; v < vertexCount; v++)
         {
-            float midpoint[3];
-            float outwards[3];
+            glm::vec3 midpoint;
             int vn = (v + 1) % vertexCount;
             for (int a = 0; a < 3; a++)
-            {
                 midpoint[a] = 0.5f * (vertices[v][a] + vertices[vn][a]);
-                outwards[a] = midpoint[a] - (length * planes[vn + 1][a]);
-            }
+            auto outwards = midpoint - length * glm::vec3(planes[vn + 1]);
             glBegin (GL_LINES);
             glColor4fv (colors[(v % 4) + 1]);
             if (DrawEdges)
@@ -447,8 +439,8 @@ void Occluder::draw() const
             }
             if (DrawNormals)
             {
-                glVertex3fv (midpoint);
-                glVertex3fv (outwards);
+                glVertex3f (midpoint.x, midpoint.y, midpoint.z);
+                glVertex3f (outwards.x, outwards.y, outwards.z);
             }
             glEnd();
         }

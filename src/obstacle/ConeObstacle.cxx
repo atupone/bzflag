@@ -16,6 +16,8 @@
 // System headers
 #include <math.h>
 #include <assert.h>
+#include <glm/vec2.hpp>
+#include <glm/vec3.hpp>
 
 // Common headers
 #include "global.h"
@@ -35,7 +37,7 @@ ConeObstacle::ConeObstacle()
 
 
 ConeObstacle::ConeObstacle(const MeshTransform& xform,
-                           const float* _pos, const float* _size,
+                           const glm::vec3 &_pos, const glm::vec3 &_size,
                            float _rotation, float _sweepAngle,
                            const float _texsize[2], bool _useNormals,
                            int _divisions,
@@ -161,12 +163,12 @@ MeshObstacle* ConeObstacle::makeMesh()
 
     // setup the coordinates
     std::vector<char> checkTypes;
-    std::vector<cfvec3> checkPoints;
-    std::vector<cfvec3> vertices;
-    std::vector<cfvec3> normals;
-    std::vector<cfvec2> texcoords;
-    cfvec3 v, n;
-    cfvec2 t;
+    std::vector<glm::vec3> checkPoints;
+    std::vector<glm::vec3> vertices;
+    std::vector<glm::vec3> normals;
+    std::vector<glm::vec2> texcoords;
+    glm::vec3 v, n;
+    glm::vec2 t;
 
     // add the checkpoint (one is sufficient)
     if (isCircle)
@@ -356,52 +358,23 @@ float ConeObstacle::intersect(const Ray&) const
     return -1.0f;
 }
 
-void ConeObstacle::get3DNormal(const float*, float*) const
+void ConeObstacle::get3DNormal(const glm::vec3 &, glm::vec3 &) const
 {
     assert(false);
     return;
 }
 
-void ConeObstacle::getNormal(const float*, float*) const
+void ConeObstacle::getNormal(const glm::vec3 &, glm::vec3 &) const
 {
     assert(false);
     return;
 }
 
-bool ConeObstacle::getHitNormal(const float*, float, const float*, float,
-                                float, float, float, float*) const
+bool ConeObstacle::inCylinder(const glm::vec3 &, float, float) const
 {
     assert(false);
     return false;
 }
-
-bool ConeObstacle::inCylinder(const float*,float, float) const
-{
-    assert(false);
-    return false;
-}
-
-bool ConeObstacle::inBox(const float*, float, float, float, float) const
-{
-    assert(false);
-    return false;
-}
-
-bool ConeObstacle::inMovingBox(const float*, float, const float*, float,
-                               float, float, float) const
-{
-    assert(false);
-    return false;
-}
-
-bool ConeObstacle::isCrossing(const float* UNUSED(p), float UNUSED(_angle),
-                              float UNUSED(dx), float UNUSED(dy), float UNUSED(height),
-                              float* UNUSED(_plane)) const
-{
-    assert(false);
-    return false;
-}
-
 
 void *ConeObstacle::pack(void *buf) const
 {

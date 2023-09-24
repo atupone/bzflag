@@ -31,7 +31,7 @@ public:
     void        addShots(SceneDatabase* scene, bool colorblind) const;
 
 private:
-    bool        doEndShot(int index, bool isHit, float* pos);
+    bool        doEndShot(int index, bool isHit, glm::vec3 &pos) override;
 
 private:
     std::vector<RemoteShotPath*> shots;
