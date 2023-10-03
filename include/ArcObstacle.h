@@ -46,7 +46,7 @@ public:
 
     ArcObstacle();
     ArcObstacle(const MeshTransform& transform,
-                const float* _pos, const float* _size,
+                const glm::vec3 &_pos, const glm::vec3 &_size,
                 float _rotation, float _angle, float _ratio,
                 const float _texsize[4], bool _useNormals,
                 int _divisions, const BzMaterial* mats[MaterialCount],
@@ -63,23 +63,10 @@ public:
     bool isFlatTop() const override;
 
     float intersect(const Ray&) const override;
-    void getNormal(const float* p, float* n) const override;
-    void get3DNormal(const float* p, float* n) const override;
+    void getNormal(const glm::vec3 &p, glm::vec3 &n) const override;
+    void get3DNormal(const glm::vec3 &p, glm::vec3 &n) const override;
 
-    bool inCylinder(const float* p, float radius, float height) const override;
-    bool inBox(const float* p, float angle,
-               float halfWidth, float halfBreadth, float height) const override;
-    bool inMovingBox(const float* oldP, float oldAngle,
-                     const float *newP, float newAngle,
-                     float halfWidth, float halfBreadth, float height) const override;
-    bool isCrossing(const float* p, float angle,
-                    float halfWidth, float halfBreadth, float height,
-                    float* plane) const override;
-
-    bool getHitNormal(const float* pos1, float azimuth1,
-                      const float* pos2, float azimuth2,
-                      float halfWidth, float halfBreadth,
-                      float height, float* normal) const override;
+    bool inCylinder(const glm::vec3 &p, float radius, float height) const override;
 
     int packSize() const override;
     void *pack(void*) const override;

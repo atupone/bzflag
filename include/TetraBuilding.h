@@ -34,7 +34,7 @@ public:
 
     TetraBuilding();
     TetraBuilding(const MeshTransform& transform,
-                  const float vertices[4][3], const float normals[4][3][3],
+                  const glm::vec3 vertices[4], const float normals[4][3][3],
                   const float texCoords[4][3][2], const bool useNormals[4],
                   const bool useTexCoords[4], const BzMaterial* materials[4],
                   bool drive = false, bool shoot = false, bool ricochet = false);
@@ -51,25 +51,10 @@ public:
     bool        isValid() const override;
 
     float       intersect(const Ray&) const override;
-    void        getNormal(const float* p, float* n) const override;
-    void        get3DNormal(const float* p, float* n) const override;
+    void        getNormal(const glm::vec3 &p, glm::vec3 &n) const override;
+    void        get3DNormal(const glm::vec3 &p, glm::vec3 &n) const override;
 
-    bool        inCylinder(const float* p, float radius, float height) const override;
-    bool        inBox(const float* p, float angle,
-                      float halfWidth, float halfBreadth, float height) const override;
-    bool        inMovingBox(const float* oldP, float oldAngle,
-                            const float *newP, float newAngle,
-                            float halfWidth, float halfBreadth, float height) const override;
-    bool        isCrossing(const float* p, float angle,
-                           float halfWidth, float halfBreadth, float height,
-                           float* plane) const override;
-
-    bool        getHitNormal(
-        const float* pos1, float azimuth1,
-        const float* pos2, float azimuth2,
-        float halfWidth, float halfBreadth,
-        float height,
-        float* normal) const override;
+    bool        inCylinder(const glm::vec3 &p, float radius, float height) const override;
 
     void        getCorner(int index, float* pos) const;
 
@@ -86,7 +71,7 @@ private:
     static const char*  typeName;
 
     MeshTransform transform;
-    float vertices[4][3];
+    glm::vec3 vertices[4];
     float normals[4][3][3];
     float texcoords[4][3][2];
     bool useNormals[4];

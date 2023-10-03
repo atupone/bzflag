@@ -24,11 +24,11 @@
 class PolyWallSceneNode final : public WallSceneNode
 {
 public:
-    PolyWallSceneNode(const GLfloat3Array& vertices,
-                      const GLfloat2Array& uvs);
+    PolyWallSceneNode(const std::vector<glm::vec3> &vertices,
+                      const std::vector<glm::vec2> &uvs);
     ~PolyWallSceneNode();
 
-    int         split(const float*, SceneNode*&, SceneNode*&) const override;
+    int         split(const glm::vec4 &, SceneNode*&, SceneNode*&) const override;
 
     void        addRenderNodes(SceneRenderer&) override;
     void        addShadowNodes(SceneRenderer&) override;
@@ -41,26 +41,26 @@ protected:
     {
     public:
         Geometry(PolyWallSceneNode*,
-                 const GLfloat3Array& vertices,
-                 const GLfloat2Array& uvs,
-                 const GLfloat* normal);
+                 const std::vector<glm::vec3> &vertices,
+                 const std::vector<glm::vec2> &uvs,
+                 const glm::vec4 &plane);
         ~Geometry();
         void        setStyle(int _style)
         {
             style = _style;
         }
         void        render() override;
-        const GLfloat* getPosition() const override;
+        const glm::vec3 &getPosition() const override;
     private:
         void        drawV() const;
         void        drawVT() const;
     private:
         PolyWallSceneNode* wall;
         int     style;
-        const GLfloat*  normal;
+        const glm::vec4 &plane;
     public:
-        GLfloat3Array   vertex;
-        GLfloat2Array   uv;
+        const std::vector<glm::vec3> vertex;
+        const std::vector<glm::vec2> uv;
     };
 
 private:
