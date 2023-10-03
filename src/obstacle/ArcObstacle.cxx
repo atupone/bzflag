@@ -15,6 +15,8 @@
 
 // System interfaces
 #include <math.h>
+#include <glm/vec2.hpp>
+#include <glm/vec3.hpp>
 
 //Common interfaces
 #include "global.h"
@@ -29,7 +31,7 @@ const char* ArcObstacle::typeName = "ArcObstacle";
 
 
 ArcObstacle::ArcObstacle(const MeshTransform& xform,
-                         const float* _pos, const float* _size,
+                         const glm::vec3 &_pos, const glm::vec3 &_size,
                          float _rotation, float _sweepAngle, float _ratio,
                          const float _texsize[4], bool _useNormals,
                          int _divisions, const BzMaterial* mats[MaterialCount],
@@ -191,12 +193,12 @@ MeshObstacle* ArcObstacle::makePie(bool isCircle, float a, float r,
 
     // setup the coordinates
     std::vector<char> checkTypes;
-    std::vector<cfvec3> checkPoints;
-    std::vector<cfvec3> vertices;
-    std::vector<cfvec3> normals;
-    std::vector<cfvec2> texcoords;
-    cfvec3 v, n;
-    cfvec2 t;
+    std::vector<glm::vec3> checkPoints;
+    std::vector<glm::vec3> vertices;
+    std::vector<glm::vec3> normals;
+    std::vector<glm::vec2> texcoords;
+    glm::vec3 v, n;
+    glm::vec2 t;
 
     // add the checkpoint (one is sufficient)
     if (isCircle)
@@ -373,12 +375,12 @@ MeshObstacle* ArcObstacle::makeRing(bool isCircle, float a, float r,
 
     // setup the coordinates
     std::vector<char> checkTypes;
-    std::vector<cfvec3> checkPoints;
-    std::vector<cfvec3> vertices;
-    std::vector<cfvec3> normals;
-    std::vector<cfvec2> texcoords;
-    cfvec3 v, n;
-    cfvec2 t;
+    std::vector<glm::vec3> checkPoints;
+    std::vector<glm::vec3> vertices;
+    std::vector<glm::vec3> normals;
+    std::vector<glm::vec2> texcoords;
+    glm::vec3 v, n;
+    glm::vec2 t;
 
     // add the checkpoints (very wasteful)
     v[0] = pos[0];

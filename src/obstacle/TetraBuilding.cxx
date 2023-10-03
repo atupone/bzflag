@@ -15,6 +15,9 @@
 
 // System headers
 #include <math.h>
+#include <glm/vec3.hpp>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/mixed_product.hpp>
 
 // Common headers
 #include "global.h"
@@ -33,7 +36,7 @@ const char* TetraBuilding::typeName = "TetraBuilding";
 
 
 TetraBuilding::TetraBuilding(const MeshTransform& xform,
-                             const float _vertices[4][3],
+                             const glm::vec3 _vertices[4],
                              const float _normals[4][3][3],
                              const float _texcoords[4][3][2],
                              const bool _useNormals[4],
@@ -42,7 +45,8 @@ TetraBuilding::TetraBuilding(const MeshTransform& xform,
                              bool drive, bool shoot, bool rico)
 {
     // tetra specific parameters
-    memcpy (vertices, _vertices, sizeof(vertices));
+    for (int i = 0; i < 4; i++)
+        vertices[i] = _vertices[i];
     memcpy (normals, _normals, sizeof(normals));
     memcpy (texcoords, _texcoords, sizeof(texcoords));
     memcpy (useNormals, _useNormals, sizeof(useNormals));
@@ -80,22 +84,16 @@ MeshObstacle* TetraBuilding::makeMesh()
     // setup the coordinates
     int i;
     std::vector<char> checkTypes;
-    std::vector<cfvec3> checkPoints;
-    std::vector<cfvec3> verts;
-    std::vector<cfvec3> norms;
-    std::vector<cfvec2> texcds;
+    std::vector<glm::vec3> checkPoints;
+    std::vector<glm::vec3> verts;
+    std::vector<glm::vec3> norms;
+    std::vector<glm::vec2> texcds;
 
     // setup the inside check point
-    float center[3] = {0.0f, 0.0f, 0.0f};
+    auto center = glm::vec3(0.0f);
     for (i = 0; i < 4; i++)
-    {
-        center[0] += vertices[i][0];
-        center[1] += vertices[i][1];
-        center[2] += vertices[i][2];
-    }
-    center[0] *= 0.25f;
-    center[1] *= 0.25f;
-    center[2] *= 0.25f;
+        center += vertices[i];
+    center *= 0.25f;
     checkPoints.push_back(center);
     checkTypes.push_back(MeshObstacle::CheckInside);
 
@@ -137,16 +135,13 @@ void TetraBuilding::checkVertexOrder()
     int v, a;
 
     // make sure the the planes are facing outwards
-    float edge[3][3]; // edges from vertex 0
+    glm::vec3 edge[3]; // edges from vertex 0
     for (v = 0; v < 3; v++)
     {
         for (a = 0; a < 3; a++)
             edge[v][a] = vertices[v+1][a] - vertices[0][a];
     }
-    float cross[3];
-    vec3cross(cross, edge[0], edge[1]);
-
-    const float dot = vec3dot (cross, edge[2]);
+    const auto dot = glm::mixedProduct(edge[0], edge[1], edge[2]);
 
     // swap vertices 1 & 2 if we are out of order
     if (dot < 0.0f)
@@ -370,7 +365,7 @@ void TetraBuilding::print(std::ostream& out, const std::string& indent) const
     // write the vertex information
     for (i = 0; i < 4; i++)
     {
-        const float* vertex = vertices[i];
+        const auto &vertex = vertices[i];
         out << indent << "\tvertex " << vertex[0] << " " << vertex[1] << " "
             << vertex[2] << std::endl;
         if (useNormals[i])
