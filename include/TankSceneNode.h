@@ -242,7 +242,7 @@ private:
     float       rightWheelOffset;
     bool        useDimensions;
     bool        onlyShadows;
-    bool        transparent, sort;
+    bool        transparent;
     float       explodeFraction;
     bool        clip;
     bool        inTheCockpit;

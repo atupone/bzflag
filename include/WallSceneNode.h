@@ -93,18 +93,7 @@ protected:
     }
     const OpenGLGState* getWallGState() const;
 
-    static int      splitWall(const glm::vec4 &plane,
-                              const std::vector<glm::vec3>& vertices,
-                              const std::vector<glm::vec2>& uvs,
-                              SceneNode*& front, SceneNode*& back); // const
-
     glm::vec4 plane;   // unit normal, distance to origin
-private:
-    static void splitEdge(float d1, float d2,
-                          glm::vec3 p1,  glm::vec3 p2,
-                          glm::vec2 uv1, glm::vec2 uv2,
-                          glm::vec3& p, glm::vec2& uv);
-
 private:
     int         numLODs;
     float*      elementAreas;

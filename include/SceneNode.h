@@ -13,10 +13,6 @@
 /* SceneNode:
  *  Encapsulates information for rendering an object in the scene.
  *
- * GLfloat2
- * GLfloat3
- *  Arrays of two and three GLfloat's
- *
  * Probably shouldn't use names like this (GLfloat...).  Oh well.
  */
 
@@ -78,8 +74,6 @@ public:
     void        setOccluder(bool value);
 
     virtual void    addLight(SceneRenderer&);
-    virtual int     split(const glm::vec4 &plane,
-                          SceneNode*& front, SceneNode*& back) const;
     virtual void    addShadowNodes(SceneRenderer&);
     virtual void    addRenderNodes(SceneRenderer&);
     virtual void    renderRadar();
