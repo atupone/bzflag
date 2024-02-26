@@ -31,8 +31,6 @@ public:
                      bool makeLODs = true);
     ~TriWallSceneNode();
 
-    int         split(const glm::vec4 &, SceneNode*&, SceneNode*&) const override;
-
     void        addRenderNodes(SceneRenderer&) override;
     void        addShadowNodes(SceneRenderer&) override;
     void        renderRadar() override;
