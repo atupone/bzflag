@@ -81,8 +81,6 @@ public:
     void        setOccluder(bool value);
 
     virtual void    addLight(SceneRenderer&);
-    virtual int     split(const glm::vec4 &plane,
-                          SceneNode*& front, SceneNode*& back) const;
     virtual void    addShadowNodes(SceneRenderer&);
     virtual void    addRenderNodes(SceneRenderer&);
     virtual void    renderRadar();
