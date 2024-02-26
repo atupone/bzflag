@@ -362,22 +362,6 @@ QuadWallSceneNode::~QuadWallSceneNode()
     delete shadowNode;
 }
 
-int         QuadWallSceneNode::split(const glm::vec4 &_plane,
-                                     SceneNode*& front, SceneNode*& back) const
-{
-    // need to reorder vertices into counterclockwise order
-    std::vector<glm::vec3> vertex(4);
-    std::vector<glm::vec2> uv(4);
-    for (int i = 0; i < 4; i++)
-    {
-        int j = i;
-        if (j == 2 || j == 3) j = 5 - j;
-        vertex[i] = nodes[0]->vertex[j];
-        uv[i] = nodes[0]->uv[j];
-    }
-    return WallSceneNode::splitWall(_plane, vertex, uv, front, back);
-}
-
 void            QuadWallSceneNode::addRenderNodes(
     SceneRenderer& renderer)
 {
