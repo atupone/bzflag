@@ -2779,9 +2779,6 @@ msgstr ""
 msgid "ZSceneDatabase processed in %.3f seconds.\n"
 msgstr ""
 
-msgid "BSPSceneDatabase processed in %.3f seconds.\n"
-msgstr ""
-
 msgid "Download stopped by user action"
 msgstr ""
 

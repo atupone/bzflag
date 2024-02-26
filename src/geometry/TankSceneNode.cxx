@@ -175,7 +175,6 @@ void TankSceneNode::addTreadOffsets(float left, float right)
 
 void TankSceneNode::notifyStyleChange()
 {
-    sort = !BZDBCache::zbuffer;
     OpenGLGStateBuilder builder(gstate);
     builder.enableTexture(BZDBCache::texture);
     builder.enableMaterial(BZDBCache::lighting);
@@ -242,13 +241,13 @@ void TankSceneNode::addRenderNodes(SceneRenderer& renderer)
     bool narrow = false;
     if ((tankSize == Narrow) &&
             (!useDimensions || (dimensions[1] < 0.01f)) &&
-            BZDBCache::animatedTreads && BZDBCache::zbuffer)
+            BZDBCache::animatedTreads)
         narrow = true;
     tankRenderNode.setNarrowWithDepth(narrow);
     treadsRenderNode.setNarrowWithDepth(narrow);
 
     // if drawing in sorted order then decide which order
-    if (sort || transparent || narrow)
+    if (transparent || narrow)
     {
         const auto &mySphere = getSphere();
         const auto d = eye - mySphere;
@@ -386,7 +385,7 @@ void TankSceneNode::setExplodeFraction(float t)
 void TankSceneNode::setJumpJets(float scale)
 {
     jumpJetsOn = false;
-    if ((scale > 0.0f) && BZDBCache::zbuffer && BZDBCache::texture)
+    if ((scale > 0.0f) && BZDBCache::texture)
     {
         jumpJetsOn = true;
         jumpJetsScale = scale;
@@ -944,7 +943,7 @@ void TankSceneNode::TankRenderNode::render()
         renderPart(Turret);
         renderPart(Barrel);
     }
-    else if (!isShadow && (sceneNode->sort || sceneNode->transparent))
+    else if (!isShadow && sceneNode->transparent)
     {
         // draw is some sorted order
         if (sceneNode->explodeFraction == 0.0f)
