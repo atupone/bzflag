@@ -442,47 +442,15 @@ void SphereLodSceneNode::SphereLodRenderNode::render()
 //
 
 const int       NumSlices = 2 * SphereRes;
-const int       NumParts = SphereLowRes * SphereLowRes;
 
 SphereBspSceneNode::SphereBspSceneNode(const glm::vec3 &pos, GLfloat _radius) :
     SphereSceneNode(pos, _radius),
-    renderNode(this),
-    parts(NULL)
+    renderNode(this)
 {
 }
 
 SphereBspSceneNode::~SphereBspSceneNode()
 {
-    if (parts)
-    {
-        for (int i = 0; i < NumParts; i++)
-            delete parts[i];
-        delete[] parts;
-    }
-}
-
-SceneNode**     SphereBspSceneNode::getParts(int& numParts)
-{
-    if (!parts)
-    {
-        // make parts -- always use low detail sphere (if your zbuffer is
-        // slow, then you probably don't want to render lots o' polygons)
-        parts = new SphereFragmentSceneNode*[NumParts];
-        for (int i = 0; i < SphereLowRes; i++)
-            for (int j = 0; j < SphereLowRes; j++)
-                parts[SphereLowRes * i + j] = new SphereFragmentSceneNode(j, i, this);
-    }
-
-    // choose number of parts to cut off bottom at around ground level
-    int i;
-    const auto &mySphere = getSphere();
-    for (i = 0; i < SphereLowRes; i++)
-        if (radius * SphereBspRenderNode::lgeom[SphereLowRes*i][2]
-                + mySphere[2] < 0.01f)
-            break;
-    numParts = SphereLowRes * i;
-
-    return (SceneNode**)parts;
 }
 
 void            SphereBspSceneNode::addRenderNodes(
@@ -702,128 +670,6 @@ void            SphereBspSceneNode::SphereBspRenderNode::render()
 
     glDisable(GL_CLIP_PLANE0);
 }
-
-//
-// SphereFragmentSceneNode
-//
-
-SphereFragmentSceneNode::SphereFragmentSceneNode(int _theta, int _phi,
-        SphereBspSceneNode* _parentSphere) :
-    parentSphere(_parentSphere),
-    renderNode(_parentSphere, _theta, _phi)
-{
-    // position sphere fragment
-    move();
-}
-
-SphereFragmentSceneNode::~SphereFragmentSceneNode()
-{
-    // do nothing
-}
-
-void            SphereFragmentSceneNode::move()
-{
-    const auto &pSphere   = parentSphere->getSphere();
-    const GLfloat pRadius = parentSphere->getRadius();
-    const auto vertex     = renderNode.getVertex();
-    setCenter(pSphere + pRadius * vertex);
-
-    setRadius((GLfloat)(4.0 * M_PI * M_PI * pRadius) /
-              GLfloat(SphereLowRes * SphereLowRes));
-}
-
-void            SphereFragmentSceneNode::addRenderNodes
-(SceneRenderer& renderer)
-{
-    renderer.addRenderNode(&renderNode, &parentSphere->gstate);
-}
-
-void            SphereFragmentSceneNode::addShadowNodes(
-    SceneRenderer& UNUSED(renderer))
-{
-    return;
-    /*
-      renderer.addShadowNode(&renderNode);
-    */
-}
-
-//
-// SphereFragmentSceneNode::FragmentRenderNode
-//
-
-SphereFragmentSceneNode::FragmentRenderNode::FragmentRenderNode(
-    const SphereBspSceneNode* _sceneNode,
-    int _theta, int _phi) :
-    sceneNode(_sceneNode),
-    theta(_theta),
-    phi(_phi)
-{
-    // compute incremented theta and phi
-    theta2 = (theta + 1) % SphereLowRes;
-    phi2 = phi + 1;
-}
-
-SphereFragmentSceneNode::FragmentRenderNode::~FragmentRenderNode()
-{
-    // do nothing
-}
-
-const glm::vec3 &SphereFragmentSceneNode::FragmentRenderNode::getVertex() const
-{
-    return SphereBspSceneNode::SphereBspRenderNode
-           ::lgeom[phi * SphereLowRes + theta];
-}
-
-const glm::vec3 &SphereFragmentSceneNode::FragmentRenderNode::
-getPosition() const
-{
-    return sceneNode->getSphere();
-}
-
-void            SphereFragmentSceneNode::FragmentRenderNode::render()
-{
-    const GLfloat pRadius = sceneNode->getRadius();
-    const auto &pSphere = getPosition();
-
-    glPushMatrix();
-    {
-        glTranslatef(pSphere[0], pSphere[1], pSphere[2]);
-        glScalef(pRadius, pRadius, pRadius);
-
-        myColor4fv(sceneNode->color);
-        glBegin(GL_TRIANGLE_STRIP);
-        {
-            if (BZDBCache::lighting)
-            {
-                glNormal3fv(SphereBspSceneNode::SphereBspRenderNode::lgeom[SphereLowRes * phi + theta]);
-                glVertex3fv(SphereBspSceneNode::SphereBspRenderNode::lgeom[SphereLowRes * phi + theta]);
-                glNormal3fv(SphereBspSceneNode::SphereBspRenderNode::lgeom[SphereLowRes * phi2 + theta]);
-                glVertex3fv(SphereBspSceneNode::SphereBspRenderNode::lgeom[SphereLowRes * phi2 + theta]);
-                glNormal3fv(SphereBspSceneNode::SphereBspRenderNode::lgeom[SphereLowRes * phi + theta2]);
-                glVertex3fv(SphereBspSceneNode::SphereBspRenderNode::lgeom[SphereLowRes * phi + theta2]);
-                glNormal3fv(SphereBspSceneNode::SphereBspRenderNode::lgeom[SphereLowRes * phi2 + theta2]);
-                glVertex3fv(SphereBspSceneNode::SphereBspRenderNode::lgeom[SphereLowRes * phi2 + theta2]);
-                addTriangleCount(2);
-            }
-            else
-            {
-                glVertex3fv(SphereBspSceneNode::SphereBspRenderNode::lgeom[SphereLowRes * phi + theta]);
-                glVertex3fv(SphereBspSceneNode::SphereBspRenderNode::lgeom[SphereLowRes * phi2 + theta]);
-                glVertex3fv(SphereBspSceneNode::SphereBspRenderNode::lgeom[SphereLowRes * phi + theta2]);
-                glVertex3fv(SphereBspSceneNode::SphereBspRenderNode::lgeom[SphereLowRes * phi2 + theta2]);
-                addTriangleCount(2);
-            }
-        }
-        glEnd(); // 4 verts -> 2 tris
-    }
-    glPopMatrix();
-
-    return;
-}
-
-
-/******************************************************************************/
-
 
 // Local Variables: ***
 // mode: C++ ***

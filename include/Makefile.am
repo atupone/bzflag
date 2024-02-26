@@ -8,7 +8,6 @@ noinst_HEADERS =			\
 	AutoCompleter.h			\
 	BaseSceneNodeGenerator.h	\
 	BoxSceneNodeGenerator.h		\
-	BSPSceneDatabase.h		\
 	BZDBCache.h			\
 	BZDBLocal.h			\
 	BaseBuilding.h			\
@@ -93,7 +92,6 @@ noinst_HEADERS =			\
 	PlatformFactory.h		\
 	PlayerInfo.h			\
 	PlayerState.h			\
-	PolyWallSceneNode.h		\
 	Protocol.h			\
 	PyramidBuilding.h		\
 	PyramidSceneNodeGenerator.h	\

@@ -22,10 +22,9 @@
 #include "BZDBCache.h"
 
 
-EighthDimShellNode::EighthDimShellNode(SceneNode* node, bool _ownTheNode)
+EighthDimShellNode::EighthDimShellNode(SceneNode* node)
 {
     sceneNode = node;
-    ownTheNode = _ownTheNode;
 
     makeNodes();
 
@@ -35,8 +34,6 @@ EighthDimShellNode::EighthDimShellNode(SceneNode* node, bool _ownTheNode)
 
 EighthDimShellNode::~EighthDimShellNode()
 {
-    if (ownTheNode)
-        delete sceneNode;
     killNodes();
     return;
 }

@@ -47,7 +47,7 @@ enum TrackSides
 
 
 //
-// Helper Classes  (TrackEntry, TrackList, TrackRenderNode, TrackSceneNode)
+// Helper Classes  (TrackEntry, TrackList, TrackRenderNode)
 //
 
 class TrackEntry
@@ -66,7 +66,6 @@ public:
     char sides;
     int phydrv;
     float lifeTime;
-    class TrackSceneNode* sceneNode;
 
     friend class TrackList;
 };
@@ -94,10 +93,6 @@ public:
     TrackEntry* getStart()
     {
         return start;
-    }
-    TrackEntry* getEnd()
-    {
-        return end;
     }
 
     void addNode(TrackEntry&);
@@ -166,22 +161,6 @@ private:
 };
 
 
-class TrackSceneNode : public SceneNode
-{
-public:
-    TrackSceneNode(const TrackEntry*, TrackType, const OpenGLGState*);
-    ~TrackSceneNode();
-    void addRenderNodes(SceneRenderer&);
-    void update(); // set the sphere properties
-
-private:
-    TrackType type;
-    const TrackEntry* te;
-    const OpenGLGState* gstate;
-    TrackRenderNode renderNode;
-};
-
-
 //
 // Local Variables
 //
@@ -223,8 +202,6 @@ static void drawPuddle(const TrackEntry& te);
 static void drawTreads(const TrackEntry& te);
 static bool onBuilding(const float pos[3]);
 static void updateList(TrackList& list, float dt);
-static void addEntryToList(TrackList& list,
-                           TrackEntry& te, TrackType type);
 
 
 /****************************************************************************/
@@ -297,38 +274,12 @@ AirCullStyle TrackMarks::getAirCulling()
 }
 
 
-static void addEntryToList(TrackList& list,
-                           TrackEntry& te, TrackType type)
-{
-    // push the entry
-    list.addNode(te);
-
-    // make a sceneNode for the BSP rendering, if not on the ground
-    if (!BZDBCache::zbuffer && (te.pos[2] != TextureHeightOffset))
-    {
-        const OpenGLGState* gstate = NULL;
-        if (type == TreadsTrack)
-            gstate = &treadsGState;
-        else if (type == PuddleTrack)
-            gstate = &puddleGState;
-        else if (type == SmokeTrack)
-            gstate = &smokeGState;
-        else
-            return;
-        TrackEntry* copy = list.getEnd();
-        copy->sceneNode = new TrackSceneNode(copy, type, gstate);
-    }
-    return;
-}
-
-
 bool TrackMarks::addMark(const glm::vec3 &pos, float scale, float angle,
                          int phydrv)
 {
     TrackEntry te;
     TrackType type;
     te.lifeTime = 0.0f;
-    te.sceneNode = NULL;
 
     // determine the track mark type
     if ((pos[2] <= 0.1f) && BZDB.get(StateDatabase::BZDB_MIRROR) != "none")
@@ -378,7 +329,7 @@ bool TrackMarks::addMark(const glm::vec3 &pos, float scale, float angle,
     if (type == PuddleTrack)
     {
         // Puddle track marks
-        addEntryToList(PuddleList, te, type);
+        PuddleList.addNode(te);
     }
     else
     {
@@ -387,13 +338,13 @@ bool TrackMarks::addMark(const glm::vec3 &pos, float scale, float angle,
         {
             // no culling required
             te.sides = BothTreads;
-            addEntryToList(TreadsGroundList, te, type);
+            TreadsGroundList.addNode(te);
         }
         else if ((AirCull & InitAirCull) == 0)
         {
             // do not cull the air marks
             te.sides = BothTreads;
-            addEntryToList(TreadsObstacleList, te, type);
+            TreadsObstacleList.addNode(te);
         }
         else
         {
@@ -415,7 +366,7 @@ bool TrackMarks::addMark(const glm::vec3 &pos, float scale, float angle,
                 te.sides |= RightTread;
             // add if required
             if (te.sides != 0)
-                addEntryToList(TreadsObstacleList, te, type);
+                TreadsObstacleList.addNode(te);
             else
                 return false;
         }
@@ -607,7 +558,6 @@ void TrackMarks::renderGroundTracks()
     TrackEntry* ptr;
 
     // disable the zbuffer for drawing on the ground
-    if (BZDBCache::zbuffer)
     {
         glDepthMask(GL_FALSE);
         glDisable(GL_DEPTH_TEST);
@@ -624,7 +574,6 @@ void TrackMarks::renderGroundTracks()
         drawPuddle(*ptr);
 
     // re-enable the zbuffer
-    if (BZDBCache::zbuffer)
     {
         glDepthMask(GL_TRUE);
         glEnable(GL_DEPTH_TEST);
@@ -636,11 +585,6 @@ void TrackMarks::renderGroundTracks()
 
 void TrackMarks::renderObstacleTracks()
 {
-    if (!BZDBCache::zbuffer)
-    {
-        return; // this is not for the BSP rendering
-    }
-
     TrackEntry* ptr;
 
     // disable the zbuffer writing (these are the last things drawn)
@@ -760,39 +704,6 @@ static void drawTreads(const TrackEntry& te)
 }
 
 
-void TrackMarks::addSceneNodes(SceneDatabase* scene)
-{
-    // Depth Buffer does not need to use SceneNodes
-    if (BZDBCache::zbuffer)
-        return;
-
-    // tread track marks on obstacles
-    TrackEntry* ptr;
-    for (ptr = TreadsObstacleList.getStart(); ptr != NULL; ptr = ptr->getNext())
-    {
-        const TrackEntry& te = *ptr;
-        if (te.sceneNode != NULL)
-        {
-            te.sceneNode->update();
-            scene->addDynamicNode(te.sceneNode);
-        }
-    }
-
-    // smoke track marks in the air
-    for (ptr = SmokeList.getStart(); ptr != NULL; ptr = ptr->getNext())
-    {
-        const TrackEntry& te = *ptr;
-        if (te.sceneNode != NULL)
-        {
-            te.sceneNode->update();
-            scene->addDynamicNode(te.sceneNode);
-        }
-    }
-
-    return;
-}
-
-
 /****************************************************************************/
 //
 // TrackEntry
@@ -800,7 +711,6 @@ void TrackMarks::addSceneNodes(SceneDatabase* scene)
 
 TrackEntry::~TrackEntry()
 {
-    delete sceneNode;
     return;
 }
 
@@ -849,50 +759,6 @@ void TrackRenderNode::render()
         drawPuddle(*te);
     else if (type == SmokeTrack)
         drawTreads(*te);
-    return;
-}
-
-
-//
-// TrackSceneNode
-//
-
-TrackSceneNode::TrackSceneNode(const TrackEntry* _te, TrackType _type,
-                               const OpenGLGState* _gstate) :
-    renderNode(_te, _type)
-{
-    te = _te;
-    type = _type;
-    gstate = _gstate;
-    return;
-}
-
-TrackSceneNode::~TrackSceneNode()
-{
-    return;
-}
-
-void TrackSceneNode::addRenderNodes(SceneRenderer& renderer)
-{
-    renderer.addRenderNode(&renderNode, gstate);
-    return;
-}
-
-void TrackSceneNode::update()
-{
-    // update the position
-    setCenter(te->pos);
-
-    // update the radius squared (for culling)
-    float radius = 0;
-    if (type == TreadsTrack)
-        radius = (te->scale * TreadOutside);
-    else if (type == PuddleTrack)
-        radius = (te->scale * (TreadMiddle + 1.0f));
-    else if (type == SmokeTrack)
-        radius = (te->scale * TreadOutside);
-    setRadius(radius * radius);
-
     return;
 }
 
