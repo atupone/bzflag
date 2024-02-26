@@ -133,7 +133,7 @@ bool ShockWaveStrategy::isStoppedByHit() const
 
 void ShockWaveStrategy::addShot(SceneDatabase* scene, bool)
 {
-    scene->addDynamicSphere(shockNode);
+    scene->addDynamicNode(shockNode);
 }
 
 void ShockWaveStrategy::radarRender() const

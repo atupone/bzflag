@@ -40,8 +40,6 @@ public:
     const glm::vec3 &getVertex (int vertex) const override;
     const glm::vec3 *getVertices() const;
 
-    int split(const glm::vec4 &plane, SceneNode*&, SceneNode*&) const override;
-
     void addRenderNodes(SceneRenderer&) override;
     void addShadowNodes(SceneRenderer&) override;
     void renderRadar() override;
@@ -85,28 +83,6 @@ protected:
     };
 
 private:
-    int splitWallVTN(const glm::vec4 &plane,
-                     const std::vector<glm::vec3> &vertices,
-                     const std::vector<glm::vec3> &normals,
-                     const std::vector<glm::vec2> &texcoords,
-                     SceneNode*& front, SceneNode*& back) const;
-
-    void splitEdgeVTN(float d1, float d2,
-                      const glm::vec3 &p1, const glm::vec3 &p2,
-                      const glm::vec3 &n1, const glm::vec3 &n2,
-                      const glm::vec2 &uv1, const glm::vec2 &uv2,
-                      glm::vec3 &p, glm::vec3 &n, glm::vec2 &uv) const;
-
-    int splitWallVT(const glm::vec4 &plane,
-                    const std::vector<glm::vec3> &vertices,
-                    const std::vector<glm::vec2> &texcoords,
-                    SceneNode*& front, SceneNode*& back) const;
-
-    void splitEdgeVT(float d1, float d2,
-                     const glm::vec3 &p1,  const glm::vec3 &p2,
-                     const glm::vec2 &uv1, const glm::vec2 &uv2,
-                     glm::vec3 &p, glm::vec2 &uv) const;
-
     Geometry node;
     bool noRadar;
     bool noShadow;

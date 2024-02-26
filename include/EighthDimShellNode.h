@@ -26,7 +26,7 @@
 class EighthDimShellNode : public SceneNode
 {
 public:
-    EighthDimShellNode(SceneNode *sceneNode, bool ownTheNode);
+    EighthDimShellNode(SceneNode *sceneNode);
     ~EighthDimShellNode();
 
     bool cull(const ViewFrustum&) const override;
@@ -55,7 +55,6 @@ private:
     void killNodes();
 
 private:
-    bool ownTheNode;
     SceneNode* sceneNode;
 
     int shellNodeCount;

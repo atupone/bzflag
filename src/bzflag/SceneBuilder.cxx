@@ -15,7 +15,6 @@
 
 // local implemenation headers
 #include "ZSceneDatabase.h"
-#include "BSPSceneDatabase.h"
 #include "World.h"
 
 // scene node implemenation headers
@@ -215,16 +214,14 @@ SceneDatabaseBuilder::~SceneDatabaseBuilder()
 SceneDatabase* SceneDatabaseBuilder::make(const World* world)
 {
     // set LOD flags
-    const bool doLODs = BZDBCache::lighting && BZDBCache::zbuffer;
+    const bool doLODs = BZDBCache::lighting;
     wallLOD = baseLOD = boxLOD = pyramidLOD = teleporterLOD = doLODs;
 
     // pick type of database
     SceneDatabase* db;
-    if (BZDBCache::zbuffer)
+    {
         db = new ZSceneDatabase;
-    else
-        db = new BSPSceneDatabase;
-    // FIXME -- when making BSP tree, try several shuffles for best tree
+    }
 
     if (!world)
         return db;
@@ -262,8 +259,6 @@ SceneDatabase* SceneDatabaseBuilder::make(const World* world)
 
     // add the water level node
     addWaterLevel(db, world);
-
-    db->finalizeStatics();
 
     return db;
 }
@@ -305,7 +300,7 @@ void SceneDatabaseBuilder::addWaterLevel(SceneDatabase* db,
     // setup the material
     MeshSceneNodeGenerator::setupNodeMaterial(node, mat);
 
-    db->addStaticNode(node, false);
+    db->addStaticNode(node);
 
     return;
 }
@@ -344,7 +339,7 @@ void SceneDatabaseBuilder::addWall(SceneDatabase* db, const WallObstacle& o)
         node->setTexture(wallTexture);
         node->setUseColorTexture(useColorTexture);
 
-        db->addStaticNode(node, false);
+        db->addStaticNode(node);
         part = (part + 1) % 5;
     }
     delete nodeGen;
@@ -359,12 +354,8 @@ void SceneDatabaseBuilder::addMesh(SceneDatabase* db, MeshObstacle* mesh)
     while ((node = nodeGen->getNextNode(wallLOD)))
     {
         // make the inside node
-        const bool ownTheNode = db->addStaticNode(node, true);
-        // The BSP can split a MeshPolySceneNode and then delete it, which is
-        // not good for the EighthDimShellNode's referencing scheme. If the
-        // BSP would have split and then deleted this node, ownTheNode will
-        // return true, and the EighthDimShellNode will then own the node.
-        EighthDimShellNode* inode = new EighthDimShellNode(node, ownTheNode);
+        db->addStaticNode(node);
+        auto inode = new EighthDimShellNode(node);
         mesh->addInsideSceneNode(inode);
     }
     delete nodeGen;
@@ -427,12 +418,10 @@ void SceneDatabaseBuilder::addBox(SceneDatabase* db, BoxBuilding& o)
             node->setUseColorTexture(useColorTexture[1]);
         }
 
+        db->addStaticNode(node);
 #ifdef SHELL_INSIDE_NODES
-        const bool ownTheNode = db->addStaticNode(node, true);
-        EighthDimShellNode* inode = new EighthDimShellNode(node, ownTheNode);
+        auto inode = new EighthDimShellNode(node);
         o.addInsideSceneNode(inode);
-#else
-        db->addStaticNode(node, false);
 #endif // SHELL_INSIDE_NODES
 
         part = (part + 1) % 6;
@@ -489,12 +478,10 @@ void SceneDatabaseBuilder::addPyramid(SceneDatabase* db, PyramidBuilding& o)
         node->setTexture(pyramidTexture);
         node->setUseColorTexture(useColorTexture);
 
+        db->addStaticNode(node);
 #ifdef SHELL_INSIDE_NODES
-        const bool ownTheNode = db->addStaticNode(node, true);
-        EighthDimShellNode* inode = new EighthDimShellNode(node, ownTheNode);
+        auto inode = new EighthDimShellNode(node);
         o.addInsideSceneNode(inode);
-#else
-        db->addStaticNode(node, false);
 #endif // SHELL_INSIDE_NODES
 
         part = (part + 1) % 5;
@@ -587,12 +574,10 @@ void SceneDatabaseBuilder::addBase(SceneDatabase *db, BaseBuilding &o)
         }
         part++;
 
+        db->addStaticNode(node);
 #ifdef SHELL_INSIDE_NODES
-        const bool ownTheNode = db->addStaticNode(node, true);
-        EighthDimShellNode* inode = new EighthDimShellNode(node, ownTheNode);
+        auto inode = new EighthDimShellNode(node);
         o.addInsideSceneNode(inode);
-#else
-        db->addStaticNode(node, false);
 #endif // SHELL_INSIDE_NODES
     }
 
@@ -674,7 +659,7 @@ void SceneDatabaseBuilder::addTeleporter(SceneDatabase* db,
             }
         }
 
-        db->addStaticNode(node, false);
+        db->addStaticNode(node);
         part = (part + 1) % numParts;
     }
 
@@ -683,11 +668,11 @@ void SceneDatabaseBuilder::addTeleporter(SceneDatabase* db,
 
     linkNode = MeshSceneNodeGenerator::getMeshPolySceneNode(o.getBackLink());
     MeshSceneNodeGenerator::setupNodeMaterial(linkNode, mat);
-    db->addStaticNode(linkNode, false);
+    db->addStaticNode(linkNode);
 
     linkNode = MeshSceneNodeGenerator::getMeshPolySceneNode(o.getFrontLink());
     MeshSceneNodeGenerator::setupNodeMaterial(linkNode, mat);
-    db->addStaticNode(linkNode, false);
+    db->addStaticNode(linkNode);
 
     delete nodeGen;
 }

@@ -39,13 +39,10 @@ public:
     virtual     ~SceneDatabase();
 
     // returns true if the node would have been deleted
-    virtual bool    addStaticNode(SceneNode*, bool dontFree) = 0;
+    virtual void addStaticNode(SceneNode *) = 0;
     virtual void    addDynamicNode(SceneNode*) = 0;
-    virtual void    addDynamicSphere(SphereSceneNode*) = 0;
-    virtual void    finalizeStatics() = 0;
     virtual void    removeDynamicNodes() = 0;
     virtual void    removeAllNodes() = 0;
-    virtual bool    isOrdered() = 0;
 
     virtual void    updateNodeStyles() = 0;
     virtual void    addLights(SceneRenderer& renderer) = 0;

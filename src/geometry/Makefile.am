@@ -31,7 +31,6 @@ libGeometry_la_SOURCES  =		\
 	MeshRenderNode.h		\
 	MeshSceneNode.cxx		\
 	OccluderSceneNode.cxx		\
-	PolyWallSceneNode.cxx		\
 	QuadWallSceneNode.cxx		\
 	SceneNode.cxx			\
 	SphereSceneNode.cxx		\
