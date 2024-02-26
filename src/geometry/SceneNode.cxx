@@ -101,12 +101,6 @@ GLfloat SceneNode::getDistance(const glm::vec3 &eye) const
     return glm::distance2(eye, sphere);
 }
 
-int SceneNode::split(const glm::vec4 &, SceneNode*&, SceneNode*&) const
-{
-    // can't split me
-    return 1;
-}
-
 bool            SceneNode::cull(const ViewFrustum& view) const
 {
     // if center of object is outside view frustum and distance is
@@ -153,54 +147,6 @@ const glm::vec3 &SceneNode::getVertex (int) const
 const glm::vec4 *SceneNode::getPlane() const
 {
     return NULL;
-}
-
-
-//
-// GLfloat2Array
-//
-
-GLfloat2Array::GLfloat2Array(const GLfloat2Array& a) :
-    size(a.size)
-{
-    data = new GLfloat2[size];
-    ::memcpy(data, a.data, size * sizeof(GLfloat2));
-}
-
-GLfloat2Array&      GLfloat2Array::operator=(const GLfloat2Array& a)
-{
-    if (this != &a)
-    {
-        delete[] data;
-        size = a.size;
-        data = new GLfloat2[size];
-        ::memcpy(data, a.data, size * sizeof(GLfloat2));
-    }
-    return *this;
-}
-
-
-//
-// GLfloat3Array
-//
-
-GLfloat3Array::GLfloat3Array(const GLfloat3Array& a) :
-    size(a.size)
-{
-    data = new GLfloat3[size];
-    ::memcpy(data, a.data, size * sizeof(GLfloat3));
-}
-
-GLfloat3Array&      GLfloat3Array::operator=(const GLfloat3Array& a)
-{
-    if (this != &a)
-    {
-        delete[] data;
-        size = a.size;
-        data = new GLfloat3[size];
-        ::memcpy(data, a.data, size * sizeof(GLfloat3));
-    }
-    return *this;
 }
 
 
