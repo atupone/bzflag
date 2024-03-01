@@ -756,9 +756,6 @@ msgstr "Kesh spiska serverov ochi$en"
 msgid "Display Settings"
 msgstr "Nastrojki displeya"
 
-msgid "Dithering:"
-msgstr "Razmytie:"
-
 msgid "Smoothing:"
 msgstr "Sglazhivanie:"
 
