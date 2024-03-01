@@ -286,9 +286,6 @@ void updateConfigFile(void)
         // Get rid of geometry and lastScreenshot settings
         BZDB.unset("geometry");
         BZDB.unset("lastScreenshot");
-
-        // Turn off dithering (since none of our automatic performance checks turn it on anymore)
-        BZDB.setBool("dither", false);
     }
 
     if (configVersion <= 4)   // Upgrade 2.4.0 (or 2.4.2, since the config file version was not incremented) to 2.4.4

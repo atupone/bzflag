@@ -116,7 +116,6 @@ void            OpenGLMaterial::Rep::execute()
             glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, _specular);
             glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, _emissive);
             glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shininess);
-            if (RENDERER.useQuality() > 0)
             {
                 if  ((specular[0] > 0.0f) ||
                         (specular[1] > 0.0f) ||
