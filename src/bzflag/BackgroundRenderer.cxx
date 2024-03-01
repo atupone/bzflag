@@ -545,102 +545,21 @@ void BackgroundRenderer::addCloudDrift(GLfloat uDrift, GLfloat vDrift)
 }
 
 
-void BackgroundRenderer::renderSky(SceneRenderer& renderer, bool fullWindow,
+void BackgroundRenderer::renderSky(SceneRenderer& renderer,
                                    bool mirror)
 {
     if (!BZDBCache::drawSky)
         return;
-    if (renderer.useQuality() > 0)
-        drawSky(renderer, mirror);
-    else
     {
-        // low detail -- draw as damn fast as ya can, ie cheat.  use glClear()
-        // to draw solid color sky and ground.
-        MainWindow& window = renderer.getWindow();
-        const int x = window.getOriginX();
-        const int y = window.getOriginY();
-        const int width = window.getWidth();
-        const int height = window.getHeight();
-        const int viewHeight = window.getViewHeight();
-        const SceneRenderer::ViewType viewType = renderer.getViewType();
-
-        // draw sky
-        glDisable(GL_DITHER);
-        glPushAttrib(GL_SCISSOR_BIT);
-        glScissor(x, y + height - (viewHeight >> 1), width, (viewHeight >> 1));
-        glClearColor(skyZenithColor[0], skyZenithColor[1], skyZenithColor[2], 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        // draw ground -- first get the color (assume it's all green)
-        GLfloat _groundColor = 0.1f + 0.15f * renderer.getSunColor()[1];
-        if (fullWindow && viewType == SceneRenderer::ThreeChannel)
-            glScissor(x, y, width, height >> 1);
-        else if (fullWindow && viewType == SceneRenderer::Stacked)
-            glScissor(x, y, width, height >> 1);
-#ifndef USE_GL_STEREO
-        else if (fullWindow && viewType == SceneRenderer::Stereo)
-            glScissor(x, y, width, height >> 1);
-#endif
-        else
-            glScissor(x, y + height - viewHeight, width, (viewHeight + 1) >> 1);
-        if (invert)
-            glClearColor(_groundColor, 0.0f, _groundColor, 0.0f);
-        else
-            glClearColor(0.0f, _groundColor, 0.0f, 0.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        // back to normal
-        glPopAttrib();
-        if (BZDB.isTrue("dither")) glEnable(GL_DITHER);
+        drawSky(renderer, mirror);
     }
 }
 
 
-void BackgroundRenderer::renderGround(SceneRenderer& renderer,
-                                      bool fullWindow)
+void BackgroundRenderer::renderGround()
 {
-    if (renderer.useQuality() > 0)
-        drawGround();
-    else
     {
-        // low detail -- draw as damn fast as ya can, ie cheat.  use glClear()
-        // to draw solid color sky and ground.
-        MainWindow& window = renderer.getWindow();
-        const int x = window.getOriginX();
-        const int y = window.getOriginY();
-        const int width = window.getWidth();
-        const int height = window.getHeight();
-        const int viewHeight = window.getViewHeight();
-        const SceneRenderer::ViewType viewType = renderer.getViewType();
-
-        // draw sky
-        glDisable(GL_DITHER);
-        glPushAttrib(GL_SCISSOR_BIT);
-        glScissor(x, y + height - (viewHeight >> 1), width, (viewHeight >> 1));
-        glClearColor(skyZenithColor[0], skyZenithColor[1], skyZenithColor[2], 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        // draw ground -- first get the color (assume it's all green)
-        GLfloat _groundColor = 0.1f + 0.15f * renderer.getSunColor()[1];
-        if (fullWindow && viewType == SceneRenderer::ThreeChannel)
-            glScissor(x, y, width, height >> 1);
-        else if (fullWindow && viewType == SceneRenderer::Stacked)
-            glScissor(x, y, width, height >> 1);
-#ifndef USE_GL_STEREO
-        else if (fullWindow && viewType == SceneRenderer::Stereo)
-            glScissor(x, y, width, height >> 1);
-#endif
-        else
-            glScissor(x, y + height - viewHeight, width, (viewHeight + 1) >> 1);
-        if (invert)
-            glClearColor(_groundColor, 0.0f, _groundColor, 0.0f);
-        else
-            glClearColor(0.0f, _groundColor, 0.0f, 0.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        // back to normal
-        glPopAttrib();
-        if (BZDB.isTrue("dither")) glEnable(GL_DITHER);
+        drawGround();
     }
 }
 
@@ -653,7 +572,7 @@ void BackgroundRenderer::renderGroundEffects(SceneRenderer& renderer,
     // drawn after it.  also use projection with very far clipping plane.
 
     // only draw the grid lines if texturing is disabled
-    if (!BZDBCache::texture || (renderer.useQuality() <= 0))
+    if (!BZDBCache::texture)
         drawGroundGrid(renderer);
 
     if (!blank)
