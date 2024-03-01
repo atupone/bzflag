@@ -3594,9 +3594,6 @@ bool addExplosion(const glm::vec3 &_pos,
     if (prototypeExplosions.empty())
         return false;
 
-    // don't show explosions if quality is low
-    if (sceneRenderer->useQuality() < 1) return false;
-
     // don't add explosion if texture mapping are off
     if (!BZDBCache::texture)
         return false;
@@ -6247,7 +6244,7 @@ void drawFrame(const float dt)
             viewFrustum.setView(eyePoint, targetPoint);
 
             // draw left channel
-            sceneRenderer->render(false, true, true);
+            sceneRenderer->render(false, true);
 
             // set up for drawing right channel
             mainWindow->setQuadrant(MainWindow::LowerRight);
@@ -6258,7 +6255,7 @@ void drawFrame(const float dt)
             viewFrustum.setView(eyePoint, targetPoint);
 
             // draw right channel
-            sceneRenderer->render(true, true, true);
+            sceneRenderer->render(true, true);
 
 #if defined(DEBUG_RENDERING)
             // set up for drawing rear channel
@@ -6268,7 +6265,7 @@ void drawFrame(const float dt)
             viewFrustum.setView(eyePoint, targetPoint);
 
             // draw rear channel
-            sceneRenderer->render(true, true, true);
+            sceneRenderer->render(true, true);
 #endif
             // back to center channel
             mainWindow->setQuadrant(MainWindow::UpperRight);
