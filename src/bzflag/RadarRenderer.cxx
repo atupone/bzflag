@@ -444,7 +444,7 @@ void RadarRenderer::render(SceneRenderer& renderer, bool blank, bool observer)
 
         glColor3f(1.0f, 1.0f, 1.0f);
 
-        if ((noiseTexture >= 0) && (renderer.useQuality() > 0))
+        if (noiseTexture >= 0)
         {
 
             const int sequences = 10;
@@ -479,28 +479,6 @@ void RadarRenderer::render(SceneRenderer& renderer, bool blank, bool observer)
                 glTexCoord2f(np[noisePattern+0],np[noisePattern+3]);
                 glVertex2f(-radarRange, radarRange);
                 glTexCoord2f(np[noisePattern+2],np[noisePattern+3]);
-                glVertex2f( radarRange, radarRange);
-            }
-            glEnd();
-
-            glDisable(GL_TEXTURE_2D);
-        }
-
-        else if ((noiseTexture >= 0) && BZDBCache::texture &&
-                 (renderer.useQuality() == 0))
-        {
-            glEnable(GL_TEXTURE_2D);
-            tm.bind(noiseTexture);
-
-            glBegin(GL_TRIANGLE_STRIP);
-            {
-                glTexCoord2f(0,0);
-                glVertex2f(-radarRange,-radarRange);
-                glTexCoord2f(1,0);
-                glVertex2f( radarRange,-radarRange);
-                glTexCoord2f(0,1);
-                glVertex2f(-radarRange, radarRange);
-                glTexCoord2f(1,1);
                 glVertex2f( radarRange, radarRange);
             }
             glEnd();

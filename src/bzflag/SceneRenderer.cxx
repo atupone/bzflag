@@ -221,7 +221,6 @@ void SceneRenderer::setQuality(int value)
 
     notifyStyleChange();
 
-    if (useQualityValue >= 1)
     {
         glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
         glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
@@ -229,53 +228,34 @@ void SceneRenderer::setQuality(int value)
         // cause massive slowdowns and "spikes" when drawing the radar
         glHint(GL_POLYGON_SMOOTH_HINT, GL_FASTEST);
     }
-    else
-    {
-        glHint(GL_LINE_SMOOTH_HINT, GL_FASTEST);
-        glHint(GL_POINT_SMOOTH_HINT, GL_FASTEST);
-        glHint(GL_POLYGON_SMOOTH_HINT, GL_FASTEST);
-    }
 
     if (useQualityValue >= 2)
         TankSceneNode::setMaxLOD(-1);
-    else if (useQualityValue >= 1)
-        TankSceneNode::setMaxLOD(3);
     else
-        TankSceneNode::setMaxLOD(2);
+        TankSceneNode::setMaxLOD(3);
 
     if (useQualityValue >= 2)
         BZDB.set("flagChunks","32");
-    else if (useQualityValue >= 1)
-        BZDB.set("flagChunks","12");
     else
-        BZDB.set("flagChunks","8");
+        BZDB.set("flagChunks","12");
 
     if (useQualityValue >= 2)
         BZDB.set("moonSegments","64");
-    else if (useQualityValue >= 1)
-        BZDB.set("moonSegments","24");
     else
-        BZDB.set("moonSegments","12");
+        BZDB.set("moonSegments","24");
 
-    if (useQualityValue > 0)
     {
         // this can be modified by OpenGLMaterial
         glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
-    }
-    else
-    {
-        // OpenGLMaterial will not modify if (quality <= 0)
-        glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_FALSE);
     }
 
     // this setting helps keep those specular highlights
     // highlighting when applied to a dark textured surface.
     // It was mainlined in OpenGL Version 1.2
     // (there's also the GL_EXT_separate_specular_color extension)
-    if (useQualityValue >= 1)
+    {
         glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SEPARATE_SPECULAR_COLOR);
-    else
-        glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SINGLE_COLOR);
+    }
 
     BZDB.set("useQuality", TextUtils::format("%d", value));
 }
@@ -664,8 +644,7 @@ static int sortLights (const void* a, const void* b)
 }
 
 
-void SceneRenderer::render(bool _lastFrame, bool _sameFrame,
-                           bool fullWindow)
+void SceneRenderer::render(bool _lastFrame, bool _sameFrame)
 {
     lastFrame = _lastFrame;
     sameFrame = _sameFrame;
@@ -745,7 +724,7 @@ void SceneRenderer::render(bool _lastFrame, bool _sameFrame,
             scene->setOccluderManager(1);
 
         // the reflected scene
-        renderScene(_lastFrame, _sameFrame, fullWindow);
+        renderScene();
 
         // different occluders for the mirror
         if (scene)
@@ -787,25 +766,15 @@ void SceneRenderer::render(bool _lastFrame, bool _sameFrame,
             frustum.executeProjection();
             extent = BZDBCache::worldSize * 10.0f;
         }
-        // if low quality then use stipple -- it's probably much faster
-        if (useQualityValue >= 1)
         {
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             glEnable(GL_BLEND);
             glColor(mirrorColor);
         }
-        else
-        {
-            float stipple = mirrorColor[3];
-            glColor(glm::vec3(mirrorColor));
-            OpenGLGState::setStipple(stipple);
-            glEnable(GL_POLYGON_STIPPLE);
-        }
         glRectf(-extent, -extent, +extent, +extent);
-        if (useQualityValue >= 1)
+        {
             glDisable(GL_BLEND);
-        else
-            glDisable(GL_POLYGON_STIPPLE);
+        }
         if (mapFog)
         {
             glMatrixMode(GL_PROJECTION);
@@ -818,7 +787,7 @@ void SceneRenderer::render(bool _lastFrame, bool _sameFrame,
     }
 
     // the real scene
-    renderScene(_lastFrame, _sameFrame, fullWindow);
+    renderScene();
 
     // finalize dimming
     if (mapFog)
@@ -834,8 +803,7 @@ void SceneRenderer::render(bool _lastFrame, bool _sameFrame,
 }
 
 
-void SceneRenderer::renderScene(bool UNUSED(_lastFrame), bool UNUSED(_sameFrame),
-                                bool fullWindow)
+void SceneRenderer::renderScene()
 {
     int i;
     const bool lightLists = BZDB.isTrue("lightLists");
@@ -937,14 +905,14 @@ void SceneRenderer::renderScene(bool UNUSED(_lastFrame), bool UNUSED(_sameFrame)
         if (avoidSkyFog)
         {
             glDisable(GL_FOG);
-            background->renderSky(*this, fullWindow, mirror);
+            background->renderSky(*this, mirror);
             glEnable(GL_FOG);
         }
         else
-            background->renderSky(*this, fullWindow, mirror);
+            background->renderSky(*this, mirror);
 
         if (drawGround)
-            background->renderGround(*this, fullWindow);
+            background->renderGround();
     }
 
     // prepare the other lights but don't turn them on yet --
@@ -1139,18 +1107,13 @@ void SceneRenderer::renderDimming()
         glColor4f(color[0], color[1], color[2], density);
 
         // if low quality then use stipple -- it's probably much faster
-        if (useQualityValue >= 1)
-            glEnable(GL_BLEND);
-        else
         {
-            OpenGLGState::setStipple(density);
-            glEnable(GL_POLYGON_STIPPLE);
+            glEnable(GL_BLEND);
         }
         glRectf(-1.0f, -1.0f, +1.0f, +1.0f);
-        if (useQualityValue >= 1)
+        {
             glDisable(GL_BLEND);
-        else
-            glDisable(GL_POLYGON_STIPPLE);
+        }
     }
     return;
 }

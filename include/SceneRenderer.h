@@ -172,11 +172,8 @@ public:
 
 
     void      render(bool lastFrame = true,
-                     bool sameFrame = false,
-                     bool fullWindow = false);
-    void      renderScene(bool lastFrame = true,
-                          bool sameFrame = false,
-                          bool fullWindow = false);
+                     bool sameFrame = false);
+    void      renderScene();
     void      notifyStyleChange();
     void      addRenderNode(RenderNode* node, const OpenGLGState*);
     void      addShadowNode(RenderNode* node);
