@@ -35,7 +35,6 @@ namespace
 constexpr int maxChunks = 20;
 constexpr int waveLists = 8;      // GL list count
 int      flagChunks = 8;     // draw flag as 8 quads
-bool     geoPole = false;    // draw the pole as quads
 bool     realFlag = false;   // don't use billboarding
 bool     flagLists = false;  // use display lists
 int      triCount = 0;       // number of rendered triangles
@@ -318,7 +317,6 @@ void            FlagSceneNode::setTexture(const int texture)
 void            FlagSceneNode::notifyStyleChange()
 {
     const int quality = RENDERER.useQuality();
-    geoPole = (quality >= 1);
     realFlag = (quality >= 3);
 
     texturing = BZDBCache::texture;
@@ -490,7 +488,7 @@ void            FlagSceneNode::FlagRenderNode::render()
             glEnd();
             addTriangleCount(8);
         }
-        else if (geoPole)
+        else
         {
             if (is_billboard)
                 glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
@@ -504,19 +502,6 @@ void            FlagSceneNode::FlagRenderNode::render()
             }
             glEnd();
             addTriangleCount(2);
-        }
-        else
-        {
-            if (is_billboard)
-                glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
-
-            glBegin(GL_LINE_STRIP);
-            {
-                glVertex3f(0.0f, 0.0f, 0.0f);
-                glVertex3f(0.0f, 0.0f, topHeight);
-            }
-            glEnd();
-            addTriangleCount(1);
         }
 
         if (doing_texturing)

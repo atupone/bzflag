@@ -197,11 +197,6 @@ SceneDatabaseBuilder::SceneDatabaseBuilder(const SceneRenderer* _renderer) :
     boxTexWidth = boxTexHeight = 0.2f * BZDB.eval(StateDatabase::BZDB_BOXHEIGHT);
     if (boxTexture>=0)
         boxTexWidth = tm.GetAspectRatio(boxTexture) * boxTexHeight;
-
-
-    // lower maximum tank lod if lowdetail is true
-    if (renderer->useQuality() == 0)
-        TankSceneNode::setMaxLOD(2);
 }
 
 
