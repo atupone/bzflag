@@ -91,7 +91,6 @@ private:
     // stuff for ground
     OpenGLGState    groundGState[4];
     OpenGLGState    invGroundGState[4];
-    GLuint      simpleGroundList[4];
     int         groundTextureID;
     const GLfloat*  groundTextureMatrix;
 
