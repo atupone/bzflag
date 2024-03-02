@@ -315,10 +315,6 @@ void            WallSceneNode::notifyStyleChange()
         builder.enableTextureMatrix(false);
         alpha = lighted ? lightedColor[3] : color[3];
     }
-    if (BZDB.isTrue("texturereplace"))
-        builder.setTextureEnvMode(GL_REPLACE);
-    else
-        builder.setTextureEnvMode(GL_MODULATE);
     builder.enableMaterial(lighted);
     if (wantBlending || (alpha != 1.0f))
     {

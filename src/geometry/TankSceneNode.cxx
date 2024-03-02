@@ -41,7 +41,6 @@ static const float vertExplosionRatio = 0.5f;
 // parts: body, turret, barrel, left tread, right tread
 
 const int TankSceneNode::numLOD = 3;
-int       TankSceneNode::maxLevel = numLOD;
 
 TankSceneNode::TankSceneNode(const glm::vec3 &pos, const glm::vec3 &forward) :
     leftTreadOffset(0.0f), rightTreadOffset(0.0f),
@@ -72,7 +71,6 @@ TankSceneNode::TankSceneNode(const glm::vec3 &pos, const glm::vec3 &forward) :
     rebuildExplosion();
 
     shadowRenderNode.setShadow();
-    shadowRenderNode.setTankLOD(LowTankLOD);
 
     jumpJetsRealLight.setAttenuation(0, 0.05f);
     jumpJetsRealLight.setAttenuation(1, 0.0f);
@@ -218,21 +216,8 @@ void TankSceneNode::notifyStyleChange()
 void TankSceneNode::addRenderNodes(SceneRenderer& renderer)
 {
     // pick level of detail
-    const float myRadius = getRadius2();
     const ViewFrustum& view = renderer.getViewFrustum();
     const auto &eye = view.getEye();
-    const float size = myRadius * (view.getAreaFactor() /getDistance(eye));
-
-    // set the level of detail
-    TankLOD mode = LowTankLOD;
-    if ((maxLevel == -1) || ((maxLevel > 2) && (size > 55.0f)))
-        mode = HighTankLOD;
-    else if ((maxLevel > 1) && (size > 25.0f))
-        mode = MedTankLOD;
-    else
-        mode = LowTankLOD;
-    tankRenderNode.setTankLOD(mode);
-    treadsRenderNode.setTankLOD(mode);
 
     // set the tank's scaling size
     tankRenderNode.setTankSize(tankSize);
@@ -285,11 +270,6 @@ void TankSceneNode::addRenderNodes(SceneRenderer& renderer)
 
 void TankSceneNode::addShadowNodes(SceneRenderer& renderer)
 {
-    // use HighTankLOD shadows in experimental mode
-    if (TankSceneNode::maxLevel == -1)
-        shadowRenderNode.setTankLOD (HighTankLOD);
-    else
-        shadowRenderNode.setTankLOD (LowTankLOD);
     renderer.addShadowNode(&shadowRenderNode);
 }
 
@@ -429,13 +409,6 @@ void TankSceneNode::setClipPlane(const glm::vec4 &_plane)
 void TankSceneNode::resetClipPlane()
 {
     clip = false;
-}
-
-
-void TankSceneNode::setMaxLOD(int _maxLevel)
-{
-    maxLevel = _maxLevel;
-    return;
 }
 
 
@@ -823,7 +796,6 @@ TankSceneNode::TankRenderNode::TankRenderNode(const TankSceneNode* _sceneNode) :
     left(false), above(false), towards(false)
 {
     narrowWithDepth = false;
-    drawLOD = LowTankLOD;
     drawSize = Normal;
     isRadar = false;
     isTreads = false;
@@ -876,13 +848,6 @@ void TankSceneNode::TankRenderNode::setNarrowWithDepth(bool narrow)
 }
 
 
-void TankSceneNode::TankRenderNode::setTankLOD(TankLOD lod)
-{
-    drawLOD = lod;
-    return;
-}
-
-
 void TankSceneNode::TankRenderNode::setTankSize(TankSize size)
 {
     drawSize = size;
@@ -929,7 +894,7 @@ void TankSceneNode::TankRenderNode::render()
 
     // disable the dynamic lights, if it might help
     const bool switchLights = BZDBCache::lighting &&
-                              !isShadow && (drawLOD == HighTankLOD);
+                              !isShadow;
     if (switchLights)
         RENDERER.disableLights(sceneNode->extents.mins, sceneNode->extents.maxs);
 
@@ -1198,14 +1163,14 @@ void TankSceneNode::TankRenderNode::renderPart(TankPart part)
     // get the list
     GLuint list;
     TankShadow shadow = isShadow ? ShadowOn : ShadowOff;
-    list = TankGeometryMgr::getPartList(shadow, part, drawSize, drawLOD);
+    list = TankGeometryMgr::getPartList(shadow, part, drawSize);
 
     // draw the part
     glCallList(list);
 
     // add to the triangle count
     addTriangleCount(TankGeometryMgr::getPartTriangleCount(
-                         shadow, part, drawSize, drawLOD));
+                         shadow, part, drawSize));
 
     // draw the lights on the turret
     if ((part == Turret) && !isExploding && !isShadow)
