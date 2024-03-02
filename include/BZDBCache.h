@@ -58,7 +58,6 @@ public:
     static Bool  lighting;
     static Bool  smooth;
     static Bool  colorful;
-    static Int   flagChunks;
     static Bool  animatedTreads;
     static Int   radarStyle;
     static Float radarTankPixels;
