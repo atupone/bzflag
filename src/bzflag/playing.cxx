@@ -2392,7 +2392,6 @@ static void     handleServerMessage(bool human, uint16_t code,
             }
 
             tank->setDeathEffect(NULL);
-            if (SceneRenderer::instance().useQuality() >= 2)
             {
                 if (((tank != myTank)
                         && ((ROAM.getMode() != Roaming::roamViewFP)
@@ -2918,7 +2917,6 @@ static void     handleServerMessage(bool human, uint16_t code,
             {
                 shooter->addShot(firingInfo);
 
-                if (SceneRenderer::instance().useQuality() >= 2)
                 {
                     const auto shotPos = shooter->getMuzzle();
 
