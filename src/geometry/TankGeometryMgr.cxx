@@ -39,11 +39,11 @@ using namespace TankGeometryUtils;
 // ---------------
 
 // the display lists
-static GLuint displayLists[LastTankShadow][LastTankLOD]
+static GLuint displayLists[LastTankShadow]
 [LastTankSize][LastTankPart];
 
 // triangle counts
-static int partTriangles[LastTankShadow][LastTankLOD]
+static int partTriangles[LastTankShadow]
 [LastTankSize][LastTankPart];
 
 // the scaling factors
@@ -63,29 +63,13 @@ static TankShadow shadowMode = ShadowOn;
 
 // arrays of functions to avoid large switch statements
 typedef int (*partFunction)(void);
-static const partFunction partFunctions[LastTankLOD][BasicTankParts] =
+static const partFunction partFunctions[BasicTankParts] =
 {
-    {
-        buildLowBody,
-        buildLowBarrel,
-        buildLowTurret,
-        buildLowLCasing,
-        buildLowRCasing
-    },
-    {
-        buildMedBody,
-        NULL,
-        buildMedTurret,
-        buildMedLCasing,
-        buildMedRCasing
-    },
-    {
-        buildHighBody,
-        buildHighBarrel,
-        buildHighTurret,
-        buildHighLCasing,
-        buildHighRCasing
-    }
+    buildHighBody,
+    buildHighBarrel,
+    buildHighTurret,
+    buildHighLCasing,
+    buildHighRCasing
 };
 
 
@@ -109,14 +93,13 @@ void TankGeometryMgr::init()
     // initialize the lists to invalid
     for (int shadow = 0; shadow < LastTankShadow; shadow++)
     {
-        for (int lod = 0; lod < LastTankLOD; lod++)
         {
             for (int size = 0; size < LastTankSize; size++)
             {
                 for (int part = 0; part < LastTankPart; part++)
                 {
-                    displayLists[shadow][lod][size][part] = INVALID_GL_LIST_ID;
-                    partTriangles[shadow][lod][size][part] = 0;
+                    displayLists[shadow][size][part] = INVALID_GL_LIST_ID;
+                    partTriangles[shadow][size][part] = 0;
                 }
             }
         }
@@ -159,13 +142,12 @@ void TankGeometryMgr::deleteLists()
     // delete the lists that have been aquired
     for (int shadow = 0; shadow < LastTankShadow; shadow++)
     {
-        for (int lod = 0; lod < LastTankLOD; lod++)
         {
             for (int size = 0; size < LastTankSize; size++)
             {
                 for (int part = 0; part < LastTankPart; part++)
                 {
-                    GLuint& list = displayLists[shadow][lod][size][part];
+                    GLuint& list = displayLists[shadow][size][part];
                     if (list != INVALID_GL_LIST_ID)
                     {
                         glDeleteLists(list, 1);
@@ -207,7 +189,6 @@ void TankGeometryMgr::buildLists()
 
     for (int shadow = 0; shadow < LastTankShadow; shadow++)
     {
-        for (int lod = 0; lod < LastTankLOD; lod++)
         {
             for (int size = 0; size < LastTankSize; size++)
             {
@@ -223,10 +204,8 @@ void TankGeometryMgr::buildLists()
                 for (int part = 0; part < lastPart; part++)
                 {
 
-                    if ((part == Barrel) && (lod == MedTankLOD))
-                        continue;
-                    GLuint& list = displayLists[shadow][lod][size][part];
-                    int& count = partTriangles[shadow][lod][size][part];
+                    GLuint& list = displayLists[shadow][size][part];
+                    int& count = partTriangles[shadow][size][part];
 
                     // get a new OpenGL display list
                     list = glGenLists(1);
@@ -238,7 +217,7 @@ void TankGeometryMgr::buildLists()
                     if ((part <= Turret) || (!animated))
                     {
                         // the basic parts
-                        count = partFunctions[lod][part]();
+                        count = partFunctions[part]();
                     }
                     else
                     {
@@ -279,25 +258,17 @@ void TankGeometryMgr::buildLists()
 
 GLuint TankGeometryMgr::getPartList(TankGeometryEnums::TankShadow shadow,
                                     TankGeometryEnums::TankPart part,
-                                    TankGeometryEnums::TankSize size,
-                                    TankGeometryEnums::TankLOD lod)
+                                    TankGeometryEnums::TankSize size)
 {
-    if ((part == Barrel) && (lod == MedTankLOD))
-        lod = LowTankLOD;
-
-    return displayLists[shadow][lod][size][part];
+    return displayLists[shadow][size][part];
 }
 
 
 int TankGeometryMgr::getPartTriangleCount(TankGeometryEnums::TankShadow sh,
         TankGeometryEnums::TankPart part,
-        TankGeometryEnums::TankSize size,
-        TankGeometryEnums::TankLOD lod)
+        TankGeometryEnums::TankSize size)
 {
-    if ((part == Barrel) && (lod == MedTankLOD))
-        lod = LowTankLOD;
-
-    return partTriangles[sh][lod][size][part];
+    return partTriangles[sh][size][part];
 }
 
 
