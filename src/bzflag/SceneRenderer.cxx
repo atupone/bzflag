@@ -227,24 +227,7 @@ void SceneRenderer::setQuality(int value)
         // GL_NICEST for polygon smoothing seems to make some drivers
         // cause massive slowdowns and "spikes" when drawing the radar
         glHint(GL_POLYGON_SMOOTH_HINT, GL_FASTEST);
-    }
 
-    if (useQualityValue >= 2)
-        TankSceneNode::setMaxLOD(-1);
-    else
-        TankSceneNode::setMaxLOD(3);
-
-    if (useQualityValue >= 2)
-        BZDB.set("flagChunks","32");
-    else
-        BZDB.set("flagChunks","12");
-
-    if (useQualityValue >= 2)
-        BZDB.set("moonSegments","64");
-    else
-        BZDB.set("moonSegments","24");
-
-    {
         // this can be modified by OpenGLMaterial
         glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
     }

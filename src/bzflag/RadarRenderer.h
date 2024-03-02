@@ -85,7 +85,6 @@ private:
     bool        smooth;
     bool        jammed;
     bool        useTankModels;
-    bool        useTankDimensions;
     int         triangleCount;
     static const float  colorFactor;
 };

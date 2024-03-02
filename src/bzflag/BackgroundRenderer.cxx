@@ -91,10 +91,6 @@ BackgroundRenderer::BackgroundRenderer() :
     cloudsList = INVALID_GL_LIST_ID;
     sunXFormList = INVALID_GL_LIST_ID;
     starXFormList = INVALID_GL_LIST_ID;
-    simpleGroundList[0] = INVALID_GL_LIST_ID;
-    simpleGroundList[1] = INVALID_GL_LIST_ID;
-    simpleGroundList[2] = INVALID_GL_LIST_ID;
-    simpleGroundList[3] = INVALID_GL_LIST_ID;
 
     // initialize global to class stuff
     if (!init)
@@ -488,7 +484,7 @@ void BackgroundRenderer::makeCelestialLists(const SceneRenderer& renderer)
     sun2[2] = sunDirection[2] * cosf(moonAltitude) - sun2[0] * sinf(moonAltitude);
     const float limbAngle = atan2f(sun2[2], sun2[1]);
 
-    const int moonSegements = BZDB.evalInt("moonSegments");
+    const int moonSegements = 64;
     moonList = glGenLists(1);
     glNewList(moonList, GL_COMPILE);
     {
@@ -600,7 +596,6 @@ void BackgroundRenderer::renderGroundEffects(SceneRenderer& renderer,
                 drawGroundReceivers(renderer);
         }
 
-        if (renderer.useQuality() > 1)
         {
             // light the mountains (so that they get dark when the sun goes down).
             // don't do zbuffer test since they occlude all drawn before them and
@@ -876,7 +871,7 @@ void BackgroundRenderer::drawSky(SceneRenderer& renderer, bool mirror)
 {
     glPushMatrix();
 
-    const bool doSkybox = haveSkybox && (renderer.useQuality() >= 2);
+    const bool doSkybox = haveSkybox;
 
     if (!doSkybox)
     {
@@ -1020,10 +1015,9 @@ void BackgroundRenderer::drawGround()
             groundGState[styleIndex].setState();
         }
 
-        if (RENDERER.useQuality() >= 2)
+        {
             drawGroundCentered();
-        else
-            glCallList(simpleGroundList[styleIndex]);
+        }
     }
 }
 
@@ -1510,14 +1504,9 @@ void BackgroundRenderer::doFreeDisplayLists()
     weather.freeContext();
     EFFECTS.freeContext();
 
-    // simpleGroundList[1] && simpleGroundList[3] are copies of [0] & [2]
-    simpleGroundList[1] = INVALID_GL_LIST_ID;
-    simpleGroundList[3] = INVALID_GL_LIST_ID;
-
     // delete the single lists
     GLuint* const lists[] =
     {
-        &simpleGroundList[0], &simpleGroundList[2],
         &cloudsList, &sunList, &sunXFormList,
         &moonList, &starList, &starXFormList
     };
@@ -1604,83 +1593,6 @@ void BackgroundRenderer::doInitDisplayLists()
     glm::vec3 groundPlane[4];
     for (i = 0; i < 4; i++)
         groundPlane[i] = glm::vec3(groundSize * squareShape[i], 0.0f);
-
-    {
-        GLfloat xmin, xmax;
-        GLfloat ymin, ymax;
-        GLfloat xdist, ydist;
-        GLfloat xtexmin, xtexmax;
-        GLfloat ytexmin, ytexmax;
-        GLfloat xtexdist, ytexdist;
-        glm::vec2 vec;
-
-#define GROUND_DIVS (4) //FIXME -- seems to be enough
-
-        xmax = groundPlane[0][0];
-        ymax = groundPlane[0][1];
-        xmin = groundPlane[2][0];
-        ymin = groundPlane[2][1];
-        xdist = (xmax - xmin) / (float)GROUND_DIVS;
-        ydist = (ymax - ymin) / (float)GROUND_DIVS;
-
-        renderer.getGroundUV (groundPlane[0], vec);
-        xtexmax = vec[0];
-        ytexmax = vec[1];
-        renderer.getGroundUV (groundPlane[2], vec);
-        xtexmin = vec[0];
-        ytexmin = vec[1];
-        xtexdist = (xtexmax - xtexmin) / (float)GROUND_DIVS;
-        ytexdist = (ytexmax - ytexmin) / (float)GROUND_DIVS;
-
-        simpleGroundList[2] = glGenLists(1);
-        glNewList(simpleGroundList[2], GL_COMPILE);
-        {
-            for (i = 0; i < GROUND_DIVS; i++)
-            {
-                GLfloat yoff, ytexoff;
-
-                yoff = ymin + ydist * (GLfloat)i;
-                ytexoff = ytexmin + ytexdist * (GLfloat)i;
-
-                glBegin(GL_TRIANGLE_STRIP);
-
-                glTexCoord2f(xtexmin, ytexoff + ytexdist);
-                glVertex2f(xmin, yoff + ydist);
-                glTexCoord2f(xtexmin, ytexoff);
-                glVertex2f(xmin, yoff);
-
-                for (j = 0; j < GROUND_DIVS; j++)
-                {
-                    GLfloat xoff, xtexoff;
-
-                    xoff = xmin + xdist * (GLfloat)(j + 1);
-                    xtexoff = xtexmin + xtexdist * (GLfloat)(j + 1);
-
-                    glTexCoord2f(xtexoff, ytexoff + ytexdist);
-                    glVertex2f(xoff, yoff + ydist);
-                    glTexCoord2f(xtexoff, ytexoff);
-                    glVertex2f(xoff, yoff);
-                }
-                glEnd();
-            }
-        }
-        glEndList();
-    }
-
-    simpleGroundList[0] = glGenLists(1);
-    glNewList(simpleGroundList[0], GL_COMPILE);
-    {
-        glBegin(GL_TRIANGLE_STRIP);
-        glVertex(groundPlane[0]);
-        glVertex(groundPlane[1]);
-        glVertex(groundPlane[3]);
-        glVertex(groundPlane[2]);
-        glEnd();
-    }
-    glEndList();
-
-    simpleGroundList[1] = simpleGroundList[0];
-    simpleGroundList[3] = simpleGroundList[2];
 
     //
     // clouds

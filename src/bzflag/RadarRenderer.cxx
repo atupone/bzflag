@@ -54,7 +54,6 @@ RadarRenderer::RadarRenderer(const SceneRenderer&, World* _world)
       smooth(false),
       jammed(false),
       useTankModels(false),
-      useTankDimensions(false),
       triangleCount()
 {
 
@@ -175,34 +174,20 @@ void RadarRenderer::drawTank(const glm::vec3 &pos, const Player* player, bool us
     const float myAngle = LocalPlayer::getMyTank()->getAngle();
 
     // draw the tank
-    if (useSquares || !useTankDimensions)
-    {
-        setTankColor(player);
-        // align to the screen axes
-        glRotatef(float(myAngle * 180.0 / M_PI), 0.0f, 0.0f, 1.0f);
-        glRectf(-size, -size, +size, +size);
-    }
-    else
+    if (!useSquares)
     {
         const float tankAngle = player->getAngle();
         glPushMatrix();
         glRotatef(float(tankAngle * 180.0 / M_PI), 0.0f, 0.0f, 1.0f);
-        if (useTankModels)
-        {
-            drawFancyTank(player);
-            setTankColor(player);
-        }
-        else
-        {
-            setTankColor(player);
-            const float* dims = player->getDimensions();
-            glRectf(-dims[0], -dims[1], +dims[0], +dims[1]);
-        }
+        drawFancyTank(player);
         glPopMatrix();
-
-        // align to the screen axes
-        glRotatef(float(myAngle * 180.0 / M_PI), 0.0f, 0.0f, 1.0f);
     }
+    setTankColor(player);
+
+    // align to the screen axes
+    glRotatef(float(myAngle * 180.0 / M_PI), 0.0f, 0.0f, 1.0f);
+    if (useSquares)
+        glRectf(-size, -size, +size, +size);
 
     // adjust with height box size
     const float boxHeight = BZDB.eval(StateDatabase::BZDB_BOXHEIGHT);
@@ -513,10 +498,6 @@ void RadarRenderer::render(SceneRenderer& renderer, bool blank, bool observer)
         const float testMin = 8.0f * ps;
         // maintain the aspect ratio if it isn't square
         if ((tankWidth > testMin) &&  (tankLength > testMin))
-            useTankDimensions = true;
-        else
-            useTankDimensions = false;
-        if (useTankDimensions && (renderer.useQuality() >= 2))
             useTankModels = true;
         else
             useTankModels = false;
@@ -621,7 +602,7 @@ void RadarRenderer::render(SceneRenderer& renderer, bool blank, bool observer)
             if (!observer)
                 drawTank(position, player, true);
             else
-                drawTank(position, player, false);
+                drawTank(position, player, !useTankModels);
 
             glPopMatrix();
         }
@@ -727,7 +708,7 @@ void RadarRenderer::render(SceneRenderer& renderer, bool blank, bool observer)
             glPushMatrix();
 
             // my tank
-            drawTank(myPos, myTank, false);
+            drawTank(myPos, myTank, !useTankModels);
 
             glPopMatrix();
 

@@ -37,13 +37,10 @@ ShockWaveStrategy::ShockWaveStrategy(ShotPath *_path) :
 
     // make scene node
     const auto &pos = _path->getPosition();
-    if (RENDERER.useQuality() >= 2)
     {
         shockNode = new SphereLodSceneNode(pos, radius);
         shockNode->setShockWave(true);
     }
-    else
-        shockNode = new SphereBspSceneNode(pos, radius);
 
     // get team
     if (_path->getPlayer() == ServerPlayer)
@@ -59,10 +56,9 @@ ShockWaveStrategy::ShockWaveStrategy(ShotPath *_path) :
     }
 
     const auto &c = Team::getShotColor(team);
-    if (RENDERER.useQuality() >= 2)
+    {
         shockNode->setColor(c[0], c[1], c[2], 0.5f);
-    else
-        shockNode->setColor(c[0], c[1], c[2], 0.75f);
+    }
 }
 
 
@@ -92,15 +88,8 @@ void ShockWaveStrategy::update(float dt)
 
     const auto &c = Team::getShotColor(currentTeam);
 
-    // fade old-style shockwaves
-    if (RENDERER.useQuality() >= 2)
-        shockNode->setColor(c[0], c[1], c[2], 0.5f);
-    else
     {
-        const float shockIn = BZDB.eval(StateDatabase::BZDB_SHOCKINRADIUS);
-        const float shockOut = BZDB.eval(StateDatabase::BZDB_SHOCKOUTRADIUS);
-        const GLfloat frac = (radius - shockIn) / (shockOut - shockIn);
-        shockNode->setColor(c[0], c[1], c[2], 0.75f - (0.5f * frac));
+        shockNode->setColor(c[0], c[1], c[2], 0.5f);
     }
 
     // expire when full size
