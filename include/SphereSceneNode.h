@@ -100,59 +100,6 @@ private:
 };
 
 
-/******************************************************************************/
-
-const int       SphereRes = 8;
-const int       SphereLowRes = 6;
-
-class SphereBspSceneNode;
-
-class SphereBspSceneNode : public SphereSceneNode
-{
-public:
-    SphereBspSceneNode(const glm::vec3 &pos, GLfloat radius);
-    ~SphereBspSceneNode();
-
-    void        addRenderNodes(SceneRenderer&);
-    void        addShadowNodes(SceneRenderer&);
-
-protected:
-    GLfloat     getRadius() const
-    {
-        return radius;
-    }
-
-private:
-    void        freeParts();
-
-protected:
-    class SphereBspRenderNode : public RenderNode
-    {
-        friend class SphereBspSceneNode;
-    public:
-        SphereBspRenderNode(const SphereBspSceneNode*);
-        ~SphereBspRenderNode();
-        void        setHighResolution(bool);
-        void        setBaseIndex(int index);
-        void        render() override;
-        const glm::vec3 &getPosition() const override;
-    private:
-        const SphereBspSceneNode* sceneNode;
-        bool        highResolution;
-        int     baseIndex;
-        static glm::vec3 geom[2 * SphereRes * (SphereRes + 1)];
-        static glm::vec3 lgeom[SphereLowRes * (SphereLowRes + 1)];
-    };
-    friend class SphereBspRenderNode;
-
-private:
-    SphereBspRenderNode renderNode;
-};
-
-
-/******************************************************************************/
-
-
 #endif // BZF_SPHERE_SCENE_NODE_H
 
 // Local Variables: ***
