@@ -33,7 +33,6 @@ BZDBCache::Float BZDBCache::linedRadarShots;
 BZDBCache::Float BZDBCache::sizedRadarShots;
 BZDBCache::Int   BZDBCache::radarPosition;
 BZDBCache::Float BZDBCache::shotLength;
-BZDBCache::Int   BZDBCache::flagChunks;
 BZDBCache::Float BZDBCache::pulseRate;
 BZDBCache::Float BZDBCache::pulseDepth;
 BZDBCache::Int   BZDBCache::controlPanelTimestamp;
@@ -110,7 +109,6 @@ void BZDBCache::init()
     BZDB.addCallback("shotLength", clientCallback, NULL);
     BZDB.addCallback("leadingShotLine", clientCallback, NULL);
     BZDB.addCallback("radarPosition", clientCallback, NULL);
-    BZDB.addCallback("flagChunks", clientCallback, NULL);
     BZDB.addCallback("pulseRate", clientCallback, NULL);
     BZDB.addCallback("pulseDepth", clientCallback, NULL);
     BZDB.addCallback("controlPanelTimestamp", clientCallback, NULL);
@@ -197,8 +195,6 @@ void BZDBCache::clientCallback(const std::string& name, void *)
         leadingShotLine = BZDB.evalInt("leadingShotLine");
     else if (name == "radarPosition")
         radarPosition = BZDB.evalInt("radarPosition");
-    else if (name == "flagChunks")
-        flagChunks = BZDB.evalInt("flagChunks");
     else if (name == "pulseRate")
         pulseRate = BZDB.eval("pulseRate");
     else if (name == "pulseDepth")

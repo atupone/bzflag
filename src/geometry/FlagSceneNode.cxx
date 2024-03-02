@@ -34,7 +34,6 @@ namespace
 {
 constexpr int maxChunks = 20;
 constexpr int waveLists = 8;      // GL list count
-int      flagChunks = 8;     // draw flag as 8 quads
 bool     realFlag = false;   // don't use billboarding
 bool     flagLists = false;  // use display lists
 int      triCount = 0;       // number of rendered triangles
@@ -87,7 +86,7 @@ inline void WaveGeometry::executeNoList() const
     glDisableClientState(GL_NORMAL_ARRAY);
     glVertexPointer(verts);
     glTexCoordPointer(txcds);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, (flagChunks + 1) * 2);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, maxChunks * 2);
     glEnableClientState(GL_NORMAL_ARRAY);
     return;
 }
@@ -133,9 +132,9 @@ void WaveGeometry::waveFlag(float dt)
     float wave0[maxChunks];
     float wave1[maxChunks];
     float wave2[maxChunks];
-    for (auto i = 0; i <= flagChunks; i++)
+    for (auto i = 0; i < maxChunks; i++)
     {
-        const float x      = float(i) / float(flagChunks);
+        const float x      = float(i) / float(maxChunks - 1);
         const float damp   = 0.1f * x;
         const float angle1 = (float)(ripple1 - 4.0 * M_PI * x);
         const float angle2 = (float)(angle1 - 0.28 * M_PI);
@@ -145,9 +144,9 @@ void WaveGeometry::waveFlag(float dt)
         wave2[i] = wave0[i] + damp * sinRipple2;
     }
     float base = BZDBCache::flagPoleSize;
-    for (auto i = 0; i <= flagChunks; i++)
+    for (auto i = 0; i < maxChunks; i++)
     {
-        const float x      = float(i) / float(flagChunks);
+        const float x      = float(i) / float(maxChunks - 1);
         const float shift1 = wave0[i];
         verts[i*2][0] = verts[i*2+1][0] = Width * x;
         if (realFlag)
@@ -182,7 +181,7 @@ void WaveGeometry::waveFlag(float dt)
     else
         glList = INVALID_GL_LIST_ID;
 
-    triCount = flagChunks * 2;
+    triCount = maxChunks * 2 - 2;
 
     return;
 }
@@ -346,10 +345,6 @@ void            FlagSceneNode::notifyStyleChange()
     else
         builder.disableCulling();
     gstate = builder.getState();
-
-    flagChunks = BZDBCache::flagChunks;
-    if (flagChunks >= maxChunks)
-        flagChunks = maxChunks - 1;
 }
 
 

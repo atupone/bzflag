@@ -514,7 +514,7 @@ void RadarRenderer::render(SceneRenderer& renderer, bool blank, bool observer)
             useTankDimensions = true;
         else
             useTankDimensions = false;
-        if (useTankDimensions && (renderer.useQuality() >= 2))
+        if (useTankDimensions)
             useTankModels = true;
         else
             useTankModels = false;
