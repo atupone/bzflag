@@ -1345,6 +1345,10 @@ void BackgroundRenderer::drawGroundReceivers(SceneRenderer& renderer)
         auto color = lightColor;
         color[3] = I;
 
+        glm::vec2 vertexList[receiverSlices + 1];
+        for (j = 0; j <= receiverSlices; j++)
+            vertexList[j] = angle[j] * receiverRingSize;
+
         // draw ground receiver, computing lighting at each vertex ourselves
         glBegin(GL_TRIANGLE_FAN);
         {
@@ -1358,46 +1362,44 @@ void BackgroundRenderer::drawGroundReceivers(SceneRenderer& renderer)
             color[3] = I;
             glColor(color);
             for (j = 0; j <= receiverSlices; j++)
-                glVertex(receiverRingSize * angle[j]);
+                glVertex(vertexList[j]);
         }
         glEnd();
         triangleCount += receiverSlices;
 
-        for (i = 1; i < receiverRings; i++)
+        GLfloat outerSize = receiverRingSize;
+
+        glBegin(GL_TRIANGLE_STRIP);
         {
-            const GLfloat innerSize = receiverRingSize * GLfloat(i * i);
-            const GLfloat outerSize = receiverRingSize * GLfloat((i + 1) * (i + 1));
-
-            // compute inner and outer lit colors
-            d = hypotf(innerSize, pos[2]);
-            I = B / (atten[0] + d * (atten[1] + d * atten[2]));
-            I *= pos[2] / d;
-            float innerAlpha = I;
-
-            if (i + 1 == receiverRings)
-                I = 0.0f;
-            else
+            for (i = 2; i <= receiverRings; i++)
             {
-                d = hypotf(outerSize, pos[2]);
-                I = B / (atten[0] + d * (atten[1] + d * atten[2]));
-                I *= pos[2] / d;
-            }
-            float outerAlpha = I;
+                outerSize = receiverRingSize * GLfloat(i * i);
 
-            glBegin(GL_TRIANGLE_STRIP);
-            {
+                // compute inner and outer lit colors
+                float innerAlpha = I;
+
+                if (i == receiverRings)
+                    I = 0.0f;
+                else
+                {
+                    d = hypotf(outerSize, pos[2]);
+                    I = B / (atten[0] + d * (atten[1] + d * atten[2]));
+                    I *= pos[2] / d;
+                }
+
                 for (j = 0; j <= receiverSlices; j++)
                 {
                     color[3] = innerAlpha;
                     glColor(color);
-                    glVertex(angle[j] * innerSize);
-                    color[3] = outerAlpha;
+                    glVertex(vertexList[j]);
+                    vertexList[j] = angle[j] * outerSize;
+                    color[3] = I;
                     glColor(color);
-                    glVertex(angle[j] * outerSize);
+                    glVertex(vertexList[j]);
                 }
             }
-            glEnd();
         }
+        glEnd();
         triangleCount += (receiverSlices * receiverRings * 2);
 
         glTranslatef(-pos[0], -pos[1], 0.0f);
@@ -1501,10 +1503,13 @@ void BackgroundRenderer::drawAdvancedGroundReceivers(SceneRenderer& renderer)
         // move to the light's position
         glTranslatef(pos[0], pos[1], 0.0f);
 
-        float innerSize;
         glm::vec3 innerColor;
         float outerSize;
         glm::vec3 outerColor;
+
+        glm::vec2 vertexList[receiverSlices + 1];
+        for (j = 0; j <= receiverSlices; j++)
+            vertexList[j] = angle[j] * receiverRingSize;
 
         // draw ground receiver, computing lighting at each vertex ourselves
         glBegin(GL_TRIANGLE_FAN);
@@ -1522,42 +1527,42 @@ void BackgroundRenderer::drawAdvancedGroundReceivers(SceneRenderer& renderer)
             glColor(outerColor);
             outerSize = receiverRingSize;
             for (j = 0; j <= receiverSlices; j++)
-                glVertex(outerSize * angle[j]);
+                glVertex(vertexList[j]);
         }
         glEnd();
         triangleCount += receiverSlices;
 
         bool moreRings = true;
-        for (i = 2; moreRings; i++)
+        glBegin(GL_TRIANGLE_STRIP);
         {
-            // inner ring
-            innerSize = outerSize;
-            innerColor = outerColor;
-
-            // outer ring
-            outerSize = receiverRingSize * GLfloat(i * i);
-            d = hypotf(outerSize, pos[2]);
-            I = 1.0f / (atten[0] + d * (atten[1] + d * atten[2]));
-            I *= pos[2] / d; // diffuse angle factor
-            if ((I * maxVal) < minLuminance)
+            for (i = 2; moreRings; i++)
             {
-                I = 0.0f;
-                moreRings = false; // bail after this ring
-            }
-            outerColor = I * baseColor;
+                // inner ring
+                innerColor = outerColor;
 
-            glBegin(GL_TRIANGLE_STRIP);
-            {
+                // outer ring
+                outerSize = receiverRingSize * GLfloat(i * i);
+                d = hypotf(outerSize, pos[2]);
+                I = 1.0f / (atten[0] + d * (atten[1] + d * atten[2]));
+                I *= pos[2] / d; // diffuse angle factor
+                if ((I * maxVal) < minLuminance)
+                {
+                    I = 0.0f;
+                    moreRings = false; // bail after this ring
+                }
+                outerColor = I * baseColor;
+
                 for (j = 0; j <= receiverSlices; j++)
                 {
                     glColor(innerColor);
-                    glVertex(angle[j] * innerSize);
+                    glVertex(vertexList[j]);
+                    vertexList[j] = angle[j] * outerSize;
                     glColor(outerColor);
-                    glVertex(angle[j] * outerSize);
+                    glVertex(vertexList[j]);
                 }
             }
-            glEnd();
         }
+        glEnd();
         triangleCount += (receiverSlices * 2 * (i - 2));
 
         glTranslatef(-pos[0], -pos[1], 0.0f);
