@@ -25,6 +25,7 @@
 #include "VBO_Drawing.h"
 #include "VBO_Quadric.h"
 #include "Singleton.h"
+#include "OpenGLAPI.h"
 
 // local implementation headers
 #include "ViewFrustum.h"
@@ -470,7 +471,8 @@ void BoltSceneNode::BoltRenderNode::renderGeoGMBolt()
     addTriangleCount(slices * 2);
 
     // body
-    myColor4f(bodyColor.r, bodyColor.g, bodyColor.b, bodyColor.a);
+    if (!colorOverride)
+        glColor4f(bodyColor.r, bodyColor.g, bodyColor.b, bodyColor.a);
     glTranslatef(0, 0, -bodyLen);
     boltBody1.draw(GL_TRIANGLE_STRIP);
     addTriangleCount(slices);
@@ -480,13 +482,15 @@ void BoltSceneNode::BoltRenderNode::renderGeoGMBolt()
     addTriangleCount(slices);
 
     // waist
-    myColor4f(coneColor.r, coneColor.g, coneColor.b, coneColor.a);
+    if (!colorOverride)
+        glColor4f(coneColor.r, coneColor.g, coneColor.b, coneColor.a);
     glTranslatef(0, 0, -waistLen);
     boltWaist.draw(GL_TRIANGLE_STRIP);
     addTriangleCount(slices);
 
     // booster
-    myColor4f(bodyColor.r, bodyColor.g, bodyColor.b, 1.0f);
+    if (!colorOverride)
+        glColor4f(bodyColor.r, bodyColor.g, bodyColor.b, 1.0f);
     glTranslatef(0, 0, -bevelLen);
     boltBooster1.draw(GL_TRIANGLE_STRIP);
     addTriangleCount(slices);
@@ -500,13 +504,15 @@ void BoltSceneNode::BoltRenderNode::renderGeoGMBolt()
     addTriangleCount(slices);
 
     // engine
-    myColor4f(coneColor.r, coneColor.g, coneColor.b, 1.0f);
+    if (!colorOverride)
+        glColor4f(coneColor.r, coneColor.g, coneColor.b, 1.0f);
     glTranslatef(0, 0, -engineLen);
     boltEngine.draw(GL_TRIANGLE_STRIP);
     addTriangleCount(slices);
 
     // fins
-    myColor4f(finColor.r, finColor.g, finColor.b, 1.0f);
+    if (!colorOverride)
+        glColor4f(finColor.r, finColor.g, finColor.b, 1.0f);
     glTranslatef(0, 0, engineLen + bevelLen);
 
     for ( int i = 0; i < 4; i++)
@@ -549,28 +555,32 @@ void BoltSceneNode::BoltRenderNode::renderGeoBolt()
 
     auto coreColor = glm::max(c * coreBleed, minimumChannelVal);
 
-    myColor4f(coreColor.r, coreColor.g, coreColor.b, 0.85f * alphaMod);
+    if (!colorOverride)
+        glColor4f(coreColor.r, coreColor.g, coreColor.b, 0.85f * alphaMod);
     renderGeoPill(baseRadius, len, geoPills[0]);
 
     float radInc = 1.5f * baseRadius - baseRadius;
     glPushMatrix();
     glTranslatef(0, 0, -radInc * 0.5f);
 
-    myColor4f(c.r, c.g, c.b, 0.5f);
+    if (!colorOverride)
+        glColor4f(c.r, c.g, c.b, 0.5f);
     renderGeoPill(1.5f * baseRadius, len + radInc, geoPills[1]);
     glPopMatrix();
 
     radInc = 2.7f * baseRadius - baseRadius;
     glPushMatrix();
     glTranslatef(0, 0, -radInc*0.5f);
-    myColor4f(c.r, c.g, c.b, 0.25f);
+    if (!colorOverride)
+        glColor4f(c.r, c.g, c.b, 0.25f);
     renderGeoPill(2.7f * baseRadius, len + radInc, geoPills[2]);
     glPopMatrix();
 
     radInc = 3.8f * baseRadius - baseRadius;
     glPushMatrix();
     glTranslatef(0, 0,-radInc*0.5f);
-    myColor4f(c.r, c.g, c.b, 0.125f);
+    if (!colorOverride)
+        glColor4f(c.r, c.g, c.b, 0.125f);
     renderGeoPill(3.8f * baseRadius, len + radInc, geoPills[3]);
     glPopMatrix();
 
@@ -702,7 +712,8 @@ void            BoltSceneNode::BoltRenderNode::render()
             }
 
             if (sceneNode->texturing) glDisable(GL_TEXTURE_2D);
-            myColor4fv(flareColor);
+            if (!colorOverride)
+                glColor4f(flareColor.r, flareColor.g, flareColor.b, flareColor.a);
             for (int i = 0; i < numFlares; i++)
             {
                 // pick random direction in 3-space.  picking a random theta with
@@ -724,7 +735,8 @@ void            BoltSceneNode::BoltRenderNode::render()
         if (sceneNode->texturing)
         {
             // draw billboard square
-            myColor4fv(textureColor); // 1.0f all
+            if (!colorOverride)
+                glColor4f(textureColor.r, textureColor.g, textureColor.b, textureColor.a);
             glMatrixMode(GL_TEXTURE);
             glPushMatrix();
             glLoadIdentity();

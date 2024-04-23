@@ -22,6 +22,7 @@
 #include "TextureManager.h"
 #include "OpenGLAPI.h"
 #include "VBO_Drawing.h"
+#include "OpenGLAPI.h"
 
 // local implementation headers
 #include "ViewFrustum.h"
@@ -365,7 +366,11 @@ void            BillboardSceneNode::BillboardRenderNode::render()
         glScalef(du, dv, 0.0f);
 
         // draw billboard
-        myColor4fv(sceneNode->color);
+        if (!colorOverride)
+        {
+            auto color = sceneNode->color;
+            glColor4f(color.r, color.g, color.b, color.a);
+        }
         DRAWER.simmetricTexturedRect();
 
         glPopMatrix();

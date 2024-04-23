@@ -23,6 +23,7 @@
 #include "Frustum.h"
 #include "Intersect.h"
 #include "StateDatabase.h"
+#include "OpenGLAPI.h"
 
 
 //////////////////////////////////////////////////////////////////////////////
@@ -384,7 +385,7 @@ bool Occluder::makePlanes(const Frustum* frustum)
 void Occluder::draw() const
 {
     int v;
-    GLfloat colors[5][4] =
+    glm::vec4 colors[5] =
     {
         {1.0f, 0.0f, 1.0f, 1.0f}, // purple  (occluder's normal)
         {1.0f, 0.0f, 0.0f, 1.0f}, // red
@@ -414,9 +415,9 @@ void Occluder::draw() const
 
         // draw the plane normal
         glBegin (GL_LINES);
-        glColor4fv (colors[0]);
-        glVertex3f (center.x, center.y, center.z);
-        glVertex3f (outwards.x, outwards.y, outwards.z);
+        glColor(colors[0]);
+        glVertex(center);
+        glVertex(outwards);
         glEnd ();
     }
 
@@ -430,8 +431,9 @@ void Occluder::draw() const
             for (int a = 0; a < 3; a++)
                 midpoint[a] = 0.5f * (vertices[v][a] + vertices[vn][a]);
             auto outwards = midpoint - length * glm::vec3(planes[vn + 1]);
+            int index = (v % 4) + 1;
             glBegin (GL_LINES);
-            glColor4fv (colors[(v % 4) + 1]);
+            glColor(colors[index]);
             if (DrawEdges)
             {
                 glVertex3fv (vertices[v]);
@@ -451,8 +453,9 @@ void Occluder::draw() const
     {
         for (v = 0; v < vertexCount; v++)
         {
+            int index = (v % 4) + 1;
             glBegin (GL_POINTS);
-            glColor4fv (colors[(v % 4) + 1]);
+            glColor4f(colors[index][0], colors[index][1], colors[index][2], colors[index][3]);
             glVertex3fv (vertices[v]);
             glEnd();
         }

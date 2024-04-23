@@ -25,6 +25,7 @@
 #include "StateDatabase.h"
 #include "BZDBCache.h"
 #include "mathRoutine.h"
+#include "OpenGLAPI.h"
 
 // local implementation headers
 #include "ViewFrustum.h"
@@ -354,28 +355,33 @@ void            WallSceneNode::copyStyle(WallSceneNode* node)
 
 void            WallSceneNode::setColor()
 {
+    if (colorOverride)
+        return;
+
+    glm::vec4 c(0.0f);
     if (BZDBCache::texture && useColorTexture)
-        myColor4f(1,1,1,1);
+        c = glm::vec4(1.0f);
     else if (dynamicColor != NULL)
-        myColor4fv(*dynamicColor);
+        c = *dynamicColor;
     else
     {
         switch (style)
         {
         case 0:
-            myColor4fv(color);
+            c = color;
             break;
         case 1:
-            myColor4fv(lightedColor);
+            c = lightedColor;
             break;
         case 2:
-            myColor4fv(modulateColor);
+            c = modulateColor;
             break;
         case 3:
-            myColor4fv(lightedModulateColor);
+            c = lightedModulateColor;
             break;
         }
     }
+    glColor4f(c.r, c.g, c.b, c.a);
 }
 
 bool WallSceneNode::inAxisBox (const Extents& UNUSED(exts)) const

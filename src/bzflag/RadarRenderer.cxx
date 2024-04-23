@@ -223,55 +223,50 @@ void RadarRenderer::setTankColor(const Player* player)
     const LocalPlayer *myTank = LocalPlayer::getMyTank();
 
     //my tank
-    if (player->getId() == myTank->getId() )
-    {
-        glColor3f(1.0f, 1.0f, 1.0f);
-        return;
-    }
+    glm::vec3 color(1.0f);
 
-    //remote player
-    if (player->isPaused() || player->isNotResponding())
+    if (player->getId() != myTank->getId() )
     {
-        const float dimfactor = 0.4f;
-
-        glm::vec3 color;
-        if (myTank->getFlag() == Flags::Colorblindness)
-            color = Team::getRadarColor(RogueTeam);
-        else
-            color = Team::getRadarColor(player->getTeam());
-
-        const auto dimmedcolor = color * dimfactor;
-        glColor(dimmedcolor);
-    }
-    else
-    {
-        glColor(Team::getRadarColor(myTank->getFlag() ==
-                                    Flags::Colorblindness ? RogueTeam : player->getTeam()));
-    }
-    // If this tank is hunted flash it on the radar
-    if (player->isHunted() && myTank->getFlag() != Flags::Colorblindness)
-    {
-        if (flashTank.isOn())
+        //remote player
+        auto team = myTank->getFlag() == Flags::Colorblindness
+                    ? RogueTeam
+                    : player->getTeam();
+        color = Team::getRadarColor(team);
+        if (player->isPaused() || player->isNotResponding())
         {
-            if (!toggleTank)
+            const float dimfactor = 0.4f;
+            color *= dimfactor;
+        }
+
+        // If this tank is hunted flash it on the radar
+        if (player->isHunted() && myTank->getFlag() != Flags::Colorblindness)
+        {
+            if (flashTank.isOn())
             {
-                float flashcolor[3];
-                flashcolor[0] = 0.0f;
-                flashcolor[1] = 0.8f;
-                flashcolor[2] = 0.9f;
-                glColor3fv(flashcolor);
+                if (!toggleTank)
+                    color = glm::vec3(0.0f, 0.8f, 0.9f);
+            }
+            else
+            {
+                toggleTank = !toggleTank;
+                flashTank.setClock(0.2f);
             }
         }
-        else
-        {
-            toggleTank = !toggleTank;
-            flashTank.setClock(0.2f);
-        }
     }
+    glColor4f(color.r, color.g, color.b, 1.0f);
 }
 
 void RadarRenderer::drawTank(const glm::vec3 &pos, const Player* player, bool useSquares)
 {
+    FlagType *flag = player->getFlag();
+
+    if (flag != Flags::Null)
+    {
+        auto c = flag->getRadarColor();
+        glColor4f(c.r, c.g, c.b, 1.0f);
+        drawFlagOnTank();
+    }
+
     // 'ps' is pixel scale, setup in render()
     const float tankRadius = BZDBCache::tankRadius;
     float minSize = 1.5f + (ps * BZDBCache::radarTankPixels);
@@ -537,7 +532,7 @@ void RadarRenderer::render(SceneRenderer& renderer, bool blank, bool observer)
         TextureManager &tm = TextureManager::instance();
         int noiseTexture = tm.getTextureID( "noise" );
 
-        glColor3f(1.0f, 1.0f, 1.0f);
+        glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
         glScalef(radarRange, radarRange, 0.0f);
 
         if (noiseTexture >= 0)
@@ -620,7 +615,7 @@ void RadarRenderer::render(SceneRenderer& renderer, bool blank, bool observer)
         // view frustum edges
         if (!BZDB.isTrue("hideRadarViewLines"))
         {
-            glColor3f(1.0f, 0.625f, 0.125f);
+            glColor4f(1.0f, 0.625f, 0.125f, 1.0f);
             const float fovx = renderer.getViewFrustum().getFOVx();
             const float viewWidth = radarRange * tanf(0.5f * fovx);
             glPushMatrix();
@@ -664,7 +659,7 @@ void RadarRenderer::render(SceneRenderer& renderer, bool blank, bool observer)
             if (shot)
             {
                 const float cs = colorScale(shot->getPosition()[2], muzzleHeight);
-                glColor3f(1.0f * cs, 1.0f * cs, 1.0f * cs);
+                glColor4f(1.0f * cs, 1.0f * cs, 1.0f * cs, 1.0f);
                 shot->radarRender();
             }
         }
@@ -678,7 +673,7 @@ void RadarRenderer::render(SceneRenderer& renderer, bool blank, bool observer)
             if (shot)
             {
                 const float cs = colorScale(shot->getPosition()[2], muzzleHeight);
-                glColor3f(1.0f * cs, 1.0f * cs, 1.0f * cs);
+                glColor4f(1.0f * cs, 1.0f * cs, 1.0f * cs, 1.0f);
                 shot->radarRender();
             }
         }
@@ -707,12 +702,6 @@ void RadarRenderer::render(SceneRenderer& renderer, bool blank, bool observer)
 
             // transform to the tanks location
             glTranslatef(position[0], position[1], 0.0f);
-
-            if (player->getFlag() != Flags::Null)
-            {
-                glColor(player->getFlag()->getRadarColor());
-                drawFlagOnTank();
-            }
 
             if (!observer)
                 drawTank(position, player, true);
@@ -743,10 +732,10 @@ void RadarRenderer::render(SceneRenderer& renderer, bool blank, bool observer)
                             shotcolor = Team::getRadarColor(RogueTeam);
                         else
                             shotcolor = Team::getRadarColor(player->getTeam());
-                        glColor(shotcolor * cs);
+                        glColor4f(shotcolor[0] * cs, shotcolor[1] * cs, shotcolor[2] * cs, 1.0f);
                     }
                     else
-                        glColor3f(cs, cs, cs);
+                        glColor4f(cs, cs, cs, 1.0f);
                     shot->radarRender();
                 }
             }
@@ -781,7 +770,7 @@ void RadarRenderer::render(SceneRenderer& renderer, bool blank, bool observer)
             // Flags change color by height
             const float cs = colorScale(flag.position[2], muzzleHeight);
             const auto &flagcolor = flag.type->getRadarColor();
-            glColor(flagcolor * cs);
+            glColor4f(flagcolor[0] * cs, flagcolor[1] * cs, flagcolor[2] * cs, 1.0f);
             drawFlag(flag.position);
         }
         // draw antidote flag
@@ -789,7 +778,7 @@ void RadarRenderer::render(SceneRenderer& renderer, bool blank, bool observer)
             LocalPlayer::getMyTank()->getAntidoteLocation();
         if (antidotePos)
         {
-            glColor3f(1.0f, 1.0f, 0.0f);
+            glColor4f(1.0f, 1.0f, 0.0f, 1.0f);
             drawFlag(*antidotePos);
         }
 
@@ -798,7 +787,7 @@ void RadarRenderer::render(SceneRenderer& renderer, bool blank, bool observer)
 
         // north marker
         GLfloat ns = 0.05f * radarRange, ny = 0.9f * radarRange;
-        glColor3f(1.0f, 1.0f, 1.0f);
+        glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
         glTranslatef(0.0f, ny, 0.0f);
         glScalef(ns, ns, 0.0f);
         DRAWER.north();
@@ -819,13 +808,6 @@ void RadarRenderer::render(SceneRenderer& renderer, bool blank, bool observer)
             glRotatef((float)(90.0 - myAngle * 180.0 / M_PI), 0.0f, 0.0f, 1.0f);
 
             glPushMatrix();
-
-            // my flag
-            if (myTank->getFlag() != Flags::Null)
-            {
-                glColor(myTank->getFlag()->getRadarColor());
-                drawFlagOnTank();
-            }
 
             // my tank
             drawTank(myPos, myTank, false);
@@ -943,7 +925,7 @@ void RadarRenderer::renderWalls()
 {
     const ObstacleList& walls = OBSTACLEMGR.getWalls();
     int count = walls.size();
-    glColor3f(0.25f, 0.5f, 0.5f);
+    glColor4f(0.25f, 0.5f, 0.5f, 1.0f);
     for (int i = 0; i < count; i++)
     {
         const WallObstacle& wall = *((const WallObstacle*) walls[i]);
@@ -1196,7 +1178,8 @@ void RadarRenderer::renderBasesAndTeles()
                                                       ww, bb, hh);
                 if (!baseExist)
                     break;
-                glColor(Team::getRadarColor(TeamColor(i)));
+                auto c = Team::getRadarColor(TeamColor(i));
+                glColor4f(c.r, c.g, c.b, 1.0f);
                 const float rot = RAD2DEG * rotation;
                 glPushMatrix();
                 glTranslatef(basePos.x, basePos.y, 0.0f);
@@ -1216,7 +1199,7 @@ void RadarRenderer::renderBasesAndTeles()
     // is one system that doesn't do correct filtering.
     const ObstacleList& teleporters = OBSTACLEMGR.getTeles();
     int count = teleporters.size();
-    glColor3f(1.0f, 1.0f, 0.25f);
+    glColor4f(1.0f, 1.0f, 0.25f, 1.0f);
     for (i = 0; i < count; i++)
     {
         const Teleporter & tele = *((const Teleporter *) teleporters[i]);

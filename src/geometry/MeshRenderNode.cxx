@@ -22,11 +22,11 @@
 #include "OpenGLGState.h"
 #include "SceneNode.h"
 #include "SceneRenderer.h"
+#include "OpenGLAPI.h"
 
 #include "Extents.h"
 #include "StateDatabase.h"
 #include "BZDBCache.h"
-
 
 /******************************************************************************/
 
@@ -62,7 +62,8 @@ void OpaqueRenderNode::render()
         RENDERER.disableLights(exts->mins, exts->maxs);
 
     // set the color
-    myColor4fv(*color);
+    if (!SceneNode::colorOverride)
+        glColor4f(color->r, color->g, color->b, color->a);
 
     // do the transformation
     glPushMatrix();

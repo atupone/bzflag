@@ -143,7 +143,7 @@ void TextureFont::drawString(float scale, GLfloat color[4], const char *str,
         return;
 
     if (color[0] >= 0)
-        glColor4fv(color);
+        glColor4f(color[0], color[1], color[2], color[3]);
 
     glPushMatrix();
     glScalef(scale, scale, 1);

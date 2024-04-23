@@ -754,7 +754,10 @@ void SceneRenderer::render(bool _lastFrame, bool _sameFrame)
         {
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             glEnable(GL_BLEND);
-            glColor4fv(mirrorColor);
+            glColor4f(mirrorColor[0],
+                      mirrorColor[1],
+                      mirrorColor[2],
+                      mirrorColor[3]);
         }
         glScalef(extent, extent, 0.0f);
         DRAWER.simmetricRect();

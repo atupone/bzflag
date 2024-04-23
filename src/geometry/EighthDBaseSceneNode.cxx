@@ -154,7 +154,8 @@ const glm::vec3 &EighthDBaseSceneNode::EighthDBaseRenderNode::getPosition() cons
 
 void EighthDBaseSceneNode::EighthDBaseRenderNode::render()
 {
-    myColor3f(1.0f, 1.0f, 1.0f);
+    if (!colorOverride)
+        glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
     vboIndex.enableArrays();
     vboIndex.glDrawArrays(GL_LINE_LOOP, 4);
     vboIndex.glDrawArrays(GL_LINE_LOOP, 4, 4);
