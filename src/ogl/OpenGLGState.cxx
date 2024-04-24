@@ -1091,7 +1091,6 @@ static const GLubyte    stipplePattern[NumStipples][4] =
     { 0xff, 0xdd, 0xff, 0x77 },
     { 0xff, 0xff, 0xff, 0xff },
 };
-GLuint          OpenGLGState::stipples = INVALID_GL_LIST_ID;
 
 OpenGLGState::OpenGLGState()
 {
@@ -1172,12 +1171,6 @@ void            OpenGLGState::setStipple(GLfloat alpha)
     setStippleIndex(getStippleIndex(alpha));
 }
 
-void OpenGLGState::setStippleIndex(int index)
-{
-    glCallList(stipples + index);
-}
-
-
 int OpenGLGState::getStippleIndex(float alpha)
 {
     return (int)((float)(NumStipples - 1) * alpha + 0.5f);
@@ -1196,10 +1189,8 @@ int OpenGLGState::getMaxSamples()
 }
 
 
-void OpenGLGState::initStipple(void*)
+void OpenGLGState::setStippleIndex(int i)
 {
-    stipples = glGenLists(NumStipples);
-    for (int i = 0; i < NumStipples; i++)
     {
         GLubyte stipple[132];
         GLubyte* sPtr = (GLubyte*)(((unsigned long)stipple & ~3) + 4);
@@ -1225,23 +1216,9 @@ void OpenGLGState::initStipple(void*)
         }
         lineStipple = (GLushort)stipplePattern[i][0] +
                       (((GLushort)stipplePattern[i][0]) << 8);
-        glNewList(stipples + i, GL_COMPILE);
         glPolygonStipple(sPtr);
         glLineStipple(1, lineStipple);
-        glEndList();
     }
-}
-
-
-void OpenGLGState::freeStipple(void*)
-{
-    if (stipples != INVALID_GL_LIST_ID)
-    {
-        glDeleteLists(stipples, NumStipples);
-        stipples = INVALID_GL_LIST_ID;
-    }
-
-    return;
 }
 
 
@@ -1255,12 +1232,6 @@ void OpenGLGState::init()
 
     // initialize GL state to what we expect
     initGLState();
-
-    // other initialization
-    initStipple(NULL);
-
-    // redo stipple init if context is recreated
-    registerContextInitializer(freeStipple, initStipple, NULL);
 }
 
 
@@ -1536,35 +1507,6 @@ static void contextInitError(const char* message)
     printf ("contextInitError(): %s\n", message);
 }
 
-
-#undef glNewList
-void bzNewList(GLuint list, GLenum mode)
-{
-    glNewList(list, mode);
-    return;
-}
-
-#undef glGenLists
-GLuint bzGenLists(GLsizei count)
-{
-    if (OpenGLGState::getExecutingFreeFuncs())
-        contextFreeError ("bzGenLists() is having issues");
-    GLuint base = glGenLists(count);
-    //logDebugMessage(4,"genList = %i (%i)\n", (int)base, (int)count);
-    return base;
-}
-
-#undef glDeleteLists
-void bzDeleteLists(GLuint base, GLsizei count)
-{
-    if (OpenGLGState::getExecutingInitFuncs())
-        contextInitError ("bzDeleteLists() is having issues");
-    if (OpenGLGState::haveGLContext())
-        glDeleteLists(base, count);
-    else
-        logDebugMessage(4,"bzDeleteLists(), no context\n");
-    return;
-}
 
 #undef glGenTextures
 void bzGenTextures(GLsizei count, GLuint *textures)
