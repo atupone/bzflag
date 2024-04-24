@@ -481,7 +481,7 @@ void SceneRenderer::enableSun(bool on)
 void SceneRenderer::setupSun()
 {
     if (BZDBCache::lighting && sunOrMoonUp)
-        theSun.execute(SunLight, BZDB.isTrue("lightLists"));
+        theSun.execute(SunLight);
 }
 
 
@@ -584,7 +584,7 @@ void SceneRenderer::setTimeOfDay(double julianDay)
     glLightModelfv(GL_LIGHT_MODEL_AMBIENT, glm::value_ptr(color));
 
     if (background)
-        background->setCelestial(*this, sunDir, moonDir);
+        background->setCelestial(sunDir, moonDir);
 }
 
 
@@ -791,7 +791,6 @@ void SceneRenderer::render(bool _lastFrame, bool _sameFrame)
 void SceneRenderer::renderScene()
 {
     int i;
-    const bool lightLists = BZDB.isTrue("lightLists");
 
     // avoid OpenGL calls as long as possible -- there's a good
     // chance we're waiting on the vertical retrace.
@@ -811,7 +810,7 @@ void SceneRenderer::renderScene()
     // turn sunlight on -- the ground needs it
     if (BZDBCache::lighting && sunOrMoonUp)
     {
-        theSun.execute(SunLight, lightLists);
+        theSun.execute(SunLight);
         theSun.enableLight(SunLight, true);
     }
 
@@ -901,7 +900,7 @@ void SceneRenderer::renderScene()
     if (BZDBCache::lighting)
     {
         for (i = 0; i < dynamicLights; i++)
-            lights[i]->execute(i + reservedLights, lightLists);
+            lights[i]->execute(i + reservedLights);
     }
 
     // draw rest of background
