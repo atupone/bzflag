@@ -27,6 +27,7 @@
 #include "StateDatabase.h"
 #include "BZDBCache.h"
 #include "OpenGLGState.h"
+#include "Vertex_Chunk.h"
 
 
 // use the namespaces
@@ -39,11 +40,11 @@ using namespace TankGeometryUtils;
 // ---------------
 
 // the display lists
-static GLuint displayLists[LastTankShadow]
+static Vertex_Chunk displayLists
 [LastTankSize][LastTankPart];
 
 // triangle counts
-static int partTriangles[LastTankShadow]
+static int partTriangles
 [LastTankSize][LastTankPart];
 
 // the scaling factors
@@ -57,9 +58,6 @@ static glm::vec3 scaleFactors[LastTankSize] =
 };
 // the current scaling factors
 static auto currentScaleFactor = scaleFactors[Normal];
-
-// the current shadow mode (used to remove glNormal3f and glTexcoord2f calls)
-static TankShadow shadowMode = ShadowOn;
 
 // arrays of functions to avoid large switch statements
 typedef int (*partFunction)(void);
@@ -77,8 +75,6 @@ static const partFunction partFunctions[BasicTankParts] =
 // -------------------------
 
 static void setupScales();
-static void freeContext(void *data);
-static void initContext(void *data);
 static void bzdbCallback(const std::string& str, void *data);
 
 
@@ -91,16 +87,12 @@ static void bzdbCallback(const std::string& str, void *data);
 void TankGeometryMgr::init()
 {
     // initialize the lists to invalid
-    for (int shadow = 0; shadow < LastTankShadow; shadow++)
     {
         {
             for (int size = 0; size < LastTankSize; size++)
             {
                 for (int part = 0; part < LastTankPart; part++)
-                {
-                    displayLists[shadow][size][part] = INVALID_GL_LIST_ID;
-                    partTriangles[shadow][size][part] = 0;
-                }
+                    partTriangles[size][part] = 0;
             }
         }
     }
@@ -112,11 +104,9 @@ void TankGeometryMgr::init()
     BZDB.addCallback (StateDatabase::BZDB_THIEFTINYFACTOR, bzdbCallback, NULL);
     BZDB.addCallback ("animatedTreads", bzdbCallback, NULL);
 
-    // install the context initializer
-    OpenGLGState::registerContextInitializer (freeContext, initContext, NULL);
-
     // setup the scaleFactors
     setupScales();
+    buildLists();
 
     return;
 }
@@ -130,8 +120,7 @@ void TankGeometryMgr::kill()
     BZDB.removeCallback (StateDatabase::BZDB_THIEFTINYFACTOR, bzdbCallback, NULL);
     BZDB.removeCallback ("animatedTreads", bzdbCallback, NULL);
 
-    // remove the context initializer callback
-    OpenGLGState::unregisterContextInitializer(freeContext, initContext, NULL);
+    deleteLists();
 
     return;
 }
@@ -140,26 +129,22 @@ void TankGeometryMgr::kill()
 void TankGeometryMgr::deleteLists()
 {
     // delete the lists that have been aquired
-    for (int shadow = 0; shadow < LastTankShadow; shadow++)
     {
         {
             for (int size = 0; size < LastTankSize; size++)
             {
                 for (int part = 0; part < LastTankPart; part++)
-                {
-                    GLuint& list = displayLists[shadow][size][part];
-                    if (list != INVALID_GL_LIST_ID)
-                    {
-                        glDeleteLists(list, 1);
-                        list = INVALID_GL_LIST_ID;
-                    }
-                }
+                    displayLists[size][part] = Vertex_Chunk();
             }
         }
     }
     return;
 }
 
+
+static std::vector<glm::vec2> tankTextur;
+static std::vector<glm::vec3> tankNormal;
+static std::vector<glm::vec3> tankVertex;
 
 void TankGeometryMgr::buildLists()
 {
@@ -187,7 +172,6 @@ void TankGeometryMgr::buildLists()
     int wheelDivs = divisionLevels[quality][0];
     int treadDivs = divisionLevels[quality][1];
 
-    for (int shadow = 0; shadow < LastTankShadow; shadow++)
     {
         {
             for (int size = 0; size < LastTankSize; size++)
@@ -198,18 +182,15 @@ void TankGeometryMgr::buildLists()
                 if (animated)
                     lastPart = HighTankParts;
 
-                // set the shadow mode for the doNormal3f() and doTexcoord2f() calls
-                shadowMode = (TankShadow) shadow;
-
                 for (int part = 0; part < lastPart; part++)
                 {
 
-                    GLuint& list = displayLists[shadow][size][part];
-                    int& count = partTriangles[shadow][size][part];
+                    auto &list = displayLists[size][part];
+                    int &count = partTriangles[size][part];
 
-                    // get a new OpenGL display list
-                    list = glGenLists(1);
-                    glNewList(list, GL_COMPILE);
+                    tankTextur.clear();
+                    tankNormal.clear();
+                    tankVertex.clear();
 
                     // setup the scale factor
                     currentScaleFactor = scaleFactors[size];
@@ -244,31 +225,28 @@ void TankGeometryMgr::buildLists()
                         }
                     }
 
-                    // end of the list
-                    glEndList();
+                    list = Vertex_Chunk(Vertex_Chunk::VTN, tankVertex.size());
+                    list.textureData(tankTextur);
+                    list.normalData(tankNormal);
+                    list.vertexData(tankVertex);
 
                 } // part
             } // size
         } // lod
-    } // shadow
+    }
 
     return;
 }
 
 
-GLuint TankGeometryMgr::getPartList(TankGeometryEnums::TankShadow shadow,
-                                    TankGeometryEnums::TankPart part,
-                                    TankGeometryEnums::TankSize size)
+int TankGeometryMgr::drawPart(bool isShadow,
+                              TankGeometryEnums::TankPart part,
+                              TankGeometryEnums::TankSize size)
 {
-    return displayLists[shadow][size][part];
-}
-
-
-int TankGeometryMgr::getPartTriangleCount(TankGeometryEnums::TankShadow sh,
-        TankGeometryEnums::TankPart part,
-        TankGeometryEnums::TankSize size)
-{
-    return partTriangles[sh][size][part];
+    // get the list
+    displayLists[size][part].draw(GL_TRIANGLE_STRIP, isShadow);
+    int count = partTriangles[size][part];
+    return count;
 }
 
 
@@ -286,25 +264,10 @@ const glm::vec3 &TankGeometryMgr::getScaleFactor(TankSize size)
 
 static void bzdbCallback(const std::string& UNUSED(name), void * UNUSED(data))
 {
-    deleteLists();
     buildLists();
     return;
 }
 
-
-static void freeContext(void * UNUSED(data))
-{
-    // delete all of the lists
-    deleteLists();
-    return;
-}
-
-
-static void initContext(void * UNUSED(data))
-{
-    buildLists();
-    return;
-}
 
 
 static void setupScales()
@@ -352,33 +315,34 @@ static void setupScales()
 // ---------------------------
 
 
+static glm::vec3 normal;
+static glm::vec2 textur;
+
 void TankGeometryUtils::doVertex3f(GLfloat x, GLfloat y, GLfloat z)
 {
     const auto &scale = currentScaleFactor;
     const auto xyz = glm::vec3(x, y, z) * scale;
-    glVertex3f(xyz.x, xyz.y, xyz.z);
+    tankNormal.push_back(normal);
+    tankTextur.push_back(textur);
+    tankVertex.push_back(xyz);
     return;
 }
 
 
 void TankGeometryUtils::doNormal3f(GLfloat x, GLfloat y, GLfloat z)
 {
-    if (shadowMode == ShadowOn)
-        return;
     const auto &scale = currentScaleFactor;
     auto sxyz = glm::vec3(x, y, z) * scale;
     if (sxyz.x || sxyz.y || sxyz.z)
         sxyz = glm::normalize(sxyz);
-    glNormal3f(sxyz.x, sxyz.y, sxyz.z);
+    normal = sxyz;
     return;
 }
 
 
 void TankGeometryUtils::doTexCoord2f(GLfloat x, GLfloat y)
 {
-    if (shadowMode == ShadowOn)
-        return;
-    glTexCoord2f(x, y);
+    textur = glm::vec2(x, y);
     return;
 }
 

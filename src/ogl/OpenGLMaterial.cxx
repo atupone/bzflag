@@ -10,8 +10,10 @@
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#include "common.h"
+// Interface header
 #include "OpenGLMaterial.h"
+
+// Common headers
 #include "OpenGLGState.h"
 #include "SceneRenderer.h"
 
@@ -20,6 +22,7 @@
 //
 
 OpenGLMaterial::Rep*    OpenGLMaterial::Rep::head = NULL;
+GLuint OpenGLMaterial::Rep::listCount = 0;
 
 OpenGLMaterial::Rep*    OpenGLMaterial::Rep::getRep(
     const glm::vec3 &specular,
@@ -51,7 +54,7 @@ OpenGLMaterial::Rep::Rep(const glm::vec3 &_specular,
                          GLfloat _shininess)
     : refCount(1), shininess(_shininess)
 {
-    list = INVALID_GL_LIST_ID;
+    list = ++listCount;
 
     prev = NULL;
     next = head;
@@ -60,23 +63,10 @@ OpenGLMaterial::Rep::Rep(const glm::vec3 &_specular,
 
     specular = _specular;
     emissive = _emissive;
-
-    OpenGLGState::registerContextInitializer(freeContext,
-            initContext, (void*)this);
 }
 
 OpenGLMaterial::Rep::~Rep()
 {
-    OpenGLGState::unregisterContextInitializer(freeContext,
-            initContext, (void*)this);
-
-    // free OpenGL display list
-    if (list != INVALID_GL_LIST_ID)
-    {
-        glDeleteLists(list, 1);
-        list = INVALID_GL_LIST_ID;
-    }
-
     // remove me from material list
     if (next != NULL) next->prev = prev;
     if (prev != NULL) prev->next = next;
@@ -95,12 +85,7 @@ void            OpenGLMaterial::Rep::unref()
 
 void            OpenGLMaterial::Rep::execute()
 {
-    if (list != INVALID_GL_LIST_ID)
-        glCallList(list);
-    else
     {
-        list = glGenLists(1);
-        glNewList(list, GL_COMPILE_AND_EXECUTE);
         {
             GLfloat     _specular[4];
             GLfloat     _emissive[4];
@@ -131,27 +116,7 @@ void            OpenGLMaterial::Rep::execute()
                 }
             }
         }
-        glEndList();
     }
-    return;
-}
-
-
-void OpenGLMaterial::Rep::freeContext(void* self)
-{
-    GLuint& list = ((Rep*)self)->list;
-    if (list != INVALID_GL_LIST_ID)
-    {
-        glDeleteLists(list, 1);
-        list = INVALID_GL_LIST_ID;
-    }
-    return;
-}
-
-
-void OpenGLMaterial::Rep::initContext(void* UNUSED(self))
-{
-    // the next execute() call will rebuild the list
     return;
 }
 
