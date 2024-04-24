@@ -1160,17 +1160,12 @@ void TankSceneNode::TankRenderNode::renderPart(TankPart part)
     if (!isShadow)
         setupPartColor(part);
 
-    // get the list
-    GLuint list;
-    TankShadow shadow = isShadow ? ShadowOn : ShadowOff;
-    list = TankGeometryMgr::getPartList(shadow, part, drawSize);
-
     // draw the part
-    glCallList(list);
+    int count = TankGeometryMgr::drawPart(isShadow, part, drawSize);
+    (void)count;
 
     // add to the triangle count
-    addTriangleCount(TankGeometryMgr::getPartTriangleCount(
-                         shadow, part, drawSize));
+    addTriangleCount(count);
 
     // draw the lights on the turret
     if ((part == Turret) && !isExploding && !isShadow)

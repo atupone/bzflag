@@ -29,6 +29,7 @@
 #include "bzfgl.h"
 #include "OpenGLGState.h"
 #include "WeatherRenderer.h"
+#include "Vertex_Chunk.h"
 
 class SceneRenderer;
 class BackgroundRenderer
@@ -53,8 +54,7 @@ public:
     const glm::vec3 *getSunDirection() const;
     void        setBlank(bool blank = true);
     void        setInvert(bool invert = true);
-    void        setCelestial(const SceneRenderer&,
-                             const glm::vec3 &sunDirection,
+    void        setCelestial(const glm::vec3 &sunDirection,
                              const glm::vec3 &moonDirection);
     void        addCloudDrift(GLfloat uDrift, GLfloat vDrift);
     void        notifyStyleChange();
@@ -72,13 +72,16 @@ private:
     void        drawGroundReceivers(SceneRenderer&);
     void        drawAdvancedGroundReceivers(SceneRenderer&);
     void        drawMountains(void);
+    void        drawSunXForm();
+    void        drawStarXForm(const SceneRenderer& renderer);
+    void        drawMoon();
 
     void        resizeSky();
 
     void        doFreeDisplayLists();
     void        doInitDisplayLists();
     void        setSkyColors();
-    void        makeCelestialLists(const SceneRenderer&);
+    void        makeCelestialLists();
     static void     freeContext(void*);
     static void     initContext(void*);
     static void     bzdbCallback(const std::string&, void*);
@@ -108,14 +111,15 @@ private:
     int         numMountainTextures;
     int         mountainsMinWidth;
     OpenGLGState*   mountainsGState;
-    GLuint*     mountainsList;
+    Vertex_Chunk *mountainsList;
 
     // stuff for clouds
     GLfloat     cloudDriftU, cloudDriftV;
     bool        cloudsAvailable;
     bool        cloudsVisible;
     OpenGLGState    cloudsGState;
-    GLuint      cloudsList;
+    Vertex_Chunk opaqueCloud;
+    Vertex_Chunk cloudsList;
 
     // weather
     WeatherRenderer weather;
@@ -143,11 +147,14 @@ private:
     OpenGLGState    sunGState;
     OpenGLGState    moonGState[2];
     OpenGLGState    starGState[2];
-    GLuint      sunList;
-    GLuint      sunXFormList;
-    GLuint      moonList;
-    GLuint      starList;
-    GLuint      starXFormList;
+    Vertex_Chunk    sunList;
+    Vertex_Chunk    moonList;
+    Vertex_Chunk    starList;
+    float       sunAzimuth;
+    float       sunElevation;
+    float       moonAzimuth;
+    float       moonAltitude;
+    float       limbAngle;
 
     static glm::vec3 skyPyramid[5];
     static const GLfloat    cloudRepeats;
