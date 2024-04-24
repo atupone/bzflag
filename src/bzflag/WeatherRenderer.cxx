@@ -72,8 +72,6 @@ WeatherRenderer::WeatherRenderer()
 
     puddleColor[0] = puddleColor[1] = puddleColor[2] = puddleColor[3] = 1.0f;
 
-    dropList = INVALID_GL_LIST_ID;
-
     gridSize = 200.0f;
 
     keyFactor = 1.0f / gridSize;
@@ -105,7 +103,6 @@ WeatherRenderer::WeatherRenderer()
 
 WeatherRenderer::~WeatherRenderer()
 {
-    freeContext(); // free the display lists
     BZDB.removeCallback("_rainType", bzdbCallBack, this);
     BZDB.removeCallback("_rainDensity", bzdbCallBack, this);
     BZDB.removeCallback("_rainSpread", bzdbCallBack, this);
@@ -414,8 +411,6 @@ void WeatherRenderer::set(void)
             }
             lastRainTime = float(TimeKeeper::getCurrent().getSeconds());
         }
-        // recompute the drops based on the posible new size
-        buildDropList();
 
         if (_CULLING_RAIN)   // need to update the bbox depths on all the chunks
         {
@@ -599,106 +594,22 @@ void WeatherRenderer::draw(const SceneRenderer& sr)
 }
 
 
-void WeatherRenderer::freeContext(void)
+void WeatherRenderer::drawDrop()
 {
-    if (dropList != INVALID_GL_LIST_ID)
-    {
-        glDeleteLists(dropList, 1);
-        dropList = INVALID_GL_LIST_ID;
-    }
-    return;
-}
-
-
-void WeatherRenderer::rebuildContext(void)
-{
-    buildDropList();
-    return;
-}
-
-
-void WeatherRenderer::buildDropList(bool _draw)
-{
-    if (!_draw)
-    {
-        if (dropList != INVALID_GL_LIST_ID)
-        {
-            glDeleteLists(dropList, 1);
-            dropList = INVALID_GL_LIST_ID;
-        }
-        dropList = glGenLists(1);
-        glNewList(dropList, GL_COMPILE);
-    }
-
     if (doBillBoards)
-    {
-        glBegin(GL_TRIANGLE_STRIP);
-        glTexCoord2f(0, 0);
-        glVertex3f(-rainSize[0], -rainSize[1], 0);
-
-        glTexCoord2f(1, 0);
-        glVertex3f(rainSize[0], -rainSize[1], 0);
-
-        glTexCoord2f(0, 1);
-        glVertex3f(-rainSize[0], rainSize[1], 0);
-
-        glTexCoord2f(1, 1);
-        glVertex3f(rainSize[0], rainSize[1], 0);
-        glEnd();
-    }
+        DRAWER.simmetricTexturedRect();
     else
     {
-        glPushMatrix();
-        glBegin(GL_TRIANGLE_STRIP);
-        glTexCoord2f(0, 0);
-        glVertex3f(-rainSize[0], 0, -rainSize[1]);
-
-        glTexCoord2f(1, 0);
-        glVertex3f(rainSize[0], 0, -rainSize[1]);
-
-        glTexCoord2f(0, 1);
-        glVertex3f(-rainSize[0], 0, rainSize[1]);
-
-        glTexCoord2f(1, 1);
-        glVertex3f(rainSize[0], 0, rainSize[1]);
-        glEnd();
+        DRAWER.simmetricTexturedRectXZ();
 
         glRotatef(120, 0, 0, 1);
 
-        glBegin(GL_TRIANGLE_STRIP);
-        glTexCoord2f(0, 0);
-        glVertex3f(-rainSize[0], 0, -rainSize[1]);
-
-        glTexCoord2f (1, 0);
-        glVertex3f(rainSize[0], 0, -rainSize[1]);
-
-        glTexCoord2f (0, 1);
-        glVertex3f(-rainSize[0], 0, rainSize[1]);
-
-        glTexCoord2f (1, 1);
-        glVertex3f(rainSize[0], 0, rainSize[1]);
-        glEnd();
+        DRAWER.simmetricTexturedRectXZ();
 
         glRotatef(120, 0, 0, 1);
 
-        glBegin(GL_TRIANGLE_STRIP);
-        glTexCoord2f(0, 0);
-        glVertex3f(-rainSize[0], 0, -rainSize[1]);
-
-        glTexCoord2f(1, 0);
-        glVertex3f(rainSize[0], 0, -rainSize[1]);
-
-        glTexCoord2f(0, 1);
-        glVertex3f(-rainSize[0], 0, rainSize[1]);
-
-        glTexCoord2f(1, 1);
-        glVertex3f(rainSize[0], 0, rainSize[1]);
-        glEnd();
-        glPopMatrix();
+        DRAWER.simmetricTexturedRectXZ();
     }
-
-    if (!_draw)
-        glEndList();
 }
 
 
@@ -861,10 +772,8 @@ void WeatherRenderer::drawDrop(rain& drop, const SceneRenderer& sr)
         if (spinRain)
             glRotatef(lastRainTime * 10.0f * rainSpeed, 0, 0, 1);
 
-        if (1)
-            glCallList(dropList);
-        else
-            buildDropList(true);
+        glScalef(rainSize[0], rainSize[1], rainSize[1]);
+        drawDrop();
         glPopMatrix();
     }
 }
