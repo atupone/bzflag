@@ -76,8 +76,7 @@ private:
         Rep(const glm::vec3 &specular,
             const glm::vec3 &emissive,
             GLfloat shininess);
-        static void freeContext(void*);
-        static void initContext(void*);
+        static GLuint listCount;
     public:
         int     refCount;
         Rep*        prev;
