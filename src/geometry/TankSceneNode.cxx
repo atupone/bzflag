@@ -1341,18 +1341,6 @@ void TankSceneNode::TankRenderNode::renderJumpJets()
     if (!sceneNode->jumpJetsOn)
         return;
 
-    typedef struct
-    {
-        glm::vec3 vertex;
-        glm::vec2 texcoord;
-    } jetVertex;
-    static const jetVertex jet[3] =
-    {
-        {{+0.3f,  0.0f, 0.0f}, {0.0f, 1.0f}},
-        {{-0.3f,  0.0f, 0.0f}, {1.0f, 1.0f}},
-        {{ 0.0f, -1.0f, 0.0f}, {0.5f, 0.0f}}
-    };
-
     myColor4f(1.0f, 1.0f, 1.0f, 0.5f);
 
     // use a clip plane, because the ground has no depth
@@ -1370,15 +1358,7 @@ void TankSceneNode::TankRenderNode::renderJumpJets()
 
             RENDERER.getViewFrustum().executeBillboard();
 
-            glBegin(GL_TRIANGLES);
-            {
-                for (int v = 0; v < 3; v++)
-                {
-                    glTexCoord2fv(jet[v].texcoord);
-                    glVertex3fv(jet[v].vertex);
-                }
-            }
-            glEnd();
+            TankGeometryMgr::drawJets();
         }
         glPopMatrix();
     }
