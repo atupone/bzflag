@@ -43,6 +43,8 @@ using namespace TankGeometryUtils;
 static Vertex_Chunk displayLists
 [LastTankSize][LastTankPart];
 
+static Vertex_Chunk lightsOnTank;
+
 // triangle counts
 static int partTriangles
 [LastTankSize][LastTankPart];
@@ -138,6 +140,7 @@ void TankGeometryMgr::deleteLists()
             }
         }
     }
+    lightsOnTank = Vertex_Chunk();
     return;
 }
 
@@ -235,6 +238,28 @@ void TankGeometryMgr::buildLists()
         } // lod
     }
 
+    {
+        lightsOnTank = Vertex_Chunk(Vertex_Chunk::VC, 3);
+
+        const glm::vec4 colors[3] =
+        {
+            { 1.0f, 1.0f, 1.0f, 1.0f },
+            { 1.0f, 0.0f, 0.0f, 1.0f },
+            { 0.0f, 1.0f, 0.0f, 1.0f }
+        };
+
+        const glm::vec3 vertex[3] =
+        {
+            { -1.53f,  0.00f, 2.1f },
+            {  0.10f,  0.75f, 2.1f },
+            {  0.10f, -0.75f, 2.1f }
+        };
+
+        lightsOnTank.colorData(colors);
+        lightsOnTank.vertexData(vertex);
+
+    }
+
     return;
 }
 
@@ -247,6 +272,12 @@ int TankGeometryMgr::drawPart(bool isShadow,
     displayLists[size][part].draw(GL_TRIANGLE_STRIP, isShadow);
     int count = partTriangles[size][part];
     return count;
+}
+
+
+void TankGeometryMgr::drawLightsOnTank(bool colorOverride)
+{
+    lightsOnTank.draw(GL_POINTS, colorOverride);
 }
 
 
