@@ -44,6 +44,7 @@ static Vertex_Chunk displayLists
 [LastTankSize][LastTankPart];
 
 static Vertex_Chunk lightsOnTank;
+static Vertex_Chunk tankJets;
 
 // triangle counts
 static int partTriangles
@@ -141,6 +142,7 @@ void TankGeometryMgr::deleteLists()
         }
     }
     lightsOnTank = Vertex_Chunk();
+    tankJets     = Vertex_Chunk();
     return;
 }
 
@@ -258,6 +260,25 @@ void TankGeometryMgr::buildLists()
         lightsOnTank.colorData(colors);
         lightsOnTank.vertexData(vertex);
 
+
+        tankJets = Vertex_Chunk(Vertex_Chunk::VT, 3);
+
+        const glm::vec2 jetTexture[3] =
+        {
+            { 0.0f, 1.0f },
+            { 1.0f, 1.0f },
+            { 0.5f, 0.0f }
+        };
+
+        const glm::vec3 jetVertex[3] =
+        {
+            { +0.3f,  0.0f, 0.0f },
+            { -0.3f,  0.0f, 0.0f },
+            {  0.0f, -1.0f, 0.0f }
+        };
+
+        tankJets.textureData(jetTexture);
+        tankJets.vertexData(jetVertex);
     }
 
     return;
@@ -278,6 +299,12 @@ int TankGeometryMgr::drawPart(bool isShadow,
 void TankGeometryMgr::drawLightsOnTank(bool colorOverride)
 {
     lightsOnTank.draw(GL_POINTS, colorOverride);
+}
+
+
+void TankGeometryMgr::drawJets()
+{
+    tankJets.draw(GL_TRIANGLES);
 }
 
 
