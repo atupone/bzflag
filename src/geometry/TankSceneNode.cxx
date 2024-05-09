@@ -1307,34 +1307,15 @@ bool TankSceneNode::TankRenderNode::setupTextureMatrix(TankPart part)
 
 void TankSceneNode::TankRenderNode::renderLights()
 {
-    static const glm::vec3 lights[3] =
-    {
-        { 1.0f, 1.0f, 1.0f },
-        { 1.0f, 0.0f, 0.0f },
-        { 0.0f, 1.0f, 0.0f }
-    };
-    static const glm::vec3 lightsPos[3] =
-    {
-        { -1.53f,  0.00f, 2.1f },
-        {  0.10f,  0.75f, 2.1f },
-        {  0.10f, -0.75f, 2.1f }
-    };
     sceneNode->lightsGState.setState();
     glPointSize(2.0f);
 
-    glBegin(GL_POINTS);
-    {
-        const auto &scale
-            = TankGeometryMgr::getScaleFactor(sceneNode->tankSize);
+    const auto &scale = TankGeometryMgr::getScaleFactor(sceneNode->tankSize);
 
-        for (int i = 0; i < 3; i++)
-        {
-            const auto pos = lightsPos[i] * scale;
-            myColor3fv(lights[i]);
-            glVertex(pos);
-        }
-    }
-    glEnd();
+    glPushMatrix();
+    glScalef(scale.x, scale.y, scale.z);
+    TankGeometryMgr::drawLightsOnTank(colorOverride);
+    glPopMatrix();
 
     glPointSize(1.0f);
     sceneNode->gstate.setState();
