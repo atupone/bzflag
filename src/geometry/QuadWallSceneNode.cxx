@@ -45,14 +45,11 @@ QuadWallSceneNode::Geometry::Geometry(QuadWallSceneNode* _wall,
                                       float uRepeats, float vRepeats, bool fixedUVs) :
     wall(_wall),
     style(0),
-    ds(uCount),
-    dt(vCount),
-    dsq(uCount / 4),
-    dsr(uCount % 4),
     plane(_plane),
-    vertex((uCount+1) * (vCount+1)),
-    uv((uCount+1) * (vCount+1))
+    vboIndexS(Vertex_Chunk::V, 4),
+    vertex((uCount+1) * (vCount+1))
 {
+    std::vector<glm::vec2> uv((uCount+1) * (vCount+1));
     for (int n = 0, j = 0; j <= vCount; j++)
     {
         const float t = (float)j / (float)vCount;
@@ -92,53 +89,54 @@ QuadWallSceneNode::Geometry::Geometry(QuadWallSceneNode* _wall,
         }
     }
 
+    const int ds = uCount;
+    const int dt = vCount;
+
+    std::vector<glm::vec2> text;
+    std::vector<glm::vec3> vert;
+
+    int k = 0;
+    int t = 0;
+
+    while (1)
+    {
+        for (int s = 0; s <= uCount; s++)
+        {
+            text.push_back(uv[k + ds + 1]);
+            vert.push_back(vertex[k + ds + 1]);
+            text.push_back(uv[k]);
+            vert.push_back(vertex[k]);
+            k++;
+        }
+        t++;
+        if (t >= dt)
+            break;
+        // Build degenerate triangles
+        text.push_back(uv[k - 1]);
+        vert.push_back(vertex[k - 1]);
+        text.push_back(uv[k]);
+        vert.push_back(vertex[k]);
+    }
+    vboIndex = Vertex_Chunk(Vertex_Chunk::VT, vert.size());
+
+    vboIndex.textureData(text);
+    vboIndex.vertexData(vert);
     triangles = 2 * (uCount * vCount);
+
+    glm::vec3 myVertexS[4];
+
+    int last = (ds + 1) * dt;
+    myVertexS[0] = vertex[last];
+    myVertexS[1] = vertex[0];
+    myVertexS[2] = vertex[last + ds];
+    myVertexS[3] = vertex[ds];
+    vboIndexS.vertexData(myVertexS);
 }
 
 QuadWallSceneNode::Geometry::~Geometry()
 {
     // do nothing
 }
-
-#define RENDER(_e)                          \
-  for (int k = 0, t = 0; t < dt; t++) {                 \
-    glBegin(GL_TRIANGLE_STRIP);                     \
-    for (int s = 0; s < dsq; k += 4, s++) {             \
-      _e(k+ds+1);                           \
-      _e(k);                                \
-      _e(k+ds+2);                           \
-      _e(k+1);                              \
-      _e(k+ds+3);                           \
-      _e(k+2);                              \
-      _e(k+ds+4);                           \
-      _e(k+3);                              \
-    }                                   \
-    switch (dsr) {                          \
-      case 3:                               \
-    _e(k+ds+1);                         \
-    _e(k);                              \
-    k++;                                \
-    /* fall through */                      \
-      case 2:                               \
-    _e(k+ds+1);                         \
-    _e(k);                              \
-    k++;                                \
-    /* fall through */                      \
-      case 1:                               \
-    _e(k+ds+1);                         \
-    _e(k);                              \
-    k++;                                \
-    /* fall through */                      \
-      case 0:                               \
-    /* don't forget right edge of last quad on row */       \
-    _e(k+ds+1);                         \
-    _e(k);                              \
-    k++;                                \
-    }                                   \
-    glEnd();                                \
-  }
-#define EMITV(_i)   glVertex(vertex[_i])
-#define EMITVT(_i)  glTexCoord(uv[_i]); glVertex(vertex[_i])
 
 const glm::vec3 &QuadWallSceneNode::Geometry::getPosition() const
 {
@@ -149,34 +147,15 @@ void            QuadWallSceneNode::Geometry::render()
 {
     wall->setColor();
     glNormal3fv(plane);
-    if (style >= 2)
-        drawVT();
-    else
-        drawV();
+    vboIndex.draw(GL_TRIANGLE_STRIP, style < 2);
     addTriangleCount(triangles);
     return;
 }
 
 void            QuadWallSceneNode::Geometry::renderShadow()
 {
-    int last = (ds + 1) * dt;
-    glBegin(GL_TRIANGLE_STRIP);
-    glVertex(vertex[last]);
-    glVertex(vertex[0]);
-    glVertex(vertex[last + ds]);
-    glVertex(vertex[ds]);
-    glEnd();
+    vboIndexS.draw(GL_TRIANGLE_STRIP);
     addTriangleCount(2);
-}
-
-void            QuadWallSceneNode::Geometry::drawV() const
-{
-    RENDER(EMITV)
-}
-
-void            QuadWallSceneNode::Geometry::drawVT() const
-{
-    RENDER(EMITVT)
 }
 
 const glm::vec3 &QuadWallSceneNode::Geometry::getVertex(int i) const
