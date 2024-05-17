@@ -24,6 +24,9 @@
 // System headers
 #include <glm/gtc/type_ptr.hpp>
 
+// Common headers
+#include "Vertex_Chunk.h"
+
 class MeshPolySceneNode : public WallSceneNode
 {
 public:
@@ -68,18 +71,12 @@ protected:
         int getVertexCount() const;
         const glm::vec3 &getPosition() const override;
     private:
-        void drawV() const; // draw with just vertices
-        void drawVT() const; // draw with texcoords
-        void drawVN() const; // draw with normals
-        void drawVTN() const; // draw with texcoords and normals
-    private:
         MeshPolySceneNode* sceneNode;
         int style;
         const glm::vec4 &plane;
-    public:
         const std::vector<glm::vec3> vertices;
-        const std::vector<glm::vec3> normals;
-        const std::vector<glm::vec2> texcoords;
+        bool noNormals;
+        Vertex_Chunk vboIndex;
     };
 
 private:
