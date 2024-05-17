@@ -35,13 +35,22 @@
 MeshPolySceneNode::Geometry::Geometry(
     MeshPolySceneNode* _node,
     const std::vector<glm::vec3> &_vertices,
-    const std::vector<glm::vec3> &_normals,
-    const std::vector<glm::vec2> &_texcoords,
+    const std::vector<glm::vec3> &normals,
+    const std::vector<glm::vec2> &texcoords,
     const glm::vec4 &_plane) :
-    plane(_plane), vertices(_vertices), normals(_normals), texcoords(_texcoords)
+    plane(_plane), vertices(_vertices), noNormals(normals.empty())
 {
     sceneNode = _node;
     style = 0;
+    if (noNormals)
+        vboIndex = Vertex_Chunk(Vertex_Chunk::VT, vertices.size());
+    else
+    {
+        vboIndex = Vertex_Chunk(Vertex_Chunk::VTN, vertices.size());
+        vboIndex.normalData(normals);
+    }
+    vboIndex.textureData(texcoords);
+    vboIndex.vertexData(vertices);
     return;
 }
 
@@ -57,78 +66,14 @@ const glm::vec3 &MeshPolySceneNode::Geometry::getPosition() const
     return sceneNode->getSphere();
 }
 
-inline void MeshPolySceneNode::Geometry::drawV() const
-{
-    glBegin(GL_TRIANGLE_FAN);
-    for (const auto &v : vertices)
-        glVertex3fv(v);
-    glEnd();
-    return;
-}
-
-
-inline void MeshPolySceneNode::Geometry::drawVT() const
-{
-    const int count = vertices.size();
-    glBegin(GL_TRIANGLE_FAN);
-    for (int i = 0; i < count; i++)
-    {
-        glTexCoord2fv(texcoords[i]);
-        glVertex3fv(vertices[i]);
-    }
-    glEnd();
-    return;
-}
-
-
-inline void MeshPolySceneNode::Geometry::drawVN() const
-{
-    const int count = vertices.size();
-    glBegin(GL_TRIANGLE_FAN);
-    for (int i = 0; i < count; i++)
-    {
-        glNormal3fv(normals[i]);
-        glVertex3fv(vertices[i]);
-    }
-    glEnd();
-    return;
-}
-
-
-inline void MeshPolySceneNode::Geometry::drawVTN() const
-{
-    const int count = vertices.size();
-    glBegin(GL_TRIANGLE_FAN);
-    for (int i = 0; i < count; i++)
-    {
-        glTexCoord2fv(texcoords[i]);
-        glNormal3fv(normals[i]);
-        glVertex3fv(vertices[i]);
-    }
-    glEnd();
-    return;
-}
-
-
 void MeshPolySceneNode::Geometry::render()
 {
     sceneNode->setColor();
 
-    if (!normals.empty())
-    {
-        if (style >= 2)
-            drawVTN();
-        else
-            drawVN();
-    }
-    else
-    {
+    if (noNormals)
         glNormal3fv(plane);
-        if (style >= 2)
-            drawVT();
-        else
-            drawV();
-    }
+    vboIndex.enableArrays(style >= 2, true, false);
+    vboIndex.glDrawArrays(GL_TRIANGLE_FAN);
 
     addTriangleCount(vertices.size() - 2);
     return;
@@ -137,7 +82,7 @@ void MeshPolySceneNode::Geometry::render()
 
 void MeshPolySceneNode::Geometry::renderShadow()
 {
-    drawV();
+    vboIndex.draw(GL_TRIANGLE_FAN, true);
     addTriangleCount(vertices.size() - 2);
     return;
 }
