@@ -24,6 +24,9 @@
 #include <glm/fwd.hpp>
 #include <glm/vec4.hpp>
 
+// Common headers
+#include "Vertex_Chunk.h"
+
 class LaserSceneNode : public SceneNode
 {
 public:
@@ -57,6 +60,7 @@ protected:
         void renderFlatLaser();
         void renderGeoLaser();
         const LaserSceneNode* sceneNode;
+        static Vertex_Chunk laserChunk;
     };
     glm::vec4 color;
     glm::vec4 centerColor;
