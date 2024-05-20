@@ -106,6 +106,7 @@ void            LaserSceneNode::addRenderNodes(
 
 Vertex_Chunk LaserSceneNode::LaserRenderNode::sphere12;
 Vertex_Chunk LaserSceneNode::LaserRenderNode::sphere32;
+Vertex_Chunk LaserSceneNode::LaserRenderNode::laserChunk;
 
 LaserSceneNode::LaserRenderNode::LaserRenderNode(
     const LaserSceneNode* _sceneNode) :
@@ -118,6 +119,25 @@ LaserSceneNode::LaserRenderNode::LaserRenderNode(
         init = true;
         sphere12 = Quadric::buildSphere(0.5f, 12);
         sphere32 = Quadric::buildSphere(0.5f, 32);
+
+        glm::vec3 v[6];
+        glm::vec2 t[6];
+
+        laserChunk = Vertex_Chunk(Vertex_Chunk::VT, 6);
+        t[0] = glm::vec2(0.5f,  0.5f);
+        v[0] = glm::vec3(0.0f,  0.0f,  0.0f);
+        t[1] = glm::vec2(0.0f,  0.0f);
+        v[1] = glm::vec3(0.0f,  0.0f,  1.0f);
+        t[2] = t[1];
+        v[2] = glm::vec3(0.0f,  1.0f,  0.0f);
+        t[3] = t[1];
+        v[3] = glm::vec3(0.0f,  0.0f, -1.0f);
+        t[4] = t[1];
+        v[4] = glm::vec3(0.0f, -1.0f,  0.0f);
+        t[5] = t[1];
+        v[5] = glm::vec3(0.0f,  0.0f,  1.0f);
+        laserChunk.textureData(t);
+        laserChunk.vertexData(v);
     }
 }
 
@@ -215,16 +235,8 @@ void LaserSceneNode::LaserRenderNode::renderFlatLaser()
     {
         glScalef(len, 1.0f, 1.0f);
         myColor3f(1.0f, 1.0f, 1.0f);
-        glBegin(GL_TRIANGLE_FAN);
-        glTexCoord2f(0.5f,  0.5f);
-        glVertex3f(  0.0f,  0.0f,  0.0f);
-        glTexCoord2f(0.0f,  0.0f);
-        glVertex3f(  0.0f,  0.0f,  1.0f);
-        glVertex3f(  0.0f,  1.0f,  0.0f);
-        glVertex3f(  0.0f,  0.0f, -1.0f);
-        glVertex3f(  0.0f, -1.0f,  0.0f);
-        glVertex3f(  0.0f,  0.0f,  1.0f);
-        glEnd(); // 6 verts -> 4 tris
+        laserChunk.draw(GL_TRIANGLE_FAN);
+        // 6 verts -> 4 tris
 
         DRAWER.diamondTexturedXZ();
         DRAWER.diamondTexturedXY();
