@@ -62,6 +62,7 @@ protected:
         const LaserSceneNode* sceneNode;
         static Vertex_Chunk sphere12;
         static Vertex_Chunk sphere32;
+        static Vertex_Chunk laserChunk;
     };
     glm::vec4 color;
     glm::vec4 centerColor;
