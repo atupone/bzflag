@@ -95,12 +95,13 @@ protected:
         int     numFlares;
         float       theta[6];
         float       phi[6];
+        Vertex_Chunk coronaVBO;
+        Vertex_Chunk coreVBO;
 
         static glm::vec2 core[9];
         static const glm::vec2 corona[8];
         static const GLfloat CoreFraction;
         static const GLfloat FlareSize;
-        static const GLfloat FlareSpread;
         static Vertex_Chunk boltNoseCone1;
         static Vertex_Chunk boltNoseCone2;
         static Vertex_Chunk boltBody1;
