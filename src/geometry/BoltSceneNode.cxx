@@ -24,6 +24,7 @@
 #include "OpenGLAPI.h"
 #include "VBO_Drawing.h"
 #include "VBO_Quadric.h"
+#include "Singleton.h"
 
 // local implementation headers
 #include "ViewFrustum.h"
@@ -32,6 +33,97 @@
 #include "SceneRenderer.h"
 
 #include "TimeKeeper.h"
+
+// parametrics
+const float finRadius    = 0.16f;
+const float finForeDelta = 0.02f;
+const float finCapSize   = 0.15f;
+const float maxRad       = 0.16f;
+const float noseLen      = 0.1f;
+const float noseRad      = 0.086f;
+const float bodyLen      = 0.44f;
+const float bevelLen     = 0.02f;
+const float waistRad     = 0.125f;
+const float waistLen     = 0.16f;
+const float boosterLen   = 0.2f;
+const float engineRad    = 0.1f;
+const float engineLen    = 0.08f;
+
+#define BOLTDRAWER (BoltDrawer::instance())
+
+class BoltDrawer: public Singleton<BoltDrawer>
+{
+public:
+    void drawFin();
+    void drawFlare(float ti, float c, float s);
+protected:
+    friend class Singleton<BoltDrawer>;
+private:
+    BoltDrawer();
+    void buildFin();
+    void buildFlare();
+    Vertex_Chunk finIndex1;
+    Vertex_Chunk finIndex2;
+    Vertex_Chunk flare;
+};
+
+BoltDrawer::BoltDrawer() : flare(Vertex_Chunk(Vertex_Chunk::V, 4))
+{
+    buildFin();
+    buildFlare();
+}
+
+void BoltDrawer::buildFin()
+{
+    glm::vec3 v[4];
+
+    finIndex1 = Vertex_Chunk(Vertex_Chunk::V, 4);
+    v[0] = glm::vec3(0.0f, maxRad,             0.0f);
+    v[1] = glm::vec3(0.0f, maxRad,             boosterLen);
+    v[2] = glm::vec3(0.0f, maxRad + finRadius, boosterLen - finForeDelta - finCapSize);
+    v[3] = glm::vec3(0.0f, maxRad + finRadius, boosterLen - finForeDelta);
+    finIndex1.vertexData(v);
+
+    finIndex2 = Vertex_Chunk(Vertex_Chunk::V, 4);
+    v[0] = glm::vec3(0.0f, maxRad + finRadius, boosterLen - finForeDelta - finCapSize);
+    v[1] = glm::vec3(0.0f, maxRad + finRadius, boosterLen - finForeDelta);
+    v[2] = glm::vec3(0.0f, maxRad,             0.0f);
+    v[3] = glm::vec3(0.0f, maxRad,             boosterLen);
+    finIndex2.vertexData(v);
+}
+
+void BoltDrawer::buildFlare()
+{
+    const float FlareSpread = 0.08f;
+
+    const float dx = cosf(FlareSpread);
+    const float dy = sinf(FlareSpread);
+
+    glm::vec3 v[4];
+
+    v[0] = glm::vec3(0.0f,  0.0f, 0.0f);
+    v[1] = glm::vec3(dx,   -dy,   1.0f);
+    v[2] = glm::vec3(dx,    dy,   1.0f);
+    v[3] = glm::vec3(2.0f,  0.0f, 2.0f);
+    flare.vertexData(v);
+}
+
+void BoltDrawer::drawFin()
+{
+    glNormal3f(1,0,0);
+    finIndex1.draw(GL_TRIANGLE_STRIP);
+    glNormal3f(-1,0,0);
+    finIndex2.draw(GL_TRIANGLE_STRIP);
+}
+
+void BoltDrawer::drawFlare(float ti, float c, float s)
+{
+    glPushMatrix();
+    glScalef(c, c, s);
+    glRotatef(ti * 180 / M_PI, 0.0f, 0.0f, 1.0f);
+    flare.draw(GL_TRIANGLE_STRIP);
+    glPopMatrix();
+}
 
 BoltSceneNode::BoltSceneNode(
     const glm::vec3 &pos, const glm::vec3 &vel, bool super) :
@@ -181,7 +273,6 @@ void            BoltSceneNode::addRenderNodes(
 
 const GLfloat       BoltSceneNode::BoltRenderNode::CoreFraction = 0.4f;
 const GLfloat       BoltSceneNode::BoltRenderNode::FlareSize = 1.0f;
-const GLfloat       BoltSceneNode::BoltRenderNode::FlareSpread = 0.08f;
 glm::vec2           BoltSceneNode::BoltRenderNode::core[9];
 const glm::vec2     BoltSceneNode::BoltRenderNode::corona[8] =
 {
@@ -206,21 +297,6 @@ Vertex_Chunk BoltSceneNode::BoltRenderNode::boltBooster3;
 Vertex_Chunk BoltSceneNode::BoltRenderNode::boltEngine;
 BoltSceneNode::BoltRenderNode::GeoPillVBOs
 BoltSceneNode::BoltRenderNode::geoPills[4];
-
-// parametrics
-const float finRadius    = 0.16f;
-const float finCapSize   = 0.15f;
-const float finForeDelta = 0.02f;
-const float maxRad       = 0.16f;
-const float noseLen      = 0.1f;
-const float noseRad      = 0.086f;
-const float bodyLen      = 0.44f;
-const float bevelLen     = 0.02f;
-const float waistRad     = 0.125f;
-const float waistLen     = 0.16f;
-const float boosterLen   = 0.2f;
-const float engineRad    = 0.1f;
-const float engineLen    = 0.08f;
 
 BoltSceneNode::BoltRenderNode::BoltRenderNode(
     const BoltSceneNode* _sceneNode) :
@@ -324,25 +400,6 @@ void BoltSceneNode::BoltRenderNode::setColor(const glm::vec4 &rgba)
     }
 }
 
-void drawFin()
-{
-    glBegin(GL_TRIANGLE_STRIP);
-    glNormal3f(1,0,0);
-    glVertex3f(0,maxRad,0);
-    glVertex3f(0,maxRad,boosterLen);
-    glVertex3f(0,maxRad+finRadius,boosterLen-finForeDelta-finCapSize);
-    glVertex3f(0,maxRad+finRadius,boosterLen-finForeDelta);
-    glEnd();
-
-    glBegin(GL_TRIANGLE_STRIP);
-    glNormal3f(-1,0,0);
-    glVertex3f(0,maxRad+finRadius,boosterLen-finForeDelta-finCapSize);
-    glVertex3f(0,maxRad+finRadius,boosterLen-finForeDelta);
-    glVertex3f(0,maxRad,0);
-    glVertex3f(0,maxRad,boosterLen);
-    glEnd();
-}
-
 void BoltSceneNode::BoltRenderNode::renderGeoGMBolt()
 {
     // bzdb these 2? they control the shot size
@@ -420,7 +477,7 @@ void BoltSceneNode::BoltRenderNode::renderGeoGMBolt()
     for ( int i = 0; i < 4; i++)
     {
         glRotatef(i*90.0f,0,0,1);
-        drawFin();
+        BOLTDRAWER.drawFin();
     }
 
     glEnable(GL_TEXTURE_2D);
@@ -622,13 +679,7 @@ void            BoltSceneNode::BoltRenderNode::render()
                 const float c = FlareSize * cosf(phi[i]);
                 const float s = FlareSize * sinf(phi[i]);
                 const float ti = theta[i];
-                const float fs = FlareSpread;
-                glBegin(GL_TRIANGLE_STRIP);
-                glVertex3f(0.0f,                0.0f,                0.0f);
-                glVertex3f(c * cosf(ti - fs),   c * sinf(ti - fs),   s);
-                glVertex3f(c * cosf(ti + fs),   c * sinf(ti + fs),   s);
-                glVertex3f(c * cosf(ti) * 2.0f, c * sinf(ti) * 2.0f, s * 2.0f);
-                glEnd();
+                BOLTDRAWER.drawFlare(ti, c, s);
             }
             if (sceneNode->texturing) glEnable(GL_TEXTURE_2D);
 

@@ -100,7 +100,6 @@ protected:
         static const glm::vec2 corona[8];
         static const GLfloat CoreFraction;
         static const GLfloat FlareSize;
-        static const GLfloat FlareSpread;
         static Vertex_Chunk boltNoseCone1;
         static Vertex_Chunk boltNoseCone2;
         static Vertex_Chunk boltBody1;
