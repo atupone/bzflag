@@ -20,6 +20,7 @@
 #include "StateDatabase.h"
 #include "BZDBCache.h"
 #include "OpenGLAPI.h"
+#include "VBO_Geometry.h"
 
 // FIXME (SceneRenderer.cxx is in src/bzflag)
 #include "SceneRenderer.h"
@@ -103,6 +104,8 @@ void            LaserSceneNode::addRenderNodes(
 //
 
 glm::vec2 LaserSceneNode::LaserRenderNode::geom[6];
+Vertex_Chunk LaserSceneNode::LaserRenderNode::sphere12;
+Vertex_Chunk LaserSceneNode::LaserRenderNode::sphere32;
 
 LaserSceneNode::LaserRenderNode::LaserRenderNode(
     const LaserSceneNode* _sceneNode) :
@@ -118,6 +121,8 @@ LaserSceneNode::LaserRenderNode::LaserRenderNode(
             const float angle = 2.0 * M_PI * double(i) / 6.0;
             geom[i] = LaserRadius * glm::vec2(-cosf(angle), sinf(angle));
         }
+        sphere12 = Quadric::buildSphere(0.5f, 12);
+        sphere32 = Quadric::buildSphere(0.5f, 32);
     }
 }
 
@@ -179,12 +184,12 @@ void LaserSceneNode::LaserRenderNode::renderGeoLaser()
 
     if (sceneNode->first)
     {
-        gluSphere(q, 0.5f, 32, 32);
+        sphere32.draw(GL_TRIANGLE_STRIP);
         addTriangleCount(32 * 32 * 2);
     }
     else
     {
-        gluSphere(q, 0.5f, 12, 12);
+        sphere12.draw(GL_TRIANGLE_STRIP);
         addTriangleCount(12 * 12 * 2);
     }
 
