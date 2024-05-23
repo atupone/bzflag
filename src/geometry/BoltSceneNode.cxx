@@ -22,6 +22,7 @@
 #include "BZDBCache.h"
 #include "TextureManager.h"
 #include "OpenGLAPI.h"
+#include "VBO_Quadric.h"
 
 // local implementation headers
 #include "ViewFrustum.h"
@@ -193,6 +194,31 @@ const glm::vec2     BoltSceneNode::BoltRenderNode::corona[8] =
     { (float)M_SQRT1_2, (float)-M_SQRT1_2 }
 };
 
+Vertex_Chunk BoltSceneNode::BoltRenderNode::boltNoseCone1;
+Vertex_Chunk BoltSceneNode::BoltRenderNode::boltNoseCone2;
+Vertex_Chunk BoltSceneNode::BoltRenderNode::boltBody1;
+Vertex_Chunk BoltSceneNode::BoltRenderNode::boltBody2;
+Vertex_Chunk BoltSceneNode::BoltRenderNode::boltWaist;
+Vertex_Chunk BoltSceneNode::BoltRenderNode::boltBooster1;
+Vertex_Chunk BoltSceneNode::BoltRenderNode::boltBooster2;
+Vertex_Chunk BoltSceneNode::BoltRenderNode::boltBooster3;
+Vertex_Chunk BoltSceneNode::BoltRenderNode::boltEngine;
+
+// parametrics
+const float finRadius    = 0.16f;
+const float finCapSize   = 0.15f;
+const float finForeDelta = 0.02f;
+const float maxRad       = 0.16f;
+const float noseLen      = 0.1f;
+const float noseRad      = 0.086f;
+const float bodyLen      = 0.44f;
+const float bevelLen     = 0.02f;
+const float waistRad     = 0.125f;
+const float waistLen     = 0.16f;
+const float boosterLen   = 0.2f;
+const float engineRad    = 0.1f;
+const float engineLen    = 0.08f;
+
 BoltSceneNode::BoltRenderNode::BoltRenderNode(
     const BoltSceneNode* _sceneNode) :
     sceneNode(_sceneNode),
@@ -206,6 +232,19 @@ BoltSceneNode::BoltRenderNode::BoltRenderNode(
         core[0] = glm::vec2(0.0f);
         for (int i = 0; i < 8; i++)
             core[i+1] = CoreFraction * corona[i];
+
+        const int   slices     = 8;
+
+        boltNoseCone1 = buildDisk(noseRad, slices);
+
+        boltNoseCone2 = buildCylinder(maxRad,    noseRad,  noseLen,    slices);
+        boltBody1     = buildCylinder(maxRad,    maxRad,   bodyLen,    slices);
+        boltBody2     = buildCylinder(waistRad,  maxRad,   bevelLen,   slices);
+        boltWaist     = buildCylinder(waistRad,  waistRad, waistLen,   slices);
+        boltBooster1  = buildCylinder(maxRad,    waistRad, bevelLen,   slices);
+        boltBooster2  = buildCylinder(maxRad,    maxRad,   boosterLen, slices);
+        boltBooster3  = buildCylinder(waistRad,  maxRad,   bevelLen,   slices);
+        boltEngine    = buildCylinder(engineRad, waistRad, engineLen,  slices);
     }
 
     textureColor = glm::vec4(1.0f);
@@ -260,7 +299,7 @@ void BoltSceneNode::BoltRenderNode::setColor(const glm::vec4 &rgba)
     }
 }
 
-void drawFin ( float maxRad, float finRadius, float boosterLen, float finForeDelta, float finCapSize)
+void drawFin()
 {
     glBegin(GL_TRIANGLE_STRIP);
     glNormal3f(1,0,0);
@@ -284,25 +323,6 @@ void BoltSceneNode::BoltRenderNode::renderGeoGMBolt()
     // bzdb these 2? they control the shot size
     float gmMissleSize = BZDBCache::gmSize;
 
-    // parametrics
-    float maxRad = gmMissleSize * 0.16f;
-    float noseRad = gmMissleSize * 0.086f;
-    float waistRad = gmMissleSize * 0.125f;
-    float engineRad = gmMissleSize * 0.1f;
-
-    float noseLen = gmMissleSize * 0.1f;
-    float bodyLen = gmMissleSize * 0.44f;
-    float bevelLen = gmMissleSize * 0.02f;
-    float waistLen = gmMissleSize * 0.16f;
-    float boosterLen = gmMissleSize * 0.2f;
-    float engineLen = gmMissleSize * 0.08f;
-
-    float finRadius = gmMissleSize * 0.16f;
-    float finCapSize = gmMissleSize * 0.15f;
-    float finForeDelta = gmMissleSize * 0.02f;
-
-    int slices = 8;
-
     float rotSpeed = 90.0f;
 
     glDepthMask(GL_TRUE);
@@ -319,54 +339,53 @@ void BoltSceneNode::BoltRenderNode::renderGeoGMBolt()
     auto coneColor = glm::vec4(0.125f, 0.125f, 0.125f, 1.0f);
     auto bodyColor = glm::vec4(1.0f);
 
-    glPushMatrix();
-
-    GLUquadric *q = gluNewQuadric();
+    glScalef(gmMissleSize, gmMissleSize, gmMissleSize);
 
     glColor4f(noseColor.r,noseColor.g,noseColor.b,1.0f);
-    glTranslatef(0, 0, gmMissleSize);
+    glTranslatef(0, 0, 1.0f);
     glRotatef((float)TimeKeeper::getCurrent().getSeconds() * rotSpeed,0,0,1);
 
     // nosecone
-    gluDisk(q,0,noseRad,slices,1);
+    glNormal3f(0.0f, 0.0f, 1.0f);
+    boltNoseCone1.draw(GL_TRIANGLE_FAN);
     glTranslatef(0, 0, -noseLen);
-    gluCylinder(q,maxRad,noseRad,noseLen,slices,1);
+    boltNoseCone2.draw(GL_TRIANGLE_STRIP);
     addTriangleCount(slices * 2);
 
     // body
     myColor4f(bodyColor.r, bodyColor.g, bodyColor.b, bodyColor.a);
     glTranslatef(0, 0, -bodyLen);
-    gluCylinder(q,maxRad,maxRad,bodyLen,slices,1);
+    boltBody1.draw(GL_TRIANGLE_STRIP);
     addTriangleCount(slices);
 
     glTranslatef(0, 0, -bevelLen);
-    gluCylinder(q,waistRad,maxRad,bevelLen,slices,1);
+    boltBody2.draw(GL_TRIANGLE_STRIP);
     addTriangleCount(slices);
 
     // waist
     myColor4f(coneColor.r, coneColor.g, coneColor.b, coneColor.a);
     glTranslatef(0, 0, -waistLen);
-    gluCylinder(q,waistRad,waistRad,waistLen,slices,1);
+    boltWaist.draw(GL_TRIANGLE_STRIP);
     addTriangleCount(slices);
 
     // booster
     myColor4f(bodyColor.r, bodyColor.g, bodyColor.b, 1.0f);
     glTranslatef(0, 0, -bevelLen);
-    gluCylinder(q,maxRad,waistRad,bevelLen,slices,1);
+    boltBooster1.draw(GL_TRIANGLE_STRIP);
     addTriangleCount(slices);
 
     glTranslatef(0, 0, -boosterLen);
-    gluCylinder(q,maxRad,maxRad,boosterLen,slices,1);
+    boltBooster2.draw(GL_TRIANGLE_STRIP);
     addTriangleCount(slices);
 
     glTranslatef(0, 0, -bevelLen);
-    gluCylinder(q,waistRad,maxRad,bevelLen,slices,1);
+    boltBooster3.draw(GL_TRIANGLE_STRIP);
     addTriangleCount(slices);
 
     // engine
     myColor4f(coneColor.r, coneColor.g, coneColor.b, 1.0f);
     glTranslatef(0, 0, -engineLen);
-    gluCylinder(q,engineRad,waistRad,engineLen,slices,1);
+    boltEngine.draw(GL_TRIANGLE_STRIP);
     addTriangleCount(slices);
 
     // fins
@@ -376,12 +395,8 @@ void BoltSceneNode::BoltRenderNode::renderGeoGMBolt()
     for ( int i = 0; i < 4; i++)
     {
         glRotatef(i*90.0f,0,0,1);
-        drawFin ( maxRad, finRadius, boosterLen, finForeDelta, finCapSize);
+        drawFin();
     }
-
-    glPopMatrix();
-
-    gluDeleteQuadric(q);
 
     glEnable(GL_TEXTURE_2D);
     // glDisable(GL_LIGHTING);

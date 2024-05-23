@@ -25,6 +25,7 @@
 
 // Common headers
 #include "OpenGLLight.h"
+#include "Vertex_Chunk.h"
 
 class BoltSceneNode : public SceneNode
 {
@@ -87,6 +88,15 @@ protected:
         static const GLfloat CoreFraction;
         static const GLfloat FlareSize;
         static const GLfloat FlareSpread;
+        static Vertex_Chunk boltNoseCone1;
+        static Vertex_Chunk boltNoseCone2;
+        static Vertex_Chunk boltBody1;
+        static Vertex_Chunk boltBody2;
+        static Vertex_Chunk boltWaist;
+        static Vertex_Chunk boltBooster1;
+        static Vertex_Chunk boltBooster2;
+        static Vertex_Chunk boltBooster3;
+        static Vertex_Chunk boltEngine;
     };
     friend class BoltRenderNode;
 
