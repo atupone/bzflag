@@ -89,13 +89,14 @@ public:
     void draw(GLenum mode, bool onlyVertex, int size);
 
     unsigned int getIndex() const;
-private:
-    static VBO_Vertex  *vbo[VLast];
-    static unsigned int refer[VLast];
 
     VBO_Vertex   *myVBO;
     int           index;
     unsigned int  indexSize;
+private:
+    static VBO_Vertex  *vbo[VLast];
+    static unsigned int refer[VLast];
+
     Component     myComp;
 };
 

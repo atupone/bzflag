@@ -38,6 +38,7 @@ libGeometry_la_SOURCES  =		\
 	TankSceneNode.cxx		\
 	TriWallSceneNode.cxx		\
 	ViewFrustum.cxx			\
+	VBO_Geometry.cxx		\
 	WallSceneNode.cxx
 
 libGeometry_la_LIBADD =	\
