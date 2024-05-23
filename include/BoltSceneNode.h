@@ -25,6 +25,7 @@
 
 // Common headers
 #include "OpenGLLight.h"
+#include "Vertex_Chunk.h"
 
 class BoltSceneNode : public SceneNode
 {
@@ -66,9 +67,22 @@ protected:
 
         void        renderGeoBolt();
         void        renderGeoGMBolt();
-        void        renderGeoPill( float radius, float len, int segments, float endRad = -1);
 
     private:
+        struct GeoPillVBOs
+        {
+            Vertex_Chunk emi1st1;
+            Vertex_Chunk emi1st2;
+            Vertex_Chunk emi1st3;
+            Vertex_Chunk emi1st4;
+            Vertex_Chunk shaft;
+            Vertex_Chunk emi2nd1;
+            Vertex_Chunk emi2nd2;
+            Vertex_Chunk emi2nd3;
+            Vertex_Chunk emi2nd4;
+        };
+
+        void renderGeoPill(float radius, float len, GeoPillVBOs &geoPill);
         const BoltSceneNode* sceneNode;
         int     u, v, cu, cv;
         GLfloat     du, dv;
@@ -87,6 +101,16 @@ protected:
         static const GLfloat CoreFraction;
         static const GLfloat FlareSize;
         static const GLfloat FlareSpread;
+        static Vertex_Chunk boltNoseCone1;
+        static Vertex_Chunk boltNoseCone2;
+        static Vertex_Chunk boltBody1;
+        static Vertex_Chunk boltBody2;
+        static Vertex_Chunk boltWaist;
+        static Vertex_Chunk boltBooster1;
+        static Vertex_Chunk boltBooster2;
+        static Vertex_Chunk boltBooster3;
+        static Vertex_Chunk boltEngine;
+        static GeoPillVBOs geoPills[4];
     };
     friend class BoltRenderNode;
 
