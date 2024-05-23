@@ -23,6 +23,9 @@
 // System headers
 #include <glm/vec4.hpp>
 
+// Common headers
+#include "Vertex_Chunk.h"
+
 class LaserSceneNode final : public SceneNode
 {
 public:
@@ -56,6 +59,8 @@ protected:
         void renderFlatLaser();
         void renderGeoLaser();
         const LaserSceneNode* sceneNode;
+        static Vertex_Chunk sphere12;
+        static Vertex_Chunk sphere32;
         static glm::vec2 geom[6];
     };
     glm::vec4 color;
