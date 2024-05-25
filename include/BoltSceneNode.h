@@ -67,9 +67,22 @@ protected:
 
         void        renderGeoBolt();
         void        renderGeoGMBolt();
-        void        renderGeoPill( float radius, float len, int segments, float endRad = -1);
 
     private:
+        struct GeoPillVBOs
+        {
+            Vertex_Chunk emi1st1;
+            Vertex_Chunk emi1st2;
+            Vertex_Chunk emi1st3;
+            Vertex_Chunk emi1st4;
+            Vertex_Chunk shaft;
+            Vertex_Chunk emi2nd1;
+            Vertex_Chunk emi2nd2;
+            Vertex_Chunk emi2nd3;
+            Vertex_Chunk emi2nd4;
+        };
+
+        void renderGeoPill(float radius, float len, GeoPillVBOs &geoPill);
         const BoltSceneNode* sceneNode;
         int     u, v, cu, cv;
         GLfloat     du, dv;
@@ -97,6 +110,7 @@ protected:
         static Vertex_Chunk boltBooster2;
         static Vertex_Chunk boltBooster3;
         static Vertex_Chunk boltEngine;
+        static GeoPillVBOs geoPills[4];
     };
     friend class BoltRenderNode;
 

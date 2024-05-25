@@ -17,8 +17,8 @@
 #include <glm/vec3.hpp>
 
 void buildCylinder(float baseRadius, float topRadius, float height, int slices,
-                  std::vector<glm::vec3> &vertex,
-                  std::vector<glm::vec3> &normal)
+                   std::vector<glm::vec3> &vertex,
+                   std::vector<glm::vec3> &normal)
 {
     /* Compute length (needed for normal calculations) */
     float deltaRadius = baseRadius - topRadius;

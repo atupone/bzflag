@@ -203,6 +203,8 @@ Vertex_Chunk BoltSceneNode::BoltRenderNode::boltBooster1;
 Vertex_Chunk BoltSceneNode::BoltRenderNode::boltBooster2;
 Vertex_Chunk BoltSceneNode::BoltRenderNode::boltBooster3;
 Vertex_Chunk BoltSceneNode::BoltRenderNode::boltEngine;
+BoltSceneNode::BoltRenderNode::GeoPillVBOs
+BoltSceneNode::BoltRenderNode::geoPills[4];
 
 // parametrics
 const float finRadius    = 0.16f;
@@ -245,6 +247,28 @@ BoltSceneNode::BoltRenderNode::BoltRenderNode(
         boltBooster2  = buildCylinder(maxRad,    maxRad,   boosterLen, slices);
         boltBooster3  = buildCylinder(waistRad,  maxRad,   bevelLen,   slices);
         boltEngine    = buildCylinder(engineRad, waistRad, engineLen,  slices);
+        for (int i = 0; i < 4; i++)
+        {
+            int segments;
+            if (i == 0)
+                segments = 16;
+            else if (i == 1)
+                segments = 25;
+            else if (i == 2)
+                segments = 32;
+            else
+                segments = 40;
+
+            geoPills[i].emi1st1 = buildCylinder(0.0f,     0.43589f, 0.1f,  segments);
+            geoPills[i].emi1st2 = buildCylinder(0.43589f, 0.66144f, 0.15f, segments);
+            geoPills[i].emi1st3 = buildCylinder(0.66144f, 0.86603f, 0.25f, segments);
+            geoPills[i].emi1st4 = buildCylinder(0.86603f, 1.0f,     0.5f,  segments);
+            geoPills[i].shaft   = buildCylinder(1.0f,     1.0f,     1.0f,  segments);
+            geoPills[i].emi2nd4 = buildCylinder(1.0f,     0.86603f, 0.5f,  segments);
+            geoPills[i].emi2nd3 = buildCylinder(0.86603f, 0.66144f, 0.25f, segments);
+            geoPills[i].emi2nd2 = buildCylinder(0.66144f, 0.43589f, 0.15f, segments);
+            geoPills[i].emi2nd1 = buildCylinder(0.43589f, 0.0f,     0.1f,  segments);
+        }
     }
 
     textureColor = glm::vec4(1.0f);
@@ -433,28 +457,28 @@ void BoltSceneNode::BoltRenderNode::renderGeoBolt()
     auto coreColor = glm::max(c * coreBleed, minimumChannelVal);
 
     myColor4f(coreColor.r, coreColor.g, coreColor.b, 0.85f * alphaMod);
-    renderGeoPill(baseRadius,len,16);
+    renderGeoPill(baseRadius, len, geoPills[0]);
 
     float radInc = 1.5f * baseRadius - baseRadius;
     glPushMatrix();
     glTranslatef(0, 0, -radInc * 0.5f);
 
     myColor4f(c.r, c.g, c.b, 0.5f);
-    renderGeoPill(1.5f * baseRadius, len + radInc, 25);
+    renderGeoPill(1.5f * baseRadius, len + radInc, geoPills[1]);
     glPopMatrix();
 
     radInc = 2.7f * baseRadius - baseRadius;
     glPushMatrix();
     glTranslatef(0, 0, -radInc*0.5f);
     myColor4f(c.r, c.g, c.b, 0.25f);
-    renderGeoPill(2.7f * baseRadius, len + radInc, 32);
+    renderGeoPill(2.7f * baseRadius, len + radInc, geoPills[2]);
     glPopMatrix();
 
     radInc = 3.8f * baseRadius - baseRadius;
     glPushMatrix();
     glTranslatef(0, 0,-radInc*0.5f);
     myColor4f(c.r, c.g, c.b, 0.125f);
-    renderGeoPill(3.8f * baseRadius, len + radInc, 48);
+    renderGeoPill(3.8f * baseRadius, len + radInc, geoPills[3]);
     glPopMatrix();
 
     glEnable(GL_TEXTURE_2D);
@@ -463,42 +487,45 @@ void BoltSceneNode::BoltRenderNode::renderGeoBolt()
 }
 
 
-void BoltSceneNode::BoltRenderNode::renderGeoPill(float radius, float len,
-        int segments, float endRad)
+void BoltSceneNode::BoltRenderNode::renderGeoPill(
+    float radius, float len,
+    GeoPillVBOs &geoPill)
 {
     glPushMatrix();
 
-    float assRadius = radius;
-    if (endRad >= 0)
-        assRadius = endRad;
+    float lenMinusRads = len - 2 * radius;
 
-    float lenMinusRads = len - (radius+assRadius);
-
-    GLUquadric *q = gluNewQuadric();
-    if (assRadius > 0)
+    if (radius > 0)
     {
+        glPushMatrix();
+        glScalef(radius, radius, radius);
         // 4 parts of the first hemisphere
-        gluCylinder(q,0,assRadius*0.43589,assRadius*0.1f,segments,1);
+        geoPill.emi1st1.draw(GL_TRIANGLE_STRIP);
         addTriangleCount(segments);
-        glTranslatef(0,0,assRadius*0.1f);
+        glTranslatef(0, 0, 0.1f);
 
-        gluCylinder(q,assRadius*0.43589,assRadius*0.66144,assRadius*0.15f,segments,1);
+        geoPill.emi1st2.draw(GL_TRIANGLE_STRIP);
         addTriangleCount(segments);
-        glTranslatef(0,0,assRadius*0.15f);
+        glTranslatef(0, 0, 0.15f);
 
-        gluCylinder(q,assRadius*0.66144f,assRadius*0.86603f,assRadius*0.25f,segments,1);
+        geoPill.emi1st3.draw(GL_TRIANGLE_STRIP);
         addTriangleCount(segments);
-        glTranslatef(0,0,assRadius*0.25f);
+        glTranslatef(0, 0, 0.25f);
 
-        gluCylinder(q,assRadius*0.86603,assRadius,assRadius*0.5f,segments,1);
+        geoPill.emi1st4.draw(GL_TRIANGLE_STRIP);
         addTriangleCount(segments);
-        glTranslatef(0,0,assRadius*0.5f);
+        glTranslatef(0, 0, 0.5f);
+        glPopMatrix();
+        glTranslatef(0, 0, radius);
     }
 
     // the "shaft"
     if (lenMinusRads > 0)
     {
-        gluCylinder(q,assRadius,radius,lenMinusRads,segments,1);
+        glPushMatrix();
+        glScalef(radius, radius, lenMinusRads);
+        geoPill.shaft.draw(GL_TRIANGLE_STRIP);
+        glPopMatrix();
         addTriangleCount(segments);
         glTranslatef(0,0,lenMinusRads);
     }
@@ -506,24 +533,23 @@ void BoltSceneNode::BoltRenderNode::renderGeoPill(float radius, float len,
     if (radius > 0)
     {
         // 4 parts of the last hemisphere
-        gluCylinder(q,radius,radius*0.86603,radius*0.5f,segments,1);
+        glScalef(radius, radius, radius);
+        geoPill.emi2nd4.draw(GL_TRIANGLE_STRIP);
         addTriangleCount(segments);
-        glTranslatef(0,0,radius*0.5f);
+        glTranslatef(0,0,0.5f);
 
-        gluCylinder(q,radius*0.86603f,radius*0.66144f,radius*0.25f,segments,1);
+        geoPill.emi2nd3.draw(GL_TRIANGLE_STRIP);
         addTriangleCount(segments);
-        glTranslatef(0,0,radius*0.25f);
+        glTranslatef(0,0,0.25f);
 
-        gluCylinder(q,radius*0.66144,radius*0.43589,radius*0.15f,segments,1);
+        geoPill.emi2nd2.draw(GL_TRIANGLE_STRIP);
         addTriangleCount(segments);
-        glTranslatef(0,0,radius*0.15f);
+        glTranslatef(0,0,0.15f);
 
-        gluCylinder(q,radius*0.43589,0,radius*0.1f,segments,1);
+        geoPill.emi2nd1.draw(GL_TRIANGLE_STRIP);
         addTriangleCount(segments);
-        glTranslatef(0,0,radius*0.1f);
     }
 
-    gluDeleteQuadric(q);
     glPopMatrix();
 }
 
