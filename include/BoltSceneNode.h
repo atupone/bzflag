@@ -95,6 +95,8 @@ protected:
         int     numFlares;
         float       theta[6];
         float       phi[6];
+        Vertex_Chunk coronaVBO;
+        Vertex_Chunk coreVBO;
 
         static glm::vec2 core[9];
         static const glm::vec2 corona[8];

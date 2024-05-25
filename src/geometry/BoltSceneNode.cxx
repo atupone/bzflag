@@ -301,7 +301,9 @@ BoltSceneNode::BoltRenderNode::geoPills[4];
 BoltSceneNode::BoltRenderNode::BoltRenderNode(
     const BoltSceneNode* _sceneNode) :
     sceneNode(_sceneNode),
-    numFlares(0)
+    numFlares(0),
+    coronaVBO(Vertex_Chunk(Vertex_Chunk::VC, 18)),
+    coreVBO(Vertex_Chunk(Vertex_Chunk::VC, 10))
 {
     // initialize core and corona if not already done
     static bool init = false;
@@ -398,12 +400,45 @@ void BoltSceneNode::BoltRenderNode::setColor(const glm::vec4 &rgba)
         coronaColor[3] = 0.5f;
         flareColor[3]  = 0.667f;
     }
+
+    // compute corona & core vbo
+    glm::vec3 vertex[18];
+    glm::vec4 colors[18];
+
+    for (int j = 0; j < 18; j++)
+    {
+        bool odd   = j % 2;
+        int offset = j > 15 ? 0 : j / 2;
+        if (!odd)
+            offset++;
+
+        colors[j] = odd ? outerColor : mainColor;
+        if (odd)
+            vertex[j] = glm::vec3(corona[offset], 0.0f);
+        else
+            vertex[j] = glm::vec3(core[offset], 0.0f);
+    }
+    coronaVBO.colorData(colors);
+    coronaVBO.vertexData(vertex);
+
+    colors[0] = innerColor;
+    for (int j = 1; j < 10; j++)
+        colors[j] = mainColor;
+    for (int j = 0; j < 9; j++)
+        vertex[j] = glm::vec3(core[j], 0.0f);
+    vertex[9] = glm::vec3(core[1], 0.0f);
+    coreVBO.colorData(colors);
+    coreVBO.vertexData(vertex);
 }
 
 void BoltSceneNode::BoltRenderNode::renderGeoGMBolt()
 {
     // bzdb these 2? they control the shot size
     float gmMissleSize = BZDBCache::gmSize;
+
+#ifdef DEBUG_RENDERING
+    int slices = 8;
+#endif
 
     float rotSpeed = 90.0f;
 
@@ -770,60 +805,12 @@ void            BoltSceneNode::BoltRenderNode::render()
         else
         {
             // draw corona
-            glBegin(GL_TRIANGLE_STRIP);
-            myColor4fv(mainColor);
-            glVertex2fv(core[1]);
-            myColor4fv(outerColor);
-            glVertex2fv(corona[0]);
-            myColor4fv(mainColor);
-            glVertex2fv(core[2]);
-            myColor4fv(outerColor);
-            glVertex2fv(corona[1]);
-            myColor4fv(mainColor);
-            glVertex2fv(core[3]);
-            myColor4fv(outerColor);
-            glVertex2fv(corona[2]);
-            myColor4fv(mainColor);
-            glVertex2fv(core[4]);
-            myColor4fv(outerColor);
-            glVertex2fv(corona[3]);
-            myColor4fv(mainColor);
-            glVertex2fv(core[5]);
-            myColor4fv(outerColor);
-            glVertex2fv(corona[4]);
-            myColor4fv(mainColor);
-            glVertex2fv(core[6]);
-            myColor4fv(outerColor);
-            glVertex2fv(corona[5]);
-            myColor4fv(mainColor);
-            glVertex2fv(core[7]);
-            myColor4fv(outerColor);
-            glVertex2fv(corona[6]);
-            myColor4fv(mainColor);
-            glVertex2fv(core[8]);
-            myColor4fv(outerColor);
-            glVertex2fv(corona[7]);
-            myColor4fv(mainColor);
-            glVertex2fv(core[1]);
-            myColor4fv(outerColor);
-            glVertex2fv(corona[0]);
-            glEnd(); // 18 verts -> 16 tris
+            coronaVBO.draw(GL_TRIANGLE_STRIP, colorOverride);
+            // 18 verts -> 16 tris
 
             // draw core
-            glBegin(GL_TRIANGLE_FAN);
-            myColor4fv(innerColor);
-            glVertex2fv(core[0]);
-            myColor4fv(mainColor);
-            glVertex2fv(core[1]);
-            glVertex2fv(core[2]);
-            glVertex2fv(core[3]);
-            glVertex2fv(core[4]);
-            glVertex2fv(core[5]);
-            glVertex2fv(core[6]);
-            glVertex2fv(core[7]);
-            glVertex2fv(core[8]);
-            glVertex2fv(core[1]);
-            glEnd(); // 10 verts -> 8 tris
+            coreVBO.draw(GL_TRIANGLE_FAN, colorOverride);
+            // 10 verts -> 8 tris
 
             addTriangleCount(24);
         }
