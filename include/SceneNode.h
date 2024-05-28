@@ -108,16 +108,6 @@ public:
             ::glColor4f(rgba.r, rgba.g, rgba.b, rgba.a);
     };
 
-    static void glVertex2fv(const glm::vec2 &pos)
-    {
-        ::glVertex2f(pos.x, pos.y);
-    }
-
-    static void glVertex3fv(const glm::vec3 &pos)
-    {
-        ::glVertex3f(pos.x, pos.y, pos.z);
-    }
-
     static void glTexCoord2fv(const glm::vec2 &coord)
     {
         ::glMultiTexCoord4f(GL_TEXTURE0, coord.s, coord.t, 0, 1);
