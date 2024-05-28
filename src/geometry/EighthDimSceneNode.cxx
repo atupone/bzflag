@@ -73,20 +73,27 @@ EighthDimSceneNode::EighthDimRenderNode::EighthDimRenderNode(
     int numPolys) :
     sceneNode(_sceneNode),
     numPolygons(numPolys)
+    , chunk(Vertex_Chunk::VC, numPolys * 3)
 {
-    color = new glm::vec4[numPolygons];
-    poly = new glm::vec3[numPolygons][3];
+    auto color = new glm::vec4[numPolygons * 3];
+    poly = new glm::vec3[numPolygons * 3];
 
     // make random colors
     const auto low = glm::vec4(0.2f);
     const auto hig = glm::vec4(1.0f, 1.0f, 1.0f, 0.8f);
     for (int i = 0; i < numPolygons; i++)
-        color[i] = glm::linearRand(low, hig);
+    {
+        auto col = glm::linearRand(low, hig);
+        color[i * 3]     = col;
+        color[i * 3 + 1] = col;
+        color[i * 3 + 2] = col;
+    }
+    chunk.colorData(color);
+    delete[] color;
 }
 
 EighthDimSceneNode::EighthDimRenderNode::~EighthDimRenderNode()
 {
-    delete[] color;
     delete[] poly;
 }
 
@@ -98,24 +105,16 @@ const glm::vec3 &EighthDimSceneNode::EighthDimRenderNode::getPosition() const
 void            EighthDimSceneNode::EighthDimRenderNode::render()
 {
     // draw polygons
-    glBegin(GL_TRIANGLES);
-    for (int i = 0; i < numPolygons; i++)
-    {
-        myColor4fv(color[i]);
-        glVertex3fv(poly[i][0]);
-        glVertex3fv(poly[i][2]);
-        glVertex3fv(poly[i][1]);
-    }
-    glEnd();
+    chunk.draw(GL_TRIANGLES, colorOverride);
 }
 
 void EighthDimSceneNode::EighthDimRenderNode::setPolygon(
     int index, const glm::vec3 vertex[3])
 {
-    auto &dest = poly[index];
-    dest[0] = vertex[0];
-    dest[1] = vertex[1];
-    dest[2] = vertex[2];
+    poly[index * 3]     = vertex[0];
+    poly[index * 3 + 1] = vertex[2];
+    poly[index * 3 + 2] = vertex[1];
+    chunk.vertexData(poly);
 }
 
 // Local Variables: ***
