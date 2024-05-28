@@ -104,10 +104,15 @@ EighthDBaseSceneNode::EighthDBaseRenderNode::EighthDBaseRenderNode(
     const glm::vec3 &size,
     float rotation) :
     sceneNode(_sceneNode)
+    , chunk1(Vertex_Chunk::V, 4)
+    , chunk2(Vertex_Chunk::V, 4)
+    , chunk3(Vertex_Chunk::V, 8)
 {
     // get rotation stuff
     const float c = cosf(rotation);
     const float s = sinf(rotation);
+
+    glm::vec3 corner[8];
 
     // compute corners
     corner[0][0] = corner[4][0] = pos[0] + c * size[0] - s * size[1];
@@ -120,6 +125,20 @@ EighthDBaseSceneNode::EighthDBaseRenderNode::EighthDBaseRenderNode(
     corner[3][1] = corner[7][1] = pos[1] + s * size[0] - c * size[1];
     corner[0][2] = corner[1][2] = corner[2][2] = corner[3][2] = pos[2];
     corner[4][2] = corner[5][2] = corner[6][2] = corner[7][2] = pos[2] + size[2];
+
+    chunk1.vertexData(&corner[0]);
+    chunk2.vertexData(&corner[4]);
+
+    glm::vec3 v[8];
+    v[0] = corner[0];
+    v[1] = corner[4];
+    v[2] = corner[1];
+    v[3] = corner[5];
+    v[4] = corner[2];
+    v[5] = corner[6];
+    v[6] = corner[3];
+    v[7] = corner[7];
+    chunk3.vertexData(v);
 }
 
 EighthDBaseSceneNode::EighthDBaseRenderNode::~EighthDBaseRenderNode()
@@ -135,28 +154,9 @@ const glm::vec3 &EighthDBaseSceneNode::EighthDBaseRenderNode::getPosition() cons
 void EighthDBaseSceneNode::EighthDBaseRenderNode::render()
 {
     myColor3f(1.0f, 1.0f, 1.0f);
-    glBegin(GL_LINE_LOOP);
-    glVertex3fv(corner[0]);
-    glVertex3fv(corner[1]);
-    glVertex3fv(corner[2]);
-    glVertex3fv(corner[3]);
-    glEnd();
-    glBegin(GL_LINE_LOOP);
-    glVertex3fv(corner[4]);
-    glVertex3fv(corner[5]);
-    glVertex3fv(corner[6]);
-    glVertex3fv(corner[7]);
-    glEnd();
-    glBegin(GL_LINES);
-    glVertex3fv(corner[0]);
-    glVertex3fv(corner[4]);
-    glVertex3fv(corner[1]);
-    glVertex3fv(corner[5]);
-    glVertex3fv(corner[2]);
-    glVertex3fv(corner[6]);
-    glVertex3fv(corner[3]);
-    glVertex3fv(corner[7]);
-    glEnd();
+    chunk1.draw(GL_LINE_LOOP);
+    chunk2.draw(GL_LINE_LOOP);
+    chunk3.draw(GL_LINES);
 }
 
 // Local Variables: ***

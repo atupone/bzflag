@@ -119,10 +119,14 @@ EighthDPyrSceneNode::EighthDPyrRenderNode::EighthDPyrRenderNode(
     const glm::vec3 &size,
     float rotation) :
     sceneNode(_sceneNode)
+    , chunk1(Vertex_Chunk::V, 4)
+    , chunk2(Vertex_Chunk::V, 8)
 {
     // get rotation stuff
     const float c = cosf(rotation);
     const float s = sinf(rotation);
+
+    glm::vec3 corner[5];
 
     // compute corners
     corner[0][0] = pos[0] + c * size[0] - s * size[1];
@@ -137,6 +141,19 @@ EighthDPyrSceneNode::EighthDPyrRenderNode::EighthDPyrRenderNode(
     corner[4][0] = pos[0];
     corner[4][1] = pos[1];
     corner[4][2] = pos[2] + size[2];
+
+    chunk1.vertexData(corner);
+
+    glm::vec3 v[8];
+    v[0] = corner[0];
+    v[1] = corner[4];
+    v[2] = corner[1];
+    v[3] = corner[4];
+    v[4] = corner[2];
+    v[5] = corner[4];
+    v[6] = corner[3];
+    v[7] = corner[4];
+    chunk2.vertexData(v);
 }
 
 EighthDPyrSceneNode::EighthDPyrRenderNode::~EighthDPyrRenderNode()
@@ -152,22 +169,8 @@ const glm::vec3 &EighthDPyrSceneNode::EighthDPyrRenderNode::getPosition() const
 void            EighthDPyrSceneNode::EighthDPyrRenderNode::render()
 {
     myColor3f(1.0f, 1.0f, 1.0f);
-    glBegin(GL_LINE_LOOP);
-    glVertex3fv(corner[0]);
-    glVertex3fv(corner[1]);
-    glVertex3fv(corner[2]);
-    glVertex3fv(corner[3]);
-    glEnd();
-    glBegin(GL_LINES);
-    glVertex3fv(corner[0]);
-    glVertex3fv(corner[4]);
-    glVertex3fv(corner[1]);
-    glVertex3fv(corner[4]);
-    glVertex3fv(corner[2]);
-    glVertex3fv(corner[4]);
-    glVertex3fv(corner[3]);
-    glVertex3fv(corner[4]);
-    glEnd();
+    chunk1.draw(GL_LINE_LOOP);
+    chunk2.draw(GL_LINES);
 }
 
 // Local Variables: ***
