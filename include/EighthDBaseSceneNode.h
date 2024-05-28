@@ -21,6 +21,9 @@
 // Inherit from
 #include "EighthDimSceneNode.h"
 
+// Common headers
+#include "Vertex_Chunk.h"
+
 class EighthDBaseSceneNode : public EighthDimSceneNode
 {
 public:
@@ -42,7 +45,9 @@ protected:
         const glm::vec3 &getPosition() const override;
     private:
         const EighthDBaseSceneNode *sceneNode;
-        glm::vec3 corner[8];
+        Vertex_Chunk chunk1;
+        Vertex_Chunk chunk2;
+        Vertex_Chunk chunk3;
     };
 private:
     OpenGLGState      gstate;
