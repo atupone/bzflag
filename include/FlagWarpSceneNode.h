@@ -24,6 +24,9 @@
 // System headers
 #include <glm/vec3.hpp>
 
+// Common headers
+#include "Vertex_Chunk.h"
+
 class FlagWarpSceneNode : public SceneNode
 {
 public:
@@ -48,6 +51,7 @@ protected:
         const glm::vec3 &getPosition() const override;
     private:
         const FlagWarpSceneNode* sceneNode;
+        static Vertex_Chunk warp;
         static glm::vec3 ring[12];
     };
     friend class FlagWarpRenderNode;
@@ -56,7 +60,7 @@ private:
     GLfloat     size;
     OpenGLGState    gstate;
     FlagWarpRenderNode  renderNode;
-    static const glm::vec3 color[7];
+    static const glm::vec4 color[7];
 };
 
 #endif // BZF_FLAG_WARP_SCENE_NODE_H
