@@ -32,16 +32,15 @@
 #include "SceneRenderer.h"
 
 const float     FlagWarpSize =  7.5;        // meters
-const GLfloat       FlagWarpAlpha = 0.5f;
-const glm::vec3 FlagWarpSceneNode::color[7] =
+const glm::vec4 FlagWarpSceneNode::color[7] =
 {
-    { 0.25, 1.0, 0.25 },
-    { 0.25, 0.25, 1.0 },
-    { 1.0, 0.0, 1.0 },
-    { 1.0, 0.25, 0.25 },
-    { 1.0, 0.5, 0.0 },
-    { 1.0, 1.0, 0.0 },
-    { 1.0, 1.0, 1.0 }
+    { 0.25, 1.0,  0.25, 0.5f },
+    { 0.25, 0.25, 1.0,  0.5f },
+    { 1.0,  0.0,  1.0,  0.5f },
+    { 1.0,  0.25, 0.25, 0.5f },
+    { 1.0,  0.5,  0.0,  0.5f },
+    { 1.0,  1.0,  0.0,  0.5f },
+    { 1.0,  1.0,  1.0,  0.5f }
 };
 
 FlagWarpSceneNode::FlagWarpSceneNode(const glm::vec3 &pos) :
@@ -98,6 +97,7 @@ void            FlagWarpSceneNode::addRenderNodes(
 //
 
 glm::vec3 FlagWarpSceneNode::FlagWarpRenderNode::ring[12];
+Vertex_Chunk FlagWarpSceneNode::FlagWarpRenderNode::warp;
 
 FlagWarpSceneNode::FlagWarpRenderNode::FlagWarpRenderNode(
     const FlagWarpSceneNode* _sceneNode) :
@@ -113,6 +113,7 @@ FlagWarpSceneNode::FlagWarpRenderNode::FlagWarpRenderNode(
             ring[i][1] = sinf((float)(2.0 * M_PI * double(i) / 12.0));
             ring[i][2] = 0.0f;
         }
+        warp = Vertex_Chunk(Vertex_Chunk::V, 14);
     }
 }
 
@@ -137,58 +138,60 @@ void            FlagWarpSceneNode::FlagWarpRenderNode::render()
     glPushMatrix();
     glTranslate(sphere);
 
+    float shft;
+
+    glm::vec3 v[14];
+    v[0] = glm::vec3(0.0f);
+    v[1] = geom[0];
     if (sphere[2] > RENDERER.getViewFrustum().getEye()[2])
     {
-        for (int i = 0; i < 7; i++)
-        {
-            GLfloat s = sceneNode->size - 0.05f * float(i);
-            if (s < 0.0f) break;
-            myColor4f(color[i][0], color[i][1], color[i][2], FlagWarpAlpha);
-            glBegin(GL_TRIANGLE_FAN);
-            glVertex(glm::vec3(0.0f));
-            glVertex(s * geom[0]);
-            glVertex(s * geom[11]);
-            glVertex(s * geom[10]);
-            glVertex(s * geom[9]);
-            glVertex(s * geom[8]);
-            glVertex(s * geom[7]);
-            glVertex(s * geom[6]);
-            glVertex(s * geom[5]);
-            glVertex(s * geom[4]);
-            glVertex(s * geom[3]);
-            glVertex(s * geom[2]);
-            glVertex(s * geom[1]);
-            glVertex(s * geom[0]);
-            glEnd(); // 14 verts -> 12 tris
-            addTriangleCount(12);
-            glTranslatef(0.0f, 0.0f, -0.01f);
-        }
+        shft = -0.01f;
+        v[2]  = geom[11];
+        v[3]  = geom[10];
+        v[4]  = geom[9];
+        v[5]  = geom[8];
+        v[6]  = geom[7];
+        v[7]  = geom[6];
+        v[8]  = geom[5];
+        v[9]  = geom[4];
+        v[10] = geom[3];
+        v[11] = geom[2];
+        v[12] = geom[1];
     }
     else
     {
+        shft = 0.01f;
+        v[2]  = geom[1];
+        v[3]  = geom[2];
+        v[4]  = geom[3];
+        v[5]  = geom[4];
+        v[6]  = geom[5];
+        v[7]  = geom[6];
+        v[8]  = geom[7];
+        v[9]  = geom[8];
+        v[10] = geom[9];
+        v[11] = geom[10];
+        v[12] = geom[11];
+    }
+    v[13] = geom[0];
+    warp.vertexData(v);
+
+    {
+        float s    = sceneNode->size;
+        float oldS = 1.0f;
         for (int i = 0; i < 7; i++)
         {
-            GLfloat s = sceneNode->size - 0.05f * float(i);
             if (s < 0.0f) break;
-            myColor4f(color[i][0], color[i][1], color[i][2], FlagWarpAlpha);
-            glBegin(GL_TRIANGLE_FAN);
-            glVertex(glm::vec3(0.0f));
-            glVertex(s * geom[0]);
-            glVertex(s * geom[1]);
-            glVertex(s * geom[2]);
-            glVertex(s * geom[3]);
-            glVertex(s * geom[4]);
-            glVertex(s * geom[5]);
-            glVertex(s * geom[6]);
-            glVertex(s * geom[7]);
-            glVertex(s * geom[8]);
-            glVertex(s * geom[9]);
-            glVertex(s * geom[10]);
-            glVertex(s * geom[11]);
-            glVertex(s * geom[0]);
-            glEnd(); // 14 verts -> 12 tris
+            if (!colorOverride)
+                glColor(color[i]);
+            float ratio = s / oldS;
+            glScalef(ratio, ratio, ratio);
+            warp.draw(GL_TRIANGLE_FAN);
+            // 14 verts -> 12 tris
             addTriangleCount(12);
-            glTranslatef(0.0f, 0.0f, 0.01f);
+            glTranslatef(0.0f, 0.0f, shft / s);
+            oldS = s;
+            s   -= 0.05f;
         }
     }
 
