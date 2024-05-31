@@ -168,6 +168,9 @@ private:
     void      coverWhenBurrowed(const LocalPlayer &myTank);
     glm::vec2 getMarkerCoordinate(const glm::vec3 &pos,
                                   const glm::vec2 &viewPos);
+    void      buildCrackVBO();
+    void      buildLockOnVBO();
+    void      buildCrackVBO(int maxLevels);
 
     void      resize(bool firstTime);
     static void   resizeCallback(void*);
@@ -281,6 +284,12 @@ private:
     unsigned int      lastTimeChange;
     int           triangleCount;
     int           radarTriangleCount;
+    int           currentCrackLevel;
+    Vertex_Chunk  line1;
+    Vertex_Chunk  circle1;
+    Vertex_Chunk  crackVBO;
+    Vertex_Chunk  leftLockOn;
+    Vertex_Chunk  rightLockOn;
 };
 
 
