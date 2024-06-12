@@ -27,6 +27,7 @@
 #include "TimeKeeper.h"
 #include "HUDuiTypeIn.h"
 #include "Flag.h"
+#include "Vertex_Chunk.h"
 
 /* local interface headers */
 #include "FlashClock.h"
@@ -181,6 +182,15 @@ private:
     glm::vec3     hudColor;
     glm::vec3     messageColor;
     glm::vec3     warningColor;
+
+    Vertex_Chunk  lineM5Y;
+    Vertex_Chunk  lineP4Y;
+    Vertex_Chunk  lineP8Y;
+    Vertex_Chunk  lineM5X;
+    Vertex_Chunk  lineP8X;
+    Vertex_Chunk  diamond;
+    Vertex_Chunk  leftTri;
+    Vertex_Chunk  rightTr;
 
     int       bigFontFace;
     float     bigFontSize;

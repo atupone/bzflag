@@ -24,6 +24,7 @@
 #include "BZDBCache.h"
 #include "OpenGLAPI.h"
 #include "Vertex_Chunk.h"
+#include "VBO_Geometry.h"
 
 // local implementation headers
 #include "ViewFrustum.h"
@@ -426,17 +427,16 @@ void            FlagSceneNode::FlagRenderNode::render(bool shadow)
         }
         else
         {
+            static float oldBase = -1.0f;
+            static Vertex_Chunk notWaving;
+            if (oldBase != base)
+            {
+                oldBase = base;
+                notWaving = Simple2D::buildTexRectXZ(Width, base, Height);
+            }
+
             // Not wawing flag
-            glBegin(GL_TRIANGLE_STRIP);
-            glTexCoord2f(0.0f, 0.0f);
-            glVertex3f(0.0f, 0.0f, base);
-            glTexCoord2f(1.0f, 0.0f);
-            glVertex3f(Width, 0.0f, base);
-            glTexCoord2f(0.0f, 1.0f);
-            glVertex3f(0.0f, 0.0f, topHeight);
-            glTexCoord2f(1.0f, 1.0f);
-            glVertex3f(Width, 0.0f, topHeight);
-            glEnd();
+            notWaving.draw(GL_TRIANGLE_STRIP);
             addTriangleCount(2);
         }
 
