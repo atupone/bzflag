@@ -25,6 +25,7 @@
 #include "FontManager.h"
 #include "BZDBCache.h"
 #include "OpenGLAPI.h"
+#include "VBO_Geometry.h"
 
 /* local implementation headers */
 #include "LocalPlayer.h"
@@ -99,6 +100,20 @@ HUDRenderer::HUDRenderer(const BzfDisplay* _display,
         for (i = 0; i < 36; i++)
             headingLabel[i] = TextUtils::format("%d", i * 10);
     }
+
+    lineM5Y = Simple2D::buildLine(glm::vec3( 0.0f,  0.0f, 0.0f),
+                                  glm::vec3( 0.0f, -5.0f, 0.0f));
+    lineP4Y = Simple2D::buildLine(glm::vec3( 0.0f,  0.0f, 0.0f),
+                                  glm::vec3( 0.0f,  4.0f, 0.0f));
+    lineP8Y = Simple2D::buildLine(glm::vec3( 0.0f,  0.0f, 0.0f),
+                                  glm::vec3( 0.0f,  8.0f, 0.0f));
+    lineM5X = Simple2D::buildLine(glm::vec3( 0.0f,  0.0f, 0.0f),
+                                  glm::vec3(-5.0f,  0.0f, 0.0f));
+    lineP8X = Simple2D::buildLine(glm::vec3( 0.0f,  0.0f, 0.0f),
+                                  glm::vec3( 8.0f,  0.0f, 0.0f));
+    diamond = Simple2D::buildXYDiamond(glm::vec3(0.0f, 4.0f, 0.0f), 4);
+    leftTri = Simple2D::buildLeftTriangle(glm::vec3(0.0f, 4.0f, 0.0f), 4);
+    rightTr = Simple2D::buildRightTriangle(glm::vec3(0.0f, 4.0f, 0.0f), 4);
 
     // initialize clocks
     globalClock.setClock(-1.0f, 0.8f, 0.4f);
@@ -1395,10 +1410,10 @@ void            HUDRenderer::renderBox(SceneRenderer&)
                   2 * maxMotionSize, 25 + (int)(headingFontSize + 0.5f));
 
         // draw heading mark
-        glBegin(GL_LINES);
-        glVertex2i(centerx, centery + maxMotionSize);
-        glVertex2i(centerx, centery + maxMotionSize - 5);
-        glEnd();
+        glPushMatrix();
+        glTranslatef((float)centerx, (float)(centery + maxMotionSize), 0.0f);
+        lineM5Y.draw(GL_LINES);
+        glPopMatrix();
 
         // figure out which marker is closest to center
         int baseMark = int(heading) / 10;
@@ -1417,19 +1432,17 @@ void            HUDRenderer::renderBox(SceneRenderer&)
         GLfloat basex = maxMotionSize * (heading - 10.0f * float(minMark)) /
                         headingOffset;
         if (!smooth) basex = floorf(basex);
-        glTranslatef((float)centerx - basex, (float)(centery + maxMotionSize), 0.0f);
         x = smooth ? 0.0f : -0.5f;
-        glBegin(GL_LINES);
+        glTranslatef((float)centerx - basex + x,
+                     (float)(centery + maxMotionSize),
+                     0.0f);
         for (i = minMark; i <= maxMark; i++)
         {
-            glVertex2i((int)x, 0);
-            glVertex2i((int)x, 8);
-            x += headingMarkSpacing;
-            glVertex2i((int)x, 0);
-            glVertex2i((int)x, 4);
-            x += headingMarkSpacing;
+            lineP8Y.draw(GL_LINES);
+            glTranslatef(headingMarkSpacing, 0.0f, 0.0f);
+            lineP4Y.draw(GL_LINES);
+            glTranslatef(headingMarkSpacing, 0.0f, 0.0f);
         }
-        glEnd();
 
         // back to our regular rendering mode
         if (smooth)
@@ -1482,30 +1495,20 @@ void            HUDRenderer::renderBox(SceneRenderer&)
                 // on the visible part of tape
                 GLfloat mx = maxMotionSize / headingOffset *
                              ((relAngle < 180.0f) ? relAngle : relAngle - 360.0f);
-                glBegin(GL_TRIANGLE_STRIP);
-                glVertex2f(mx, 0.0f);
-                glVertex2f(mx + 4.0f, 4.0f);
-                glVertex2f(mx - 4.0f, 4.0f);
-                glVertex2f(mx, 8.0f);
-                glEnd();
+                glTranslatef(mx, 0.0f, 0.0f);
+                diamond.draw(GL_TRIANGLE_STRIP);
             }
             else if (relAngle <= 180.0)
             {
                 // off to the right
-                glBegin(GL_TRIANGLES);
-                glVertex2f((float)maxMotionSize, 0.0f);
-                glVertex2f((float)maxMotionSize + 4.0f, 4.0f);
-                glVertex2f((float)maxMotionSize, 8.0f);
-                glEnd();
+                glTranslatef((float)maxMotionSize, 0.0f, 0.0f);
+                rightTr.draw(GL_TRIANGLES);
             }
             else
             {
                 // off to the left
-                glBegin(GL_TRIANGLES);
-                glVertex2f(-(float)maxMotionSize, 0.0f);
-                glVertex2f(-(float)maxMotionSize, 8.0f);
-                glVertex2f(-(float)maxMotionSize - 4.0f, 4.0f);
-                glEnd();
+                glTranslatef(-(float)maxMotionSize, 0.0f, 0.0f);
+                leftTri.draw(GL_TRIANGLES);
             }
         }
         markers.clear();
@@ -1521,10 +1524,10 @@ void            HUDRenderer::renderBox(SceneRenderer&)
 
         // draw altitude mark
         hudColor3Afv(hudColor, 1.0f);
-        glBegin(GL_LINES);
-        glVertex2i(centerx + maxMotionSize, centery);
-        glVertex2i(centerx + maxMotionSize - 5, centery);
-        glEnd();
+        glPushMatrix();
+        glTranslatef((float)(centerx + maxMotionSize), (float)centery, 0.0f);
+        lineM5X.draw(GL_LINES);
+        glPopMatrix();
 
         // figure out which marker is closest to center
         int baseMark = int(altitude) / 5;
@@ -1547,17 +1550,14 @@ void            HUDRenderer::renderBox(SceneRenderer&)
         GLfloat basey = maxMotionSize * (altitude - 5.0f * float(minMark)) /
                         altitudeOffset;
         if (!smooth) basey = floorf(basey);
-        glTranslatef((float)(centerx + maxMotionSize),
-                     (float)centery - basey, 0.0f);
         y = smooth ? 0.0f : -0.5f;
-        glBegin(GL_LINES);
+        glTranslatef((float)(centerx + maxMotionSize),
+                     (float)centery - basey + y, 0.0f);
         for (i = minMark; i <= maxMark; i++)
         {
-            glVertex2i(0, (int)y);
-            glVertex2i(8, (int)y);
-            y += altitudeMarkSpacing;
+            lineP8X.draw(GL_LINES);
+            glTranslatef(0.0f, altitudeMarkSpacing, 0.0f);
         }
-        glEnd();
 
         // back to our regular rendering mode
         if (smooth)
