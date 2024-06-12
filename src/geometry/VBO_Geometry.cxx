@@ -173,6 +173,79 @@ Vertex_Chunk Quadric::buildSphere(float radius, int slices)
     return vboChunk;
 }
 
+Vertex_Chunk Simple2D::buildLine(const glm::vec3 &start, const glm::vec3 &end)
+{
+    glm::vec3 v[2];
+    v[0] = start;
+    v[1] = end;
+
+    Vertex_Chunk vboChunk = Vertex_Chunk(Vertex_Chunk::V, 2);
+    vboChunk.vertexData(v);
+
+    return vboChunk;
+}
+
+Vertex_Chunk Simple2D::buildXYDiamond(glm::vec3 offset, float dim)
+{
+    glm::vec3 v[4];
+    v[0] = glm::vec3( 0.0f, -1.0f, 0.0f) * dim + offset;
+    v[1] = glm::vec3( 1.0f,  0.0f, 0.0f) * dim + offset;
+    v[2] = glm::vec3(-1.0f,  0.0f, 0.0f) * dim + offset;
+    v[3] = glm::vec3( 0.0f,  1.0f, 0.0f) * dim + offset;
+    Vertex_Chunk vboChunk = Vertex_Chunk(Vertex_Chunk::V, 4);
+    vboChunk.vertexData(v);
+
+    return vboChunk;
+}
+
+Vertex_Chunk Simple2D::buildLeftTriangle(glm::vec3 offset, float dim)
+{
+    glm::vec3 v[3];
+    v[1] = glm::vec3( 0.0f,  1.0f, 0.0f) * dim + offset;
+    v[2] = glm::vec3(-1.0f,  0.0f, 0.0f) * dim + offset;
+    v[0] = glm::vec3( 0.0f, -1.0f, 0.0f) * dim + offset;
+
+    Vertex_Chunk vboChunk = Vertex_Chunk(Vertex_Chunk::V, 3);
+    vboChunk.vertexData(v);
+
+    return vboChunk;
+}
+
+Vertex_Chunk Simple2D::buildRightTriangle(glm::vec3 offset, float dim)
+{
+    glm::vec3 v[3];
+    v[0] = glm::vec3( 0.0f, -1.0f, 0.0f) * dim + offset;
+    v[1] = glm::vec3( 1.0f,  0.0f, 0.0f) * dim + offset;
+    v[2] = glm::vec3( 0.0f,  1.0f, 0.0f) * dim + offset;
+    Vertex_Chunk vboChunk = Vertex_Chunk(Vertex_Chunk::V, 3);
+    vboChunk.vertexData(v);
+
+    return vboChunk;
+}
+
+Vertex_Chunk Simple2D::buildTexRectXZ(float width, float base, float height)
+{
+    glm::vec2 t[4];
+    glm::vec3 v[4];
+
+    t[0] = glm::vec2(0.0f,  0.0f);
+    v[0] = glm::vec3(0.0f,  0.0f, base);
+    t[1] = glm::vec2(1.0f,  0.0f);
+    v[1] = glm::vec3(width, 0.0f, base);
+    t[2] = glm::vec2(0.0f,  1.0f);
+    v[2] = glm::vec3(0.0f,  0.0f, base + height);
+    t[3] = glm::vec2(1.0f,  1.0f);
+    v[3] = glm::vec3(width, 0.0f, base + height);
+
+    Vertex_Chunk vboChunk = Vertex_Chunk(Vertex_Chunk::VT, 4);
+    vboChunk.vertexData(v);
+    vboChunk.textureData(t);
+
+    return vboChunk;
+}
+
+
+
 // Local Variables: ***
 // mode: C++ ***
 // tab-width: 4 ***
