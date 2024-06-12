@@ -29,6 +29,19 @@ private:
                               std::vector<glm::vec3> &normal);
 };
 
+class Simple2D
+{
+public:
+    static Vertex_Chunk buildLine(const glm::vec3 &start,
+                                  const glm::vec3 &end);
+    static Vertex_Chunk buildXYDiamond(glm::vec3 offset, float dim);
+    static Vertex_Chunk buildLeftTriangle(glm::vec3 offset, float dim);
+    static Vertex_Chunk buildRightTriangle(glm::vec3 offset, float dim);
+    static Vertex_Chunk buildTexRectXZ(float width,
+                                       float base,
+                                       float height);
+};
+
 
 // Local Variables: ***
 // mode: C++ ***
