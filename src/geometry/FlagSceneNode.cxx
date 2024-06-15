@@ -449,34 +449,43 @@ void            FlagSceneNode::FlagRenderNode::render(bool shadow)
         if (doing_texturing)
             glDisable(GL_TEXTURE_2D);
 
+        static float oldTopHeigth = -1.0f;
+        static float oldPoleWidth = -1.0f;
+        static Vertex_Chunk pole3D(Vertex_Chunk::V, 10);
+        static Vertex_Chunk pole2D(Vertex_Chunk::V, 4);
+
+        if ((oldTopHeigth != topHeight) || (oldPoleWidth != poleWidth))
+        {
+            glm::vec3 v[10];
+            v[0] = glm::vec3(-poleWidth,  0.0f,      0.0f);
+            v[1] = glm::vec3(-poleWidth,  0.0f,      topHeight);
+            v[2] = glm::vec3( 0.0f,      -poleWidth, 0.0f);
+            v[3] = glm::vec3( 0.0f,      -poleWidth, topHeight);
+            v[4] = glm::vec3( poleWidth,  0.0f,      0.0f);
+            v[5] = glm::vec3( poleWidth,  0.0f,      topHeight);
+            v[6] = glm::vec3( 0.0f,       poleWidth, 0.0f);
+            v[7] = glm::vec3( 0.0f,       poleWidth, topHeight);
+            v[8] = glm::vec3(-poleWidth,  0.0f,      0.0f);
+            v[9] = glm::vec3(-poleWidth,  0.0f,      topHeight);
+            pole3D.vertexData(v);
+
+            v[0] = glm::vec3(-poleWidth, 0.0f, 0.0f);
+            v[1] = glm::vec3( poleWidth, 0.0f, 0.0f);
+            v[2] = glm::vec3(-poleWidth, 0.0f, topHeight);
+            v[3] = glm::vec3( poleWidth, 0.0f, topHeight);
+            pole2D.vertexData(v);
+
+            oldTopHeigth = topHeight;
+            oldPoleWidth = poleWidth;
+        }
         if (is_billboard && realFlag)
         {
-            glBegin(GL_TRIANGLE_STRIP);
-            {
-                glVertex3f(-poleWidth, 0.0f, 0.0f);
-                glVertex3f(-poleWidth, 0.0f, topHeight);
-                glVertex3f(0.0f, -poleWidth, 0.0f);
-                glVertex3f(0.0f, -poleWidth, topHeight);
-                glVertex3f(+poleWidth, 0.0f, 0.0f);
-                glVertex3f(+poleWidth, 0.0f, topHeight);
-                glVertex3f(0.0f, +poleWidth, 0.0f);
-                glVertex3f(0.0f, +poleWidth, topHeight);
-                glVertex3f(-poleWidth, 0.0f, 0.0f);
-                glVertex3f(-poleWidth, 0.0f, topHeight);
-            }
-            glEnd();
+            pole3D.draw(GL_TRIANGLE_STRIP);
             addTriangleCount(8);
         }
         else
         {
-            glBegin(GL_TRIANGLE_STRIP);
-            {
-                glVertex3f(-poleWidth, 0.0f, 0.0f);
-                glVertex3f(+poleWidth, 0.0f, 0.0f);
-                glVertex3f(-poleWidth, 0.0f, topHeight);
-                glVertex3f(+poleWidth, 0.0f, topHeight);
-            }
-            glEnd();
+            pole2D.draw(GL_TRIANGLE_STRIP);
             addTriangleCount(2);
         }
 
