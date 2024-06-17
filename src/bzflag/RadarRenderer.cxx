@@ -43,29 +43,32 @@ static bool toggleTank = false;
 const float RadarRenderer::colorFactor = 40.0f;
 
 RadarRenderer::RadarRenderer(const SceneRenderer&, World* _world)
-    : world(_world),
-      x(0),
-      y(0),
-      w(0),
-      h(0),
-      dimming(0.0f),
-      ps(),
-      range(),
-      decay(0.01f),
-      smooth(false),
-      jammed(false),
-      useTankModels(false),
-      triangleCount()
+    :
+    x(0),
+    y(0),
+    w(0),
+    h(0),
+    dimming(0.0f),
+    ps(),
+    range(),
+    decay(0.01f),
+    smooth(false),
+    jammed(false),
+    useTankModels(false),
+    triangleCount()
 {
 
     setControlColor();
+    setWorld(_world);
 }
 
 void RadarRenderer::setWorld(World* _world)
 {
     world = _world;
+    buildBoxPyrMeshVBO();
+    buildWallsVBO();
+    buildBasesAndTelesVBO();
 }
-
 
 void RadarRenderer::setControlColor(const glm::vec3 &color)
 {
@@ -799,12 +802,16 @@ void RadarRenderer::renderObstacles(bool fastRadar, float _range)
 }
 
 
-void RadarRenderer::renderWalls()
+void RadarRenderer::buildWallsVBO()
 {
+    if (world == nullptr)
+    {
+        wallsVBO = Vertex_Chunk();
+        return;
+    }
+    std::vector<glm::vec3> vertex;
     const ObstacleList& walls = OBSTACLEMGR.getWalls();
     int count = walls.size();
-    glColor3f(0.25f, 0.5f, 0.5f);
-    glBegin(GL_LINES);
     for (int i = 0; i < count; i++)
     {
         const WallObstacle& wall = *((const WallObstacle*) walls[i]);
@@ -812,10 +819,20 @@ void RadarRenderer::renderWalls()
         const float c   = wid * cosf(wall.getRotation());
         const float s   = wid * sinf(wall.getRotation());
         const auto &pos = wall.getPosition();
-        glVertex2f(pos[0] - s, pos[1] + c);
-        glVertex2f(pos[0] + s, pos[1] - c);
+        vertex.push_back(glm::vec3(pos.x - s, pos.y + c, 0.0f));
+        vertex.push_back(glm::vec3(pos.x + s, pos.y - c, 0.0f));
     }
-    glEnd();
+    wallsVBO = Vertex_Chunk(Vertex_Chunk::V, vertex.size());
+    wallsVBO.vertexData(vertex);
+
+    return;
+}
+
+
+void RadarRenderer::renderWalls()
+{
+    glColor3f(0.25f, 0.5f, 0.5f);
+    wallsVBO.draw(GL_LINES);
 
     return;
 }
@@ -907,6 +924,104 @@ void RadarRenderer::renderBoxPyrMeshFast(float _range)
 }
 
 
+void RadarRenderer::buildBoxPyrMeshVBO()
+{
+    if (world == nullptr)
+    {
+        meshVBO.clear();
+        boxVBO.clear();
+        pyrVBO.clear();
+        boxOutlVBO.clear();
+        pyrOutlVBO.clear();
+        return;
+    }
+
+
+    int i;
+
+    const ObstacleList& meshes = OBSTACLEMGR.getMeshes();
+    int count = meshes.size();
+    meshVBO.resize(count);
+
+    for (i = 0; i < count; i++)
+    {
+        const MeshObstacle* mesh = (const MeshObstacle*) meshes[i];
+        int faces = mesh->getFaceCount();
+        meshVBO[i].resize(faces);
+
+        for (int f = 0; f < faces; f++)
+        {
+            const MeshFace* face = mesh->getFace(f);
+
+            // draw the face as a triangle fan
+            int vertexCount = face->getVertexCount();
+
+            std::vector<glm::vec3> vertex;
+            for (int v = 0; v < vertexCount; v++)
+            {
+                const auto pos = face->getVertex(v);
+                vertex.push_back(glm::vec3(pos.x, pos.y, 0.0f));
+            }
+            meshVBO[i][f] = Vertex_Chunk(Vertex_Chunk::V, vertexCount);
+            meshVBO[i][f].vertexData(vertex);
+        }
+    }
+
+    // draw box buildings.
+    const ObstacleList& boxes = OBSTACLEMGR.getBoxes();
+    count = boxes.size();
+    boxVBO.resize(count);
+    boxOutlVBO.resize(count);
+    for (i = 0; i < count; i++)
+    {
+        const BoxBuilding& box = *((const BoxBuilding*) boxes[i]);
+        if (box.isInvisible())
+            continue;
+        const float c = cosf(box.getRotation());
+        const float s = sinf(box.getRotation());
+        const float wx = c * box.getWidth(), wy = s * box.getWidth();
+        const float hx = -s * box.getBreadth(), hy = c * box.getBreadth();
+        const auto &pos = box.getPosition();
+        glm::vec3 v[4];
+        v[0] = glm::vec3(pos[0] - wx - hx, pos[1] - wy - hy, 0.0f);
+        v[1] = glm::vec3(pos[0] + wx - hx, pos[1] + wy - hy, 0.0f);
+        v[2] = glm::vec3(pos[0] - wx + hx, pos[1] - wy + hy, 0.0f);
+        v[3] = glm::vec3(pos[0] + wx + hx, pos[1] + wy + hy, 0.0f);
+        boxVBO[i] = Vertex_Chunk(Vertex_Chunk::V, 4);
+        boxVBO[i].vertexData(v);
+        v[2] = glm::vec3(pos[0] + wx + hx, pos[1] + wy + hy, 0.0f);
+        v[3] = glm::vec3(pos[0] - wx + hx, pos[1] - wy + hy, 0.0f);
+        boxOutlVBO[i] = Vertex_Chunk(Vertex_Chunk::V, 4);
+        boxOutlVBO[i].vertexData(v);
+    }
+
+    // draw pyramid buildings
+    const ObstacleList& pyramids = OBSTACLEMGR.getPyrs();
+    count = pyramids.size();
+    pyrVBO.resize(count);
+    pyrOutlVBO.resize(count);
+    for (i = 0; i < count; i++)
+    {
+        const PyramidBuilding& pyr = *((const PyramidBuilding*) pyramids[i]);
+        const float c = cosf(pyr.getRotation());
+        const float s = sinf(pyr.getRotation());
+        const float wx = c * pyr.getWidth(), wy = s * pyr.getWidth();
+        const float hx = -s * pyr.getBreadth(), hy = c * pyr.getBreadth();
+        const auto &pos = pyr.getPosition();
+        glm::vec3 v[4];
+        v[0] = glm::vec3(pos[0] - wx - hx, pos[1] - wy - hy, 0.0f);
+        v[1] = glm::vec3(pos[0] + wx - hx, pos[1] + wy - hy, 0.0f);
+        v[2] = glm::vec3(pos[0] - wx + hx, pos[1] - wy + hy, 0.0f);
+        v[3] = glm::vec3(pos[0] + wx + hx, pos[1] + wy + hy, 0.0f);
+        pyrVBO[i] = Vertex_Chunk(Vertex_Chunk::V, 4);
+        pyrVBO[i].vertexData(v);
+        v[2] = glm::vec3(pos[0] + wx + hx, pos[1] + wy + hy, 0.0f);
+        v[3] = glm::vec3(pos[0] - wx + hx, pos[1] - wy + hy, 0.0f);
+        pyrOutlVBO[i] = Vertex_Chunk(Vertex_Chunk::V, 4);
+        pyrOutlVBO[i].vertexData(v);
+    }
+}
+
 void RadarRenderer::renderBoxPyrMesh()
 {
     int i;
@@ -936,23 +1051,11 @@ void RadarRenderer::renderBoxPyrMesh()
     for (i = 0; i < count; i++)
     {
         const BoxBuilding& box = *((const BoxBuilding*) boxes[i]);
-        if (box.isInvisible())
-            continue;
         const float z = box.getPosition()[2];
         const float bh = box.getHeight();
         const float cs = colorScale(z, bh);
         glColor4f(0.25f * cs, 0.5f * cs, 0.5f * cs, transScale(z, bh));
-        const float c = cosf(box.getRotation());
-        const float s = sinf(box.getRotation());
-        const float wx = c * box.getWidth(), wy = s * box.getWidth();
-        const float hx = -s * box.getBreadth(), hy = c * box.getBreadth();
-        const auto &pos = box.getPosition();
-        glBegin(GL_TRIANGLE_STRIP);
-        glVertex2f(pos[0] - wx - hx, pos[1] - wy - hy);
-        glVertex2f(pos[0] + wx - hx, pos[1] + wy - hy);
-        glVertex2f(pos[0] - wx + hx, pos[1] - wy + hy);
-        glVertex2f(pos[0] + wx + hx, pos[1] + wy + hy);
-        glEnd();
+        boxVBO[i].draw(GL_TRIANGLE_STRIP);
     }
 
     // draw pyramid buildings
@@ -965,17 +1068,7 @@ void RadarRenderer::renderBoxPyrMesh()
         const float bh = pyr.getHeight();
         const float cs = colorScale(z, bh);
         glColor4f(0.25f * cs, 0.5f * cs, 0.5f * cs, transScale(z, bh));
-        const float c = cosf(pyr.getRotation());
-        const float s = sinf(pyr.getRotation());
-        const float wx = c * pyr.getWidth(), wy = s * pyr.getWidth();
-        const float hx = -s * pyr.getBreadth(), hy = c * pyr.getBreadth();
-        const auto &pos = pyr.getPosition();
-        glBegin(GL_TRIANGLE_STRIP);
-        glVertex2f(pos[0] - wx - hx, pos[1] - wy - hy);
-        glVertex2f(pos[0] + wx - hx, pos[1] + wy - hy);
-        glVertex2f(pos[0] - wx + hx, pos[1] - wy + hy);
-        glVertex2f(pos[0] + wx + hx, pos[1] + wy + hy);
-        glEnd();
+        pyrVBO[i].draw(GL_TRIANGLE_STRIP);
     }
 
     // draw mesh obstacles
@@ -1018,14 +1111,7 @@ void RadarRenderer::renderBoxPyrMesh()
             else
                 glColor4f(0.25f * cs, 0.5f * cs, 0.5f * cs, transScale(z, bh));
             // draw the face as a triangle fan
-            int vertexCount = face->getVertexCount();
-            glBegin(GL_TRIANGLE_FAN);
-            for (int v = 0; v < vertexCount; v++)
-            {
-                const glm::vec2 pos = face->getVertex(v);
-                glVertex(pos);
-            }
-            glEnd();
+            meshVBO[i][f].draw(GL_TRIANGLE_FAN);
         }
     }
     if (!enhanced)
@@ -1045,23 +1131,11 @@ void RadarRenderer::renderBoxPyrMesh()
         for (i = 0; i < count; i++)
         {
             const BoxBuilding& box = *((const BoxBuilding*) boxes[i]);
-            if (box.isInvisible())
-                continue;
             const float z = box.getPosition()[2];
             const float bh = box.getHeight();
             const float cs = colorScale(z, bh);
             glColor4f(0.25f * cs, 0.5f * cs, 0.5f * cs, transScale(z, bh));
-            const float c = cosf(box.getRotation());
-            const float s = sinf(box.getRotation());
-            const float wx = c * box.getWidth(), wy = s * box.getWidth();
-            const float hx = -s * box.getBreadth(), hy = c * box.getBreadth();
-            const auto &pos = box.getPosition();
-            glBegin(GL_LINE_LOOP);
-            glVertex2f(pos[0] - wx - hx, pos[1] - wy - hy);
-            glVertex2f(pos[0] + wx - hx, pos[1] + wy - hy);
-            glVertex2f(pos[0] + wx + hx, pos[1] + wy + hy);
-            glVertex2f(pos[0] - wx + hx, pos[1] - wy + hy);
-            glEnd();
+            boxOutlVBO[i].draw(GL_LINE_LOOP);
         }
 
         count = pyramids.size();
@@ -1072,17 +1146,102 @@ void RadarRenderer::renderBoxPyrMesh()
             const float bh = pyr.getHeight();
             const float cs = colorScale(z, bh);
             glColor4f(0.25f * cs, 0.5f * cs, 0.5f * cs, transScale(z, bh));
-            const float c = cosf(pyr.getRotation());
-            const float s = sinf(pyr.getRotation());
-            const float wx = c * pyr.getWidth(), wy = s * pyr.getWidth();
-            const float hx = -s * pyr.getBreadth(), hy = c * pyr.getBreadth();
-            const auto &pos = pyr.getPosition();
-            glBegin(GL_LINE_LOOP);
-            glVertex2f(pos[0] - wx - hx, pos[1] - wy - hy);
-            glVertex2f(pos[0] + wx - hx, pos[1] + wy - hy);
-            glVertex2f(pos[0] + wx + hx, pos[1] + wy + hy);
-            glVertex2f(pos[0] - wx + hx, pos[1] - wy + hy);
-            glEnd();
+            pyrOutlVBO[i].draw(GL_LINE_LOOP);
+        }
+    }
+
+    return;
+}
+
+
+void RadarRenderer::buildBasesAndTelesVBO()
+{
+    baseVBO.clear();
+    telesVBO.clear();
+    if (world == nullptr)
+        return;
+
+    int i;
+
+    if (world->allowTeamFlags())
+    {
+        baseVBO.resize(NumTeams);
+        for (i = 1; i < NumTeams; i++)
+        {
+            for (int j = 0;; j++)
+            {
+                glm::vec3 basePos;
+                float rotation;
+                float ww, bb, hh;
+                const bool baseExist = world->getBase(i, j, basePos, rotation,
+                                                      ww, bb, hh);
+                if (!baseExist)
+                    break;
+                const float beta = atan2f(bb, ww);
+                const float r = hypotf(ww, bb);
+                glm::vec3 v[4];
+                v[0] = glm::vec3(basePos.x + r * cosf(rotation + beta),
+                                 basePos.y + r * sinf(rotation + beta),
+                                 0.0f);
+                v[1] = glm::vec3(basePos.x + r * cosf((float)(rotation - beta + M_PI)),
+                                 basePos.y + r * sinf((float)(rotation - beta + M_PI)),
+                                 0.0f);
+                v[2] = glm::vec3(basePos.x + r * cosf((float)(rotation + beta + M_PI)),
+                                 basePos.y + r * sinf((float)(rotation + beta + M_PI)),
+                                 0.0f);
+                v[3] = glm::vec3(basePos.x + r * cosf(rotation - beta),
+                                 basePos.y + r * sinf(rotation - beta),
+                                 0.0f);
+                baseVBO[i].push_back(Vertex_Chunk(Vertex_Chunk::V, 4));
+                baseVBO[i][j].vertexData(v);
+            }
+        }
+    }
+
+    const ObstacleList& teleporters = OBSTACLEMGR.getTeles();
+    int count = teleporters.size();
+    telesVBO.resize(count);
+    for (i = 0; i < count; i++)
+    {
+        const Teleporter & tele = *((const Teleporter *) teleporters[i]);
+        if (tele.isHorizontal ())
+        {
+            glm::vec3 v[10];
+            const float c = cosf (tele.getRotation ());
+            const float s = sinf (tele.getRotation ());
+            const float wx = c * tele.getWidth (), wy = s * tele.getWidth ();
+            const float hx = -s * tele.getBreadth (), hy = c * tele.getBreadth ();
+            const auto &pos = tele.getPosition ();
+            v[0] = glm::vec3(pos[0] - wx - hx, pos[1] - wy - hy, 0.0f);
+            v[1] = glm::vec3(pos[0] + wx - hx, pos[1] + wy - hy, 0.0f);
+
+            v[2] = glm::vec3(pos[0] + wx - hx, pos[1] + wy - hy, 0.0f);
+            v[3] = glm::vec3(pos[0] + wx + hx, pos[1] + wy + hy, 0.0f);
+
+            v[4] = glm::vec3(pos[0] + wx + hx, pos[1] + wy + hy, 0.0f);
+            v[5] = glm::vec3(pos[0] - wx + hx, pos[1] - wy + hy, 0.0f);
+
+            v[6] = glm::vec3(pos[0] - wx + hx, pos[1] - wy + hy, 0.0f);
+            v[7] = glm::vec3(pos[0] - wx - hx, pos[1] - wy - hy, 0.0f);
+
+            v[8] = glm::vec3(pos[0] - wx - hx, pos[1] - wy - hy, 0.0f);
+            v[9] = glm::vec3(pos[0] - wx - hx, pos[1] - wy - hy, 0.0f);
+            telesVBO[i] = Vertex_Chunk(Vertex_Chunk::V, 10);
+            telesVBO[i].vertexData(v);
+        }
+        else
+        {
+            glm::vec3 v[4];
+            const float tw = tele.getBreadth ();
+            const float c = tw * cosf (tele.getRotation ());
+            const float s = tw * sinf (tele.getRotation ());
+            const auto &pos = tele.getPosition ();
+            v[0] = glm::vec3(pos[0] - s, pos[1] + c, 0.0f);
+            v[1] = glm::vec3(pos[0] + s, pos[1] - c, 0.0f);
+            v[2] = glm::vec3(pos[0] + s, pos[1] - c, 0.0f);
+            v[3] = glm::vec3(pos[0] - s, pos[1] + c, 0.0f);
+            telesVBO[i] = Vertex_Chunk(Vertex_Chunk::V, 4);
+            telesVBO[i].vertexData(v);
         }
     }
 
@@ -1109,18 +1268,7 @@ void RadarRenderer::renderBasesAndTeles()
                 if (!baseExist)
                     break;
                 glColor(Team::getRadarColor(TeamColor(i)));
-                glBegin(GL_LINE_LOOP);
-                const float beta = atan2f(bb, ww);
-                const float r = hypotf(ww, bb);
-                glVertex2f(basePos.x + r * cosf(rotation + beta),
-                           basePos.y + r * sinf(rotation + beta));
-                glVertex2f(basePos.x + r * cosf((float)(rotation - beta + M_PI)),
-                           basePos.y + r * sinf((float)(rotation - beta + M_PI)));
-                glVertex2f(basePos.x + r * cosf((float)(rotation + beta + M_PI)),
-                           basePos.y + r * sinf((float)(rotation + beta + M_PI)));
-                glVertex2f(basePos.x + r * cosf(rotation - beta),
-                           basePos.y + r * sinf(rotation - beta));
-                glEnd();
+                baseVBO[i][j].draw(GL_LINE_LOOP);
             }
         }
     }
@@ -1133,53 +1281,15 @@ void RadarRenderer::renderBasesAndTeles()
     // is one system that doesn't do correct filtering.
     const ObstacleList& teleporters = OBSTACLEMGR.getTeles();
     int count = teleporters.size();
-    glBegin(GL_LINES);
     for (i = 0; i < count; i++)
     {
         const Teleporter & tele = *((const Teleporter *) teleporters[i]);
-        if (tele.isHorizontal ())
-        {
-            const float z = tele.getPosition ()[2];
-            const float bh = tele.getHeight ();
-            const float cs = colorScale (z, bh);
-            glColor4f (1.0f * cs, 1.0f * cs, 0.25f * cs, transScale (z, bh));
-            const float c = cosf (tele.getRotation ());
-            const float s = sinf (tele.getRotation ());
-            const float wx = c * tele.getWidth (), wy = s * tele.getWidth ();
-            const float hx = -s * tele.getBreadth (), hy = c * tele.getBreadth ();
-            const auto &pos = tele.getPosition ();
-            glVertex2f (pos[0] - wx - hx, pos[1] - wy - hy);
-            glVertex2f (pos[0] + wx - hx, pos[1] + wy - hy);
-
-            glVertex2f (pos[0] + wx - hx, pos[1] + wy - hy);
-            glVertex2f (pos[0] + wx + hx, pos[1] + wy + hy);
-
-            glVertex2f (pos[0] + wx + hx, pos[1] + wy + hy);
-            glVertex2f (pos[0] - wx + hx, pos[1] - wy + hy);
-
-            glVertex2f (pos[0] - wx + hx, pos[1] - wy + hy);
-            glVertex2f (pos[0] - wx - hx, pos[1] - wy - hy);
-
-            glVertex2f (pos[0] - wx - hx, pos[1] - wy - hy);
-            glVertex2f (pos[0] - wx - hx, pos[1] - wy - hy);
-        }
-        else
-        {
-            const float z = tele.getPosition ()[2];
-            const float bh = tele.getHeight ();
-            const float cs = colorScale (z, bh);
-            glColor4f (1.0f * cs, 1.0f * cs, 0.25f * cs, transScale (z, bh));
-            const float tw = tele.getBreadth ();
-            const float c = tw * cosf (tele.getRotation ());
-            const float s = tw * sinf (tele.getRotation ());
-            const auto &pos = tele.getPosition ();
-            glVertex2f (pos[0] - s, pos[1] + c);
-            glVertex2f (pos[0] + s, pos[1] - c);
-            glVertex2f (pos[0] + s, pos[1] - c);
-            glVertex2f (pos[0] - s, pos[1] + c);
-        }
+        const float z = tele.getPosition ()[2];
+        const float bh = tele.getHeight ();
+        const float cs = colorScale (z, bh);
+        glColor4f (1.0f * cs, 1.0f * cs, 0.25f * cs, transScale (z, bh));
+        telesVBO[i].draw(GL_LINES);
     }
-    glEnd();
 
     return;
 }
