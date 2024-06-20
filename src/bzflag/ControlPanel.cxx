@@ -593,61 +593,8 @@ void            ControlPanel::render(SceneRenderer& _renderer)
 
     // nice border
     glColor(teamColor, outlineOpacity);
-    glBegin(GL_LINE_LOOP);
-    {
-        long xpos;
-        long ypos;
-
-        // bottom left
-        xpos = x + messageAreaPixels[0] - 1;
-        ypos = y + messageAreaPixels[1] - 1;
-        glVertex2f((float) xpos, (float) ypos);
-
-        // bottom right
-        xpos += messageAreaPixels[2] + 1;
-        glVertex2f((float) xpos, (float) ypos);
-
-        // top right
-        ypos += messageAreaPixels[3] + 1;
-        glVertex2f((float) xpos, (float) ypos);
-
-        // over to panel on left
-        if (!tabsOnRight)
-        {
-            xpos = x + messageAreaPixels[0] + totalTabWidth;
-            glVertex2f((float) xpos, (float) ypos);
-        }
-
-        // across the top from right to left
-        for (int tab = (int)tabs->size() - 1; tab >= 0; tab--)
-        {
-
-            if (messageMode == MessageModes(tab))
-            {
-                ypos += ay;
-                glVertex2f((float) xpos, (float) ypos);
-
-                xpos -= long(tabTextWidth[tab]) + 1;
-                glVertex2f((float) xpos, (float) ypos);
-
-                ypos -= ay;
-                glVertex2f((float) xpos, (float) ypos);
-            }
-            else
-            {
-                xpos -= long(tabTextWidth[tab]);
-                glVertex2f((float) xpos, (float) ypos);
-            }
-        }
-
-        // over from panel on right
-        //    if (tabsOnRight) {
-        xpos = x + messageAreaPixels[0] - 1;
-        glVertex2f((float) xpos, (float) ypos);
-        //    }
-
-    }
-    glEnd();
+    buildOutlineVBO(ay);
+    outlineVBO.draw(GL_LINE_LOOP);
 
     {
         glDisable(GL_BLEND);
@@ -658,6 +605,68 @@ void            ControlPanel::render(SceneRenderer& _renderer)
     glPopMatrix();
 
     fm.setOpacity(1.0f);
+}
+
+void ControlPanel::buildOutlineVBO(float ay)
+{
+    const int x = window.getOriginX();
+    const int y = window.getOriginY();
+    std::vector<glm::vec3> v;
+    {
+        long xpos;
+        long ypos;
+
+        // bottom left
+        xpos = x + messageAreaPixels[0] - 1;
+        ypos = y + messageAreaPixels[1] - 1;
+        v.push_back(glm::vec3((float) xpos, (float) ypos, 0.0f));
+
+        // bottom right
+        xpos += messageAreaPixels[2] + 1;
+        v.push_back(glm::vec3((float) xpos, (float) ypos, 0.0f));
+
+        // top right
+        ypos += messageAreaPixels[3] + 1;
+        v.push_back(glm::vec3((float) xpos, (float) ypos, 0.0f));
+
+        // over to panel on left
+        if (!tabsOnRight)
+        {
+            xpos = x + messageAreaPixels[0] + totalTabWidth;
+            v.push_back(glm::vec3((float) xpos, (float) ypos, 0.0f));
+        }
+
+        // across the top from right to left
+        for (int tab = (int)tabs->size() - 1; tab >= 0; tab--)
+        {
+
+            if (messageMode == MessageModes(tab))
+            {
+                ypos += ay;
+                v.push_back(glm::vec3((float) xpos, (float) ypos, 0.0f));
+
+                xpos -= long(tabTextWidth[tab]) + 1;
+                v.push_back(glm::vec3((float) xpos, (float) ypos, 0.0f));
+
+                ypos -= ay;
+                v.push_back(glm::vec3((float) xpos, (float) ypos, 0.0f));
+            }
+            else
+            {
+                xpos -= long(tabTextWidth[tab]);
+                v.push_back(glm::vec3((float) xpos, (float) ypos, 0.0f));
+            }
+        }
+
+        // over from panel on right
+        //    if (tabsOnRight) {
+        xpos = x + messageAreaPixels[0] - 1;
+        v.push_back(glm::vec3((float) xpos, (float) ypos, 0.0f));
+        //    }
+
+    }
+    outlineVBO = Vertex_Chunk(Vertex_Chunk::V, v.size());
+    outlineVBO.vertexData(v);
 }
 
 void            ControlPanel::resize()
