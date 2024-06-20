@@ -24,6 +24,7 @@
 
 //common headers
 #include "bzfgl.h"
+#include "Vertex_Chunk.h"
 
 // local headers
 #include "MainWindow.h"
@@ -89,6 +90,9 @@ private:
     static void     resizeCallback(void*);
     static void     exposeCallback(void*);
     static void     bzdbCallback(const std::string& name, void* data);
+
+    void buildOutlineVBO(float ay);
+    Vertex_Chunk outlineVBO;
 
     enum MessageModes
     {
