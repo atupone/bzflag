@@ -1244,17 +1244,27 @@ void HUDRenderer::drawWaypointMarker(const EnhancedHUDMarker &marker,
     if (map[0] == -halfWidth && map[1] == halfHeight) // upper left
         glRotatef(180+45,0,0,1);
 
-    glBegin(GL_TRIANGLES);
-    glVertex2f(0,0);
-    glVertex2f(triangleSize,triangleSize);
-    glVertex2f(-triangleSize,triangleSize);
-    glEnd();
+    static float oldSize = -1.0f;
+    static auto filledTriangle  = Vertex_Chunk(Vertex_Chunk::V, 3);
+    static auto outlineTriangle = Vertex_Chunk(Vertex_Chunk::V, 3);
+    if (triangleSize != oldSize)
+    {
+        oldSize = triangleSize;
 
-    glBegin(GL_LINE_STRIP);
-    glVertex3f(0,0,0.01f);
-    glVertex3f(triangleSize,triangleSize,0.01f);
-    glVertex3f(-triangleSize,triangleSize,0.01f);
-    glEnd();
+        glm::vec3 v[3];
+        v[0] = glm::vec3(0.0f);
+        v[1] = glm::vec3( triangleSize, triangleSize, 0.0f);
+        v[2] = glm::vec3(-triangleSize, triangleSize, 0.0f);
+        filledTriangle.vertexData(v);
+
+        v[0] = glm::vec3( 0.0f,         0.0f,         0.01f);
+        v[1] = glm::vec3( triangleSize, triangleSize, 0.01f);
+        v[2] = glm::vec3(-triangleSize, triangleSize, 0.01f);
+        outlineTriangle.vertexData(v);
+    }
+    filledTriangle.draw(GL_TRIANGLES);
+
+    outlineTriangle.draw(GL_LINE_STRIP);
 
     if (friendly)
         drawGeometry();
