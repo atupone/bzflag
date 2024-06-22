@@ -35,7 +35,7 @@ public:
     float       checkHit(const BaseLocalPlayer*, glm::vec3 &) const override;
     bool        isStoppedByHit() const override;
     void        addShot(SceneDatabase*, bool colorblind) override;
-    void        radarRender() const override;
+    void        radarRender() override;
 
 private:
     SphereSceneNode*    shockNode;

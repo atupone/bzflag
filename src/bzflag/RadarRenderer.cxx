@@ -538,7 +538,7 @@ void RadarRenderer::render(SceneRenderer& renderer, bool blank, bool observer)
         float muzzleHeight = BZDB.eval(StateDatabase::BZDB_MUZZLEHEIGHT);
         for (i = 0; i < maxShots; i++)
         {
-            const ShotPath* shot = myTank->getShot(i);
+            auto shot = myTank->getShot(i);
             if (shot)
             {
                 const float cs = colorScale(shot->getPosition()[2], muzzleHeight);
@@ -552,7 +552,7 @@ void RadarRenderer::render(SceneRenderer& renderer, bool blank, bool observer)
         maxShots = worldWeapons->getMaxShots();
         for (i = 0; i < maxShots; i++)
         {
-            const ShotPath* shot = worldWeapons->getShot(i);
+            auto shot = worldWeapons->getShot(i);
             if (shot)
             {
                 const float cs = colorScale(shot->getPosition()[2], muzzleHeight);
@@ -604,7 +604,7 @@ void RadarRenderer::render(SceneRenderer& renderer, bool blank, bool observer)
             if (!player) continue;
             for (int j = 0; j < maxShots; j++)
             {
-                const ShotPath* shot = player->getShot(j);
+                auto shot = player->getShot(j);
                 if (shot && (shot->getFlag() != Flags::InvisibleBullet || iSeeAll))
                 {
                     const float cs = colorScale(shot->getPosition()[2], muzzleHeight);
