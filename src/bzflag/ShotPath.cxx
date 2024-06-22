@@ -113,7 +113,7 @@ void            ShotPath::addShot(SceneDatabase* scene,
     strategy->addShot(scene, colorblind);
 }
 
-void            ShotPath::radarRender() const
+void            ShotPath::radarRender()
 {
     if (!isExpired()) strategy->radarRender();
 }
