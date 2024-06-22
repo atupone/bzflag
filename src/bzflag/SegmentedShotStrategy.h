@@ -23,6 +23,7 @@
 #include "SceneDatabase.h"
 #include "TimeKeeper.h"
 #include "LaserSceneNode.h"
+#include "Vertex_Chunk.h"
 
 /* local interface headers */
 #include "BaseLocalPlayer.h"
@@ -36,10 +37,10 @@ public:
     SegmentedShotStrategy(ShotPath*, bool useSuperTexture, bool faint = false);
     ~SegmentedShotStrategy();
 
-    void        update(float dt);
-    float       checkHit(const BaseLocalPlayer*, glm::vec3 &) const;
-    void        addShot(SceneDatabase*, bool colorblind);
-    void        radarRender() const;
+    void        update(float dt) override;
+    float       checkHit(const BaseLocalPlayer*, glm::vec3 &) const override;
+    void        addShot(SceneDatabase*, bool colorblind) override;
+    void        radarRender() override;
     TeamColor   team;
 
 protected:
@@ -89,15 +90,16 @@ class ThiefStrategy : public SegmentedShotStrategy
 public:
     ThiefStrategy(ShotPath*);
     ~ThiefStrategy();
-    void        update(float dt);
-    bool        isStoppedByHit() const;
-    void        addShot(SceneDatabase*, bool colorblind);
-    void        radarRender() const;
+    void        update(float dt) override;
+    bool        isStoppedByHit() const override;
+    void        addShot(SceneDatabase*, bool colorblind) override;
+    void        radarRender() override;
 
 private:
     float       cumTime;
     float       endTime;
     LaserSceneNode**    thiefNodes;
+    Vertex_Chunk radarChunk;
 };
 
 class MachineGunStrategy : public SegmentedShotStrategy
@@ -113,15 +115,16 @@ public:
     LaserStrategy(ShotPath*);
     ~LaserStrategy();
 
-    void        update(float dt);
-    bool        isStoppedByHit() const;
-    void        addShot(SceneDatabase*, bool colorblind);
-    void        radarRender() const;
+    void        update(float dt) override;
+    bool        isStoppedByHit() const override;
+    void        addShot(SceneDatabase*, bool colorblind) override;
+    void        radarRender() override;
 
 private:
     float       cumTime;
     float       endTime;
     LaserSceneNode**    laserNodes;
+    Vertex_Chunk radarChunk;
 };
 
 class RicochetStrategy : public SegmentedShotStrategy

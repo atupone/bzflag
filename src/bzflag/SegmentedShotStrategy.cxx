@@ -317,7 +317,7 @@ void  SegmentedShotStrategy::addShot(SceneDatabase* scene, bool colorblind)
     scene->addDynamicNode(boltSceneNode);
 }
 
-void  SegmentedShotStrategy::radarRender() const
+void SegmentedShotStrategy::radarRender()
 {
     const auto &orig = getPath().getPosition();
     const int length = (int)BZDBCache::linedRadarShots;
@@ -606,6 +606,8 @@ ThiefStrategy::ThiefStrategy(ShotPath *_path) :
     // make thief scene nodes
     const int numSegments = getSegments().size();
     thiefNodes = new LaserSceneNode*[numSegments];
+    radarChunk = Vertex_Chunk(Vertex_Chunk::V, 2 * numSegments);
+    std::vector<glm::vec3> v;
 
     TextureManager &tm = TextureManager::instance();
     int texture = tm.getTextureID("thief");
@@ -615,9 +617,10 @@ ThiefStrategy::ThiefStrategy(ShotPath *_path) :
         const ShotPathSegment& segm = getSegments()[i];
         const float t = float(segm.end - segm.start);
         const Ray& ray = segm.ray;
+        const auto &origin = ray.getOrigin();
         const auto &rawdir = ray.getDirection();
         const auto dir = t * rawdir;
-        thiefNodes[i] = new LaserSceneNode(ray.getOrigin(), dir);
+        thiefNodes[i] = new LaserSceneNode(origin, dir);
         if (texture >= 0)
             thiefNodes[i]->setTexture(texture);
 
@@ -626,7 +629,10 @@ ThiefStrategy::ThiefStrategy(ShotPath *_path) :
 
         thiefNodes[i]->setColor(0, 1, 1);
         thiefNodes[i]->setCenterColor(0, 0, 0);
+        v.push_back(glm::vec3(glm::vec2(origin), 0.0f));
+        v.push_back(glm::vec3(glm::vec2(origin + dir), 0.0f));
     }
+    radarChunk.vertexData(v);
     setCurrentSegment(numSegments - 1);
 }
 
@@ -652,22 +658,10 @@ void  ThiefStrategy::addShot(SceneDatabase* scene, bool)
         scene->addDynamicNode(thiefNodes[i]);
 }
 
-void  ThiefStrategy::radarRender() const
+void ThiefStrategy::radarRender()
 {
     // draw all segments
-    const std::vector<ShotPathSegment>& segmts = getSegments();
-    const int numSegments = segmts.size();
-    glBegin(GL_LINES);
-    for (int i = 0; i < numSegments; i++)
-    {
-        const ShotPathSegment& segm = segmts[i];
-        const auto origin = glm::vec2(segm.ray.getOrigin());
-        const auto direction = glm::vec2(segm.ray.getDirection());
-        const float dt = float(segm.end - segm.start);
-        glVertex(origin);
-        glVertex(origin + dt * direction);
-    }
-    glEnd();
+    radarChunk.draw(GL_LINES);
 }
 
 bool  ThiefStrategy::isStoppedByHit() const
@@ -768,6 +762,8 @@ LaserStrategy::LaserStrategy(ShotPath* _path) :
     laserNodes = new LaserSceneNode*[numSegments];
     const LocalPlayer* myTank = LocalPlayer::getMyTank();
     TeamColor tmpTeam = (myTank->getFlag() == Flags::Colorblindness) ? RogueTeam : team;
+    radarChunk = Vertex_Chunk(Vertex_Chunk::V, 2 * numSegments);
+    std::vector<glm::vec3> v;
 
     TextureManager &tm = TextureManager::instance();
     std::string imageName = Team::getImagePrefix(tmpTeam);
@@ -780,8 +776,9 @@ LaserStrategy::LaserStrategy(ShotPath* _path) :
         const float t = float(segm.end - segm.start);
         const Ray& ray = segm.ray;
         const auto &rawdir = ray.getDirection();
+        const auto &origin = ray.getOrigin();
         const auto dir = t * rawdir;
-        laserNodes[i] = new LaserSceneNode(ray.getOrigin(), dir);
+        laserNodes[i] = new LaserSceneNode(origin, dir);
         if (texture >= 0)
             laserNodes[i]->setTexture(texture);
 
@@ -790,7 +787,10 @@ LaserStrategy::LaserStrategy(ShotPath* _path) :
 
         if (i == 0)
             laserNodes[i]->setFirst();
+        v.push_back(glm::vec3(glm::vec2(origin), 0.0f));
+        v.push_back(glm::vec3(glm::vec2(origin + dir), 0.0f));
     }
+    radarChunk.vertexData(v);
     setCurrentSegment(numSegments - 1);
 }
 
@@ -816,22 +816,10 @@ void  LaserStrategy::addShot(SceneDatabase* scene, bool)
         scene->addDynamicNode(laserNodes[i]);
 }
 
-void  LaserStrategy::radarRender() const
+void  LaserStrategy::radarRender()
 {
     // draw all segments
-    const std::vector<ShotPathSegment>& segmts = getSegments();
-    const int numSegments = segmts.size();
-    glBegin(GL_LINES);
-    for (int i = 0; i < numSegments; i++)
-    {
-        const ShotPathSegment& segm = segmts[i];
-        const auto origin = glm::vec2(segm.ray.getOrigin());
-        const auto direction = glm::vec2(segm.ray.getDirection());
-        const float dt = float(segm.end - segm.start);
-        glVertex(origin);
-        glVertex(origin + dt * direction);
-    }
-    glEnd();
+    radarChunk.draw(GL_LINES);
 }
 
 bool  LaserStrategy::isStoppedByHit() const
