@@ -65,7 +65,7 @@ public:
 
     void        addShot(SceneDatabase*, bool colorblind);
 
-    void        radarRender() const;
+    void        radarRender();
     FiringInfo&     getFiringInfo();
     TeamColor       getTeam() const;
 protected:
