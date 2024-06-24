@@ -65,6 +65,8 @@ public:
 private:
     void        drawSky(SceneRenderer&, bool mirror);
     void        drawSkybox();
+    void        prepareSkybox();
+    void        prepareSky();
     void        drawGround(void);
     void        drawGroundCentered(void);
     void        drawGroundGrid(SceneRenderer&);
@@ -96,6 +98,15 @@ private:
     OpenGLGState    invGroundGState[4];
     int         groundTextureID;
     const GLfloat*  groundTextureMatrix;
+    Vertex_Chunk    bottomVBO;
+    Vertex_Chunk    topVBO;
+    Vertex_Chunk    leftVBO;
+    Vertex_Chunk    frontVBO;
+    Vertex_Chunk    rightVBO;
+    Vertex_Chunk    backVBO;
+    Vertex_Chunk    sunInSky;
+    Vertex_Chunk    sunSet1;
+    Vertex_Chunk    sunSet2;
 
     // stuff for grid
     GLfloat     gridSpacing;
