@@ -255,8 +255,7 @@ static void drawRingYZ(float rad, float z, float topsideOffset = 0,
                        float bottomUV = 0, float ZOffset = 0,
                        float topUV = 1.0f, int segments = 32);
 static void drawRingXY(float rad, float z, float topsideOffset = 0,
-                       float bottomUV = 0, float topUV = 1.0f,
-                       int segments = 32);
+                       float bottomUV = 0, float topUV = 1.0f);
 static glm::vec2 RadialToCartesian(float angle);
 
 #define deg2Rad 0.017453292519943295769236907684886f
@@ -1621,12 +1620,20 @@ static glm::vec2 RadialToCartesian(float angle)
 }
 
 static void drawRingXY(float rad, float z, float topsideOffset, float bottomUV,
-                       float topUV, int segments )
+                       float topUV)
 {
+    const int segments = 32;
     auto nextNormal = glm::vec2(0.0f, 1.0f);
     auto nextPos    = nextNormal * rad;
     auto nextPos2   = nextNormal * (rad + topsideOffset);
-    glBegin(GL_TRIANGLE_STRIP);
+    static Vertex_Chunk ringXY(Vertex_Chunk::VTN, segments * 8);
+
+    glm::vec3 n[segments * 8];
+    glm::vec2 t[segments * 8];
+    glm::vec3 v[segments * 8];
+
+    unsigned int j = 0;
+
     for ( int i = 0; i < segments; i ++)
     {
         float nextAng = 360.0f / segments * (i + 1);
@@ -1642,40 +1649,51 @@ static void drawRingXY(float rad, float z, float topsideOffset, float bottomUV,
         nextPos2 = nextNormal * (rad + topsideOffset);
 
         // the "inside"
-        glNormal(-thisNormal);
-        glTexCoord2f(0,bottomUV);
-        glVertex(thispos);
+        n[j] = glm::vec3(-thisNormal, 0.0f);
+        t[j] = glm::vec2(0, bottomUV);
+        v[j] = glm::vec3(thispos, 0.0f);
+        j++;
 
-        glNormal(-nextNormal);
-        glTexCoord2f(1,bottomUV);
-        glVertex(nextPos);
+        n[j] = glm::vec3(-nextNormal, 0.0f);
+        t[j] = glm::vec2(1, bottomUV);
+        v[j] = glm::vec3(nextPos, 0.0f);
+        j++;
 
-        glNormal(-thisNormal);
-        glTexCoord2f(0,topUV);
-        glVertex(thispos2, z);
+        n[j] = glm::vec3(-thisNormal, 0.0f);
+        t[j] = glm::vec2(0, topUV);
+        v[j] = glm::vec3(thispos2, z);
+        j++;
 
-        glNormal(-nextNormal);
-        glTexCoord2f(1,topUV);
-        glVertex(nextPos2, z);
+        n[j] = glm::vec3(-nextNormal, 0.0f);
+        t[j] = glm::vec2(1, topUV);
+        v[j] = glm::vec3(nextPos2, z);
+        j++;
 
         // the "outside"
-        glNormal(thisNormal);
-        glTexCoord2f(0,topUV);
-        glVertex(thispos2, z);
+        n[j] = glm::vec3(thisNormal, 0.0f);
+        t[j] = glm::vec2(0, topUV);
+        v[j] = glm::vec3(thispos2, z);
+        j++;
 
-        glNormal(nextNormal);
-        glTexCoord2f(1,topUV);
-        glVertex(nextPos2, z);
+        n[j] = glm::vec3(nextNormal, 0.0f);
+        t[j] = glm::vec2(1, topUV);
+        v[j] = glm::vec3(nextPos2, z);
+        j++;
 
-        glNormal(thisNormal);
-        glTexCoord2f(0,bottomUV);
-        glVertex(thispos);
+        n[j] = glm::vec3(thisNormal, 0.0f);
+        t[j] = glm::vec2(0, bottomUV);
+        v[j] = glm::vec3(thispos, 0.0f);
+        j++;
 
-        glNormal(nextNormal);
-        glTexCoord2f(1,bottomUV);
-        glVertex(nextPos);
+        n[j] = glm::vec3(nextNormal, 0.0f);
+        t[j] = glm::vec2(1, bottomUV);
+        v[j] = glm::vec3(nextPos, 0.0f);
+        j++;
     }
-    glEnd();
+    ringXY.normalData(n);
+    ringXY.textureData(t);
+    ringXY.vertexData(v);
+    ringXY.draw(GL_TRIANGLE_STRIP);
 }
 
 static float clampedZ(float z, float offset)
@@ -1692,7 +1710,11 @@ static void drawRingYZ(float rad, float z, float topsideOffset, float bottomUV,
     auto nextNormal = glm::vec2(0.0f, 1.0f);
     auto nextPos    = nextNormal * rad;
     auto nextPos2   = nextNormal * (rad + topsideOffset);
-    glBegin(GL_TRIANGLE_STRIP);
+
+    std::vector<glm::vec3> n;
+    std::vector<glm::vec2> t;
+    std::vector<glm::vec3> v;
+
     for ( int i = 0; i < segments; i ++)
     {
         nextAng = 360.0f/segments * (i+1);
@@ -1710,41 +1732,44 @@ static void drawRingYZ(float rad, float z, float topsideOffset, float bottomUV,
         nextPos2.x = clampedZ(nextPos2.x, ZOffset);
 
         // the "inside"
-        glNormal(-thisNormal);
-        glTexCoord2f(0,bottomUV);
-        glVertex3f(0, thispos.y, thispos.x);
+        n.push_back(glm::vec3(-thisNormal, 0.0f));
+        t.push_back(glm::vec2(0,bottomUV));
+        v.push_back(glm::vec3(0, thispos.y, thispos.x));
 
-        glNormal(-nextNormal);
-        glTexCoord2f(1,bottomUV);
-        glVertex3f(0, nextPos.y, nextPos.x);
+        n.push_back(glm::vec3(-nextNormal, 0.0f));
+        t.push_back(glm::vec2(1,bottomUV));
+        v.push_back(glm::vec3(0, nextPos.y, nextPos.x));
 
-        glNormal(-thisNormal);
-        glTexCoord2f(0,topUV);
-        glVertex3f(z, thispos2.y, thispos2.x);
+        n.push_back(glm::vec3(-thisNormal, 0.0f));
+        t.push_back(glm::vec2(0,topUV));
+        v.push_back(glm::vec3(z, thispos2.y, thispos2.x));
 
-        glNormal(-nextNormal);
-        glTexCoord2f(1,topUV);
-        glVertex3f(z, nextPos2.y, nextPos2.x);
+        n.push_back(glm::vec3(-nextNormal, 0.0f));
+        t.push_back(glm::vec2(1,topUV));
+        v.push_back(glm::vec3(z, nextPos2.y, nextPos2.x));
 
         // the "outside"
-        glNormal(thisNormal);
-        glTexCoord2f(0,topUV);
-        glVertex3f(z, thispos2.y, thispos2.x);
+        n.push_back(glm::vec3(thisNormal, 0.0f));
+        t.push_back(glm::vec2(0,topUV));
+        v.push_back(glm::vec3(z, thispos2.y, thispos2.x));
 
-        glNormal(nextNormal);
-        glTexCoord2f(1,topUV);
-        glVertex3f(z, nextPos2.y, nextPos2.x);
+        n.push_back(glm::vec3(nextNormal, 0.0f));
+        t.push_back(glm::vec2(1,topUV));
+        v.push_back(glm::vec3(z, nextPos2.y, nextPos2.x));
 
-        glNormal(thisNormal);
-        glTexCoord2f(0,bottomUV);
-        glVertex3f(0, thispos.y, thispos.x);
+        n.push_back(glm::vec3(thisNormal, 0.0f));
+        t.push_back(glm::vec2(0,bottomUV));
+        v.push_back(glm::vec3(0, thispos.y, thispos.x));
 
-        glNormal(nextNormal);
-        glTexCoord2f(1,bottomUV);
-        glVertex3f(0, nextPos.y, nextPos.x);
-
+        n.push_back(glm::vec3(nextNormal, 0.0f));
+        t.push_back(glm::vec2(1,bottomUV));
+        v.push_back(glm::vec3(0, nextPos.y, nextPos.x));
     }
-    glEnd();
+    Vertex_Chunk ringYZ(Vertex_Chunk::VTN, v.size());
+    ringYZ.normalData(n);
+    ringYZ.textureData(t);
+    ringYZ.vertexData(v);
+    ringYZ.draw(GL_TRIANGLE_STRIP);
 }
 
 
