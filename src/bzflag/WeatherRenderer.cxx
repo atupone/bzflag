@@ -456,14 +456,18 @@ void WeatherRenderer::draw(const SceneRenderer& sr)
     if (doLineRain)   // we are doing line rain
     {
         rainGState.setState();
-        glBegin(GL_LINES);
+        std::vector<glm::vec4> c;
+        std::vector<glm::vec3> v;
         std::vector<rain>::iterator itr = raindrops.begin();
         while (itr != raindrops.end())
         {
-            drawLineDrop(*itr);
+            drawLineDrop(*itr, c, v);
             itr++;
         }
-        glEnd();
+        Vertex_Chunk rainDrops(Vertex_Chunk::VC, v.size());
+        rainDrops.colorData(c);
+        rainDrops.vertexData(v);
+        rainDrops.draw(GL_LINES);
     }
     else
     {
@@ -596,7 +600,9 @@ bool WeatherRenderer::updatePuddle(std::vector<puddle>::iterator& splash,
 }
 
 
-void WeatherRenderer::drawLineDrop(rain& drop)
+void WeatherRenderer::drawLineDrop(rain& drop,
+                                   std::vector<glm::vec4> &c,
+                                   std::vector<glm::vec3> &v)
 {
     {
         float alphaMod = 0;
@@ -608,16 +614,18 @@ void WeatherRenderer::drawLineDrop(rain& drop)
         if (alphaVal < 0)
             alphaVal = 0;
 
-        glColor4f(rainColor[0][0], rainColor[0][1], rainColor[0][2], alphaVal);
-        glVertex(drop.pos);
+        c.push_back(glm::vec4(glm::vec3(rainColor[0]), alphaVal));
+        v.push_back(drop.pos);
 
         alphaVal = rainColor[1][3] - alphaMod;
         if (alphaVal < 0)
             alphaVal = 0;
 
-        glColor4f(rainColor[1][0], rainColor[1][1], rainColor[1][2], alphaVal);
-        glVertex3f(drop.pos[0], drop.pos[1],
-                   drop.pos[2] + (rainSize[1] - (drop.speed * 0.15f)));
+        c.push_back(glm::vec4(glm::vec3(rainColor[1]), alphaVal));
+        v.push_back(
+            glm::vec3(drop.pos.x,
+                      drop.pos.y,
+                      drop.pos[2] + (rainSize[1] - (drop.speed * 0.15f))));
     }
 }
 
