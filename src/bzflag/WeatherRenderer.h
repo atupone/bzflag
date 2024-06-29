@@ -100,7 +100,9 @@ protected:
     bool updateDrop(std::vector<rain>::iterator &drop, float frameTime);
     bool updatePuddle(std::vector<puddle>::iterator &splash, float frameTime);
 
-    void drawLineDrop(rain &drop);
+    void drawLineDrop(rain &drop,
+                      std::vector<glm::vec4> &c,
+                      std::vector<glm::vec3> &v);
     void drawDrop(rain &drop, const SceneRenderer& sr);
     void drawPuddle(puddle &splash);
 
