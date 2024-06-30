@@ -23,6 +23,7 @@
 #include "SceneRenderer.h"
 #include "BZDBCache.h"
 #include "OpenGLAPI.h"
+#include "Vertex_Chunk.h"
 
 // local implementation headers
 #include "ViewFrustum.h"
@@ -711,6 +712,15 @@ void TankIDLSceneNode::IDLRenderNode::render()
     glTranslate(sphere);
     glRotatef(azimuth, 0.0f, 0.0f, 1.0f);
 
+    Vertex_Chunk ext(colorOverride ? Vertex_Chunk::V : Vertex_Chunk::VC, 4);
+    {
+        glm::vec4 c[4];
+        c[0] = innerColor;
+        c[1] = innerColor;
+        c[2] = outerColor;
+        c[3] = outerColor;
+        ext.colorData(c);
+    }
     const int numFaces = bzcountof(idlFaces);
     for (int i = 0; i < numFaces; i++)
     {
@@ -751,14 +761,15 @@ void TankIDLSceneNode::IDLRenderNode::render()
         project[1] = glm::mix(origin, cross[1], dist);
 
         // draw it
-        glBegin(GL_TRIANGLE_STRIP);
-        myColor4fv(innerColor);
-        glVertex(cross[0]);
-        glVertex(cross[1]);
-        myColor4fv(outerColor);
-        glVertex(project[0]);
-        glVertex(project[1]);
-        glEnd();
+        {
+            glm::vec3 v[4];
+            v[0] = cross[0];
+            v[1] = cross[1];
+            v[2] = project[0];
+            v[3] = project[1];
+            ext.vertexData(v);
+        }
+        ext.draw(GL_TRIANGLE_STRIP);
     }
 
     glPopMatrix();
