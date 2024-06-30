@@ -1250,10 +1250,9 @@ static void drawLines (int count, const glm::vec3 vertices[], int color)
         color = colorCount - 1;
     glColor(colors[color]);
 
-    glBegin (GL_LINE_STRIP);
-    for (int i = 0; i < count; i++)
-        glVertex(vertices[i]);
-    glEnd ();
+    Vertex_Chunk chunk(Vertex_Chunk::V, count);
+    chunk.vertexData(vertices);
+    chunk.draw(GL_LINE_STRIP);
 
     return;
 }
@@ -1261,8 +1260,10 @@ static void drawLines (int count, const glm::vec3 vertices[], int color)
 
 static void drawInsideOutsidePoints()
 {
-    std::vector<const glm::vec3*> insides;
-    std::vector<const glm::vec3*> outsides;
+    std::vector<glm::vec3> insides;
+    std::vector<glm::vec3> outsides;
+    std::vector<glm::vec3> insidesLine;
+    std::vector<glm::vec3> outsidesLine;
 
     const ObstacleList& meshes = OBSTACLEMGR.getMeshes();
     for (unsigned int i = 0; i < meshes.size(); i++)
@@ -1273,16 +1274,22 @@ static void drawInsideOutsidePoints()
         const auto   checkPoints = mesh->getCheckPoints();
         for (int c = 0; c < checkCount; c++)
         {
+            const auto &point = checkPoints[c];
+            const auto point0 = glm::vec3(point.x, point.y, 0.0f);
             switch (checkTypes[c])
             {
             case MeshObstacle::CheckInside:
             {
-                insides.push_back(&checkPoints[c]);
+                insides.push_back(point);
+                insidesLine.push_back(point0);
+                insidesLine.push_back(point);
                 break;
             }
             case MeshObstacle::CheckOutside:
             {
-                outsides.push_back(&checkPoints[c]);
+                outsides.push_back(point);
+                outsidesLine.push_back(point0);
+                outsidesLine.push_back(point);
                 break;
             }
             default:
@@ -1301,33 +1308,27 @@ static void drawInsideOutsidePoints()
     glLineWidth(1.49f);
     glPointSize(4.49f);
 
-    glBegin(GL_POINTS);
-    {
-        glColor4f(0.0f, 1.0f, 0.0f, 0.8f);
-        for (const auto pt : insides)
-            glVertex(*pt);
-        glColor4f(1.0f, 0.0f, 0.0f, 0.8f);
-        for (const auto pt : outsides)
-            glVertex(*pt);
-    }
-    glEnd();
+    Vertex_Chunk points;
 
-    glBegin(GL_LINES);
-    {
-        glColor4f(0.0f, 1.0f, 0.0f, 0.2f);
-        for (const auto pt : insides)
-        {
-            glVertex3f(pt->x, pt->y, 0.0f);
-            glVertex(*pt);
-        }
-        glColor4f(1.0f, 0.0f, 0.0f, 0.2f);
-        for (const auto pt : outsides)
-        {
-            glVertex3f(pt->x, pt->y, 0.0f);
-            glVertex(*pt);
-        }
-    }
-    glEnd();
+    points = Vertex_Chunk(Vertex_Chunk::V, insides.size());
+    points.vertexData(insides);
+    glColor4f(0.0f, 1.0f, 0.0f, 0.8f);
+    points.draw(GL_POINTS);
+
+    points = Vertex_Chunk(Vertex_Chunk::V, outsides.size());
+    points.vertexData(outsides);
+    glColor4f(1.0f, 0.0f, 0.0f, 0.8f);
+    points.draw(GL_POINTS);
+
+    points = Vertex_Chunk(Vertex_Chunk::V, insidesLine.size());
+    points.vertexData(insidesLine);
+    glColor4f(0.0f, 1.0f, 0.0f, 0.2f);
+    points.draw(GL_LINES);
+
+    points = Vertex_Chunk(Vertex_Chunk::V, outsidesLine.size());
+    points.vertexData(outsidesLine);
+    glColor4f(1.0f, 0.0f, 0.0f, 0.2f);
+    points.draw(GL_LINES);
 
     glPopAttrib();
 }
