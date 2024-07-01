@@ -21,6 +21,7 @@
 #include "Intersect.h"
 #include "StateDatabase.h"
 #include "OpenGLAPI.h"
+#include "Vertex_Chunk.h"
 
 // local headers
 #include "Occluder.h"
@@ -863,6 +864,7 @@ void OctreeNode::draw()
     const glm::vec3 exts[2] = { extents.mins, extents.maxs };
 
     // draw Z-normal squares
+    Vertex_Chunk squares(Vertex_Chunk::V, 5);
     for (z = 0; z < 2; z++)
     {
         for (c = 0; c < 4; c++)
@@ -874,15 +876,12 @@ void OctreeNode::draw()
             points[c][2] = exts[z][2];
         }
         points[4] = points[0];
-        glBegin(GL_LINE_STRIP);
-
-        for (int i = 0; i < 5; i++)
-            glVertex(points[i]);
-
-        glEnd();
+        squares.vertexData(points);
+        squares.draw(GL_LINE_STRIP);
     }
 
     // draw the corner edges
+    Vertex_Chunk edges(Vertex_Chunk::V, 2);
     for (c = 0; c < 4; c++)
     {
         x = ((c + 0) % 4) / 2;
@@ -893,10 +892,8 @@ void OctreeNode::draw()
             points[z][1] = exts[y][1];
             points[z][2] = exts[z][2];
         }
-        glBegin(GL_LINE_STRIP);
-        glVertex(points[0]);
-        glVertex(points[1]);
-        glEnd();
+        edges.vertexData(points);
+        edges.draw(GL_LINE_STRIP);
     }
 
     // draw the kids
