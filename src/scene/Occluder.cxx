@@ -26,6 +26,7 @@
 #include "Intersect.h"
 #include "StateDatabase.h"
 #include "OpenGLAPI.h"
+#include "Vertex_Chunk.h"
 
 
 //////////////////////////////////////////////////////////////////////////////
@@ -409,49 +410,59 @@ void Occluder::draw() const
         auto outwards = center - length * glm::vec3(planes[0]);
 
         // draw the plane normal
-        glBegin (GL_LINES);
         glColor(colors[0]);
-        glVertex(center);
-        glVertex(outwards);
-        glEnd ();
+        glm::vec3 ver[2];
+        ver[0] = center;
+        ver[1] = outwards;
+        Vertex_Chunk line(Vertex_Chunk::V, 2);
+        line.vertexData(ver);
+        line.draw(GL_LINES);
     }
 
     // drawn the edges and normals
     if (DrawEdges || DrawNormals)
     {
+        Vertex_Chunk lines = Vertex_Chunk(Vertex_Chunk::V,
+                                          (DrawEdges && DrawNormals) ? 4 : 2);
+        glm::vec3 ver[4];
         for (v = 0; v < vertexCount; v++)
         {
+            auto vP = &ver[0];
             glm::vec3 midpoint;
             int vn = (v + 1) % vertexCount;
             for (int a = 0; a < 3; a++)
                 midpoint[a] = 0.5f * (vertices[v][a] + vertices[vn][a]);
             auto outwards = midpoint - length * glm::vec3(planes[vn + 1]);
-            glBegin (GL_LINES);
-            glColor(colors[(v % 4) + 1]);
             if (DrawEdges)
             {
-                glVertex(vertices[v]);
-                glVertex(vertices[vn]);
+                *vP++ = vertices[v];
+                *vP++ = vertices[vn];
             }
             if (DrawNormals)
             {
-                glVertex(midpoint);
-                glVertex(outwards);
+                *vP++ = midpoint;
+                *vP++ = outwards;
             }
-            glEnd();
+            lines.vertexData(ver);
+            glColor(colors[(v % 4) + 1]);
+            lines.draw(GL_LINES);
         }
     }
 
     // draw some nice vertex points
     if (DrawVertices)
     {
+        std::vector<glm::vec4> col;
+        std::vector<glm::vec3> ver;
         for (v = 0; v < vertexCount; v++)
         {
-            glBegin (GL_POINTS);
-            glColor(colors[(v % 4) + 1]);
-            glVertex(vertices[v]);
-            glEnd();
+            col.push_back(colors[(v % 4) + 1]);
+            ver.push_back(vertices[v]);
         }
+        Vertex_Chunk points(Vertex_Chunk::VC, vertexCount);
+        points.colorData(col);
+        points.vertexData(ver);
+        points.draw(GL_POINTS);
     }
 
     glDisable (GL_POINT_SMOOTH);
