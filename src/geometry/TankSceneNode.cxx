@@ -1211,29 +1211,34 @@ void TankSceneNode::TankRenderNode::setupPartColor(TankPart part)
     {
     case Body:
     {
-        myColor4f(clr->r, clr->g, clr->b, alpha);
+        if (!colorOverride)
+            glColor(glm::vec3(*clr), alpha);
         break;
     }
     case Barrel:
     {
-        myColor4f(0.25f, 0.25f, 0.25f, alpha);
+        if (!colorOverride)
+            glColor(glm::vec3(0.25f), alpha);
         break;
     }
     case Turret:
     {
-        myColor4f(0.9f * clr->r, 0.9f * clr->g, 0.9f * clr->b, alpha);
+        if (!colorOverride)
+            glColor(0.9f * glm::vec3(*clr), alpha);
         break;
     }
     case LeftCasing:
     case RightCasing:
     {
-        myColor4f(0.7f * clr->r, 0.7f * clr->g, 0.7f * clr->b, alpha);
+        if (!colorOverride)
+            glColor(0.7f * glm::vec3(*clr), alpha);
         break;
     }
     case LeftTread:
     case RightTread:
     {
-        myColor4f(0.3f * clr->r, 0.3f * clr->g, 0.3f * clr->b, alpha);
+        if (!colorOverride)
+            glColor(0.3f * glm::vec3(*clr), alpha);
         break;
     }
     case LeftWheel0:
@@ -1245,7 +1250,8 @@ void TankSceneNode::TankRenderNode::setupPartColor(TankPart part)
     case RightWheel2:
     case RightWheel3:
     {
-        myColor4f(0.4f * clr->r, 0.4f * clr->g, 0.4f * clr->b, alpha);
+        if (!colorOverride)
+            glColor(0.4f * glm::vec3(*clr), alpha);
         break;
     }
     default:   // avoid warnings about unused enumerated values
@@ -1350,7 +1356,8 @@ void TankSceneNode::TankRenderNode::renderJumpJets()
     if (!sceneNode->jumpJetsOn)
         return;
 
-    myColor4f(1.0f, 1.0f, 1.0f, 0.5f);
+    if (!colorOverride)
+        glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
 
     // use a clip plane, because the ground has no depth
     glEnable(GL_CLIP_PLANE0);

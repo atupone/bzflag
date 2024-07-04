@@ -168,7 +168,8 @@ const glm::vec3 &EighthDPyrSceneNode::EighthDPyrRenderNode::getPosition() const
 
 void            EighthDPyrSceneNode::EighthDPyrRenderNode::render()
 {
-    myColor3f(1.0f, 1.0f, 1.0f);
+    if (!colorOverride)
+        glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
     chunk1.draw(GL_LINE_LOOP);
     chunk2.draw(GL_LINES);
 }

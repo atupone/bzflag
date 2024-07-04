@@ -458,7 +458,7 @@ void BoltSceneNode::BoltRenderNode::renderGeoGMBolt()
 
     glScalef(gmMissleSize, gmMissleSize, gmMissleSize);
 
-    glColor4f(noseColor.r,noseColor.g,noseColor.b,1.0f);
+    glColor(noseColor);
     glTranslatef(0, 0, 1.0f);
     glRotatef((float)TimeKeeper::getCurrent().getSeconds() * rotSpeed,0,0,1);
 
@@ -470,7 +470,8 @@ void BoltSceneNode::BoltRenderNode::renderGeoGMBolt()
     addTriangleCount(slices * 2);
 
     // body
-    myColor4f(bodyColor.r, bodyColor.g, bodyColor.b, bodyColor.a);
+    if (!colorOverride)
+        glColor(bodyColor);
     glTranslatef(0, 0, -bodyLen);
     boltBody1.draw(GL_TRIANGLE_STRIP);
     addTriangleCount(slices);
@@ -480,13 +481,15 @@ void BoltSceneNode::BoltRenderNode::renderGeoGMBolt()
     addTriangleCount(slices);
 
     // waist
-    myColor4f(coneColor.r, coneColor.g, coneColor.b, coneColor.a);
+    if (!colorOverride)
+        glColor(coneColor);
     glTranslatef(0, 0, -waistLen);
     boltWaist.draw(GL_TRIANGLE_STRIP);
     addTriangleCount(slices);
 
     // booster
-    myColor4f(bodyColor.r, bodyColor.g, bodyColor.b, 1.0f);
+    if (!colorOverride)
+        glColor(bodyColor);
     glTranslatef(0, 0, -bevelLen);
     boltBooster1.draw(GL_TRIANGLE_STRIP);
     addTriangleCount(slices);
@@ -500,13 +503,15 @@ void BoltSceneNode::BoltRenderNode::renderGeoGMBolt()
     addTriangleCount(slices);
 
     // engine
-    myColor4f(coneColor.r, coneColor.g, coneColor.b, 1.0f);
+    if (!colorOverride)
+        glColor(coneColor);
     glTranslatef(0, 0, -engineLen);
     boltEngine.draw(GL_TRIANGLE_STRIP);
     addTriangleCount(slices);
 
     // fins
-    myColor4f(finColor.r, finColor.g, finColor.b, 1.0f);
+    if (!colorOverride)
+        glColor(finColor);
     glTranslatef(0, 0, engineLen + bevelLen);
 
     for ( int i = 0; i < 4; i++)
@@ -550,7 +555,8 @@ void BoltSceneNode::BoltRenderNode::renderGeoBolt()
     auto coreColor = glm::max(c * coreBleed, minimumChannelVal);
 
     glPushMatrix();
-    myColor4f(coreColor.r, coreColor.g, coreColor.b, 0.85f * alphaMod);
+    if (!colorOverride)
+        glColor(coreColor, 0.85f * alphaMod);
     renderGeoPill(baseRadius, len, geoPills[0]);
     glPopMatrix();
 
@@ -558,21 +564,24 @@ void BoltSceneNode::BoltRenderNode::renderGeoBolt()
     glPushMatrix();
     glTranslatef(0, 0, -radInc * 0.5f);
 
-    myColor4f(c.r, c.g, c.b, 0.5f);
+    if (!colorOverride)
+        glColor(c, 0.5f);
     renderGeoPill(1.5f * baseRadius, len + radInc, geoPills[1]);
     glPopMatrix();
 
     radInc = 2.7f * baseRadius - baseRadius;
     glPushMatrix();
     glTranslatef(0, 0, -radInc*0.5f);
-    myColor4f(c.r, c.g, c.b, 0.25f);
+    if (!colorOverride)
+        glColor(c, 0.25f);
     renderGeoPill(2.7f * baseRadius, len + radInc, geoPills[2]);
     glPopMatrix();
 
     radInc = 3.8f * baseRadius - baseRadius;
     glPushMatrix();
     glTranslatef(0, 0,-radInc*0.5f);
-    myColor4f(c.r, c.g, c.b, 0.125f);
+    if (!colorOverride)
+        glColor(c, 0.125f);
     renderGeoPill(3.8f * baseRadius, len + radInc, geoPills[3]);
     glPopMatrix();
 
@@ -704,7 +713,8 @@ void            BoltSceneNode::BoltRenderNode::render()
             }
 
             if (sceneNode->texturing) glDisable(GL_TEXTURE_2D);
-            myColor4fv(flareColor);
+            if (!colorOverride)
+                glColor(flareColor);
             for (int i = 0; i < numFlares; i++)
             {
                 // pick random direction in 3-space.  picking a random theta with
@@ -726,7 +736,8 @@ void            BoltSceneNode::BoltRenderNode::render()
         if (sceneNode->texturing)
         {
             // draw billboard square
-            myColor4fv(textureColor); // 1.0f all
+            if (!colorOverride)
+                glColor(textureColor);
             glMatrixMode(GL_TEXTURE);
             glPushMatrix();
             glLoadIdentity();
@@ -780,7 +791,7 @@ void            BoltSceneNode::BoltRenderNode::render()
                     const float V0 = uvCell / 4;
 
                     alpha -= alphaStep;
-                    glColor4f(mainColor[0],mainColor[1],mainColor[2], alpha);
+                    glColor(mainColor, alpha);
                     glPopMatrix();
                     glPushMatrix();
 

@@ -25,6 +25,7 @@
 #include "OpenGLMaterial.h"
 #include "TextureManager.h"
 #include "VBO_Drawing.h"
+#include "OpenGLAPI.h"
 
 // local implementation headers
 #include "ViewFrustum.h"
@@ -334,7 +335,8 @@ void SphereLodSceneNode::SphereLodRenderNode::render()
         }
 
         // draw the surface
-        myColor4fv(sceneNode->color);
+        if (!colorOverride)
+            glColor(sceneNode->color);
         {
             glCullFace(GL_FRONT);
             DRAWER.sphere(slices);
