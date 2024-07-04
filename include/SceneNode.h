@@ -41,11 +41,6 @@
 #define __stdcall
 #endif
 
-#define myColor3f(r, g, b)  SceneNode::glColor3f(r, g, b)
-#define myColor4f(r, g, b, a)   SceneNode::glColor4f(r, g, b, a)
-#define myColor3fv(rgb)     SceneNode::glColor3fv(rgb)
-#define myColor4fv(rgba)    SceneNode::glColor4fv(rgba)
-
 class ViewFrustum;
 class SceneRenderer;
 
@@ -87,26 +82,6 @@ public:
 
 
     static void     setColorOverride(bool = true);
-    static void     glColor3f(GLfloat r, GLfloat g, GLfloat b)
-    {
-        if (!colorOverride) ::glColor3f(r, g, b);
-    };
-
-    static void     glColor4f(GLfloat r, GLfloat g, GLfloat b, GLfloat a)
-    {
-        if (!colorOverride) ::glColor4f(r, g, b, a);
-    };
-
-    static void glColor3fv(const glm::vec3 &rgb)
-    {
-        if (!colorOverride) ::glColor3f(rgb.r, rgb.g, rgb.b);
-    };
-
-    static void glColor4fv(const glm::vec4 &rgba)
-    {
-        if (!colorOverride)
-            ::glColor4f(rgba.r, rgba.g, rgba.b, rgba.a);
-    };
 
     static void glTexCoord2fv(const glm::vec2 &coord)
     {
@@ -135,6 +110,7 @@ public:
     */
     CullState octreeState;
 
+    static bool  colorOverride;
 protected:
     void        setRadius(GLfloat radiusSquared);
     void        setCenter(const glm::vec3 &center);
@@ -150,7 +126,6 @@ private:
 protected:
     bool        occluder;
     Extents     extents;
-    static bool  colorOverride;
 private:
     glm::vec3   sphere;
     float       radius2;

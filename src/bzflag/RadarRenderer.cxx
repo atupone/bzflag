@@ -107,7 +107,7 @@ void RadarRenderer::setTankColor(const Player* player)
     //my tank
     if (player->getId() == myTank->getId() )
     {
-        glColor3f(1.0f, 1.0f, 1.0f);
+        glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
         return;
     }
 
@@ -137,11 +137,8 @@ void RadarRenderer::setTankColor(const Player* player)
         {
             if (!toggleTank)
             {
-                float flashcolor[3];
-                flashcolor[0] = 0.0f;
-                flashcolor[1] = 0.8f;
-                flashcolor[2] = 0.9f;
-                glColor3fv(flashcolor);
+                const auto flashcolor = glm::vec3(0.0f, 0.8f, 0.9f);
+                glColor(flashcolor);
             }
         }
         else
@@ -416,7 +413,7 @@ void RadarRenderer::render(SceneRenderer& renderer, bool blank, bool observer)
         TextureManager &tm = TextureManager::instance();
         int noiseTexture = tm.getTextureID( "noise" );
 
-        glColor3f(1.0f, 1.0f, 1.0f);
+        glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
         if (noiseTexture >= 0)
         {
@@ -496,7 +493,7 @@ void RadarRenderer::render(SceneRenderer& renderer, bool blank, bool observer)
         // view frustum edges
         if (!BZDB.isTrue("hideRadarViewLines"))
         {
-            glColor3f(1.0f, 0.625f, 0.125f);
+            glColor4f(1.0f, 0.625f, 0.125f, 1.0f);
             const float fovx = renderer.getViewFrustum().getFOVx();
             const float viewWidth = radarRange * tanf(0.5f * fovx);
             glPushMatrix();
@@ -540,7 +537,7 @@ void RadarRenderer::render(SceneRenderer& renderer, bool blank, bool observer)
             if (shot)
             {
                 const float cs = colorScale(shot->getPosition()[2], muzzleHeight);
-                glColor3f(1.0f * cs, 1.0f * cs, 1.0f * cs);
+                glColor4f(1.0f * cs, 1.0f * cs, 1.0f * cs, 1.0f);
                 shot->radarRender();
             }
         }
@@ -554,7 +551,7 @@ void RadarRenderer::render(SceneRenderer& renderer, bool blank, bool observer)
             if (shot)
             {
                 const float cs = colorScale(shot->getPosition()[2], muzzleHeight);
-                glColor3f(1.0f * cs, 1.0f * cs, 1.0f * cs);
+                glColor4f(1.0f * cs, 1.0f * cs, 1.0f * cs, 1.0f);
                 shot->radarRender();
             }
         }
@@ -616,7 +613,7 @@ void RadarRenderer::render(SceneRenderer& renderer, bool blank, bool observer)
                         glColor(shotcolor * cs);
                     }
                     else
-                        glColor3f(cs, cs, cs);
+                        glColor4f(cs, cs, cs, 1.0f);
                     shot->radarRender();
                 }
             }
@@ -659,7 +656,7 @@ void RadarRenderer::render(SceneRenderer& renderer, bool blank, bool observer)
             LocalPlayer::getMyTank()->getAntidoteLocation();
         if (antidotePos)
         {
-            glColor3f(1.0f, 1.0f, 0.0f);
+            glColor4f(1.0f, 1.0f, 0.0f, 1.0f);
             drawFlag(*antidotePos);
         }
 
@@ -668,7 +665,7 @@ void RadarRenderer::render(SceneRenderer& renderer, bool blank, bool observer)
 
         // north marker
         GLfloat ns = 0.05f * radarRange, ny = 0.9f * radarRange;
-        glColor3f(1.0f, 1.0f, 1.0f);
+        glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
         glTranslatef(0.0f, ny, 0.0f);
         glScalef(ns, ns, 0.0f);
         DRAWER.north();
@@ -831,7 +828,7 @@ void RadarRenderer::buildWallsVBO()
 
 void RadarRenderer::renderWalls()
 {
-    glColor3f(0.25f, 0.5f, 0.5f);
+    glColor4f(0.25f, 0.5f, 0.5f, 1.0f);
     wallsVBO.draw(GL_LINES);
 
     return;

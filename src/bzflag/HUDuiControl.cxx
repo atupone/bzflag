@@ -237,7 +237,7 @@ void            HUDuiControl::renderFocus()
         float v = (float)(arrowFrame / uFrames) / (float)vFrames;
         fh2 = floorf(1.5f * fontHeight) - 1.0f; // this really should not scale the image based on the font,
         gstate->setState();             // best would be to load an image for each size
-        glColor3f(1.0f, 1.0f, 1.0f);
+        glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
         float imageXShift = 0.5f;
         float imageYShift = -fh2 * 0.2f;
         float outputSize = fh2;
@@ -267,10 +267,10 @@ void            HUDuiControl::renderFocus()
         glPushMatrix();
         glTranslatef(x - fh2 - fontHeight, y, 0.0f);
         glScalef(fontHeight - 1.0f, 0.5f * (fontHeight - 1.0f), 0.0f);
-        glColor3f(1.0f, 1.0f, 1.0f);
+        glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
         DRAWER.isoscelesTriangleXYFilled();
 
-        glColor3f(0.0f, 0.0f, 0.0f);
+        glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
         DRAWER.isoscelesTriangleXYOutline();
         glPopMatrix();
     }
