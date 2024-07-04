@@ -371,7 +371,8 @@ void            BillboardSceneNode::BillboardRenderNode::render()
         glScalef(du, dv, 0.0f);
 
         // draw billboard
-        myColor4fv(sceneNode->color);
+        if (!colorOverride)
+            glColor(sceneNode->color);
         DRAWER.simmetricTexturedRect();
 
         glPopMatrix();
