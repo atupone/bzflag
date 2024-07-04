@@ -160,7 +160,8 @@ const glm::vec3 &EighthDBoxSceneNode::EighthDBoxRenderNode::getPosition() const
 
 void            EighthDBoxSceneNode::EighthDBoxRenderNode::render()
 {
-    myColor3f(1.0f, 1.0f, 1.0f);
+    if (!colorOverride)
+        glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
     chunk1.draw(GL_LINE_LOOP);
     chunk2.draw(GL_LINE_LOOP);
     chunk3.draw(GL_LINES);

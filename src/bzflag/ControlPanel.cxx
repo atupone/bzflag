@@ -414,7 +414,7 @@ void            ControlPanel::render(SceneRenderer& _renderer)
             int top = bottom + (int)(size * (float)messageAreaPixels[3]);
             if (top > maxTop)
                 top = maxTop;
-            glColor3f(0.7f, 0.7f, 0.7f);
+            glColor4f(0.7f, 0.7f, 0.7f, 1.0f);
             glPushMatrix();
             glTranslatef((float)messageAreaPixels[0], (float)bottom, 0.0f);
             glScalef(2.0f, (float)(top - bottom), 0.0f);
@@ -524,8 +524,7 @@ void            ControlPanel::render(SceneRenderer& _renderer)
         }
 
         // default to drawing text in white
-        GLfloat whiteColor[4] = {1.0f, 1.0f, 1.0f, dimming};
-        glColor4fv(whiteColor);
+        glColor(glm::vec3(1.0f), dimming);
 
         bool isTab = false;
 

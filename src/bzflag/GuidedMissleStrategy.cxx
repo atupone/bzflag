@@ -496,7 +496,7 @@ void GuidedMissileStrategy::radarRender()
         // draw a "bright reddish" missle tip
         if (size > 0)
         {
-            glColor3f(1.0f, 0.75f, 0.75f);
+            glColor4f(1.0f, 0.75f, 0.75f, 1.0f);
             glPointSize((float)size);
             DRAWER.point();
             glPointSize(1.0f);

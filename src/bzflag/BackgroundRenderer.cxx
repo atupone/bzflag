@@ -1057,7 +1057,7 @@ void BackgroundRenderer::drawSky(SceneRenderer& renderer, bool mirror)
         if (moonDirection[2] > -0.009f)
         {
             moonGState[doStars ? 1 : 0].setState();
-            glColor3f(1.0f, 1.0f, 1.0f);
+            glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
             //   if (useMoonTexture)
             //     glEnable(GL_TEXTURE_2D);
             drawMoon();
@@ -1087,10 +1087,10 @@ void BackgroundRenderer::drawGround()
         }
         else
         {
-            float color[4];
+            glm::vec4 color;
             if (BZDB.isSet("GroundOverideColor") &&
                     parseColorString(BZDB.get("GroundOverideColor"), color))
-                glColor4fv(color);
+                glColor(color);
             else
                 glColor(groundColor[styleIndex]);
             groundGState[styleIndex].setState();
@@ -1171,8 +1171,10 @@ void BackgroundRenderer::drawGroundGrid(
     gridGState.setState();
 
     // x lines
-    if (doShadows) glColor3f(0.0f, 0.75f, 0.5f);
-    else glColor3f(0.0f, 0.4f, 0.3f);
+    if (doShadows)
+        glColor4f(0.0f, 0.75f, 0.5f, 1.0f);
+    else
+        glColor4f(0.0f, 0.4f, 0.3f, 1.0f);
     glPushMatrix();
     glTranslatef(x0 - xhalf, y0, 0.0f);
     glScalef(1.0f, yhalf, 0.0f);
@@ -1184,8 +1186,10 @@ void BackgroundRenderer::drawGroundGrid(
     glPopMatrix();
 
     /* z lines */
-    if (doShadows) glColor3f(0.5f, 0.75f, 0.0f);
-    else glColor3f(0.3f, 0.4f, 0.0f);
+    if (doShadows)
+        glColor4f(0.5f, 0.75f, 0.0f, 1.0f);
+    else
+        glColor4f(0.3f, 0.4f, 0.0f, 1.0f);
     glPushMatrix();
     glTranslatef(x0, y0 - yhalf, 0.0f);
     glScalef(xhalf, 1.0f, 0.0f);
@@ -1242,7 +1246,7 @@ void BackgroundRenderer::drawGroundShadows(
     {
         // use stippling to avoid overlapping shadows
         sunShadowsGState.setState();
-        glColor3f(0.0f, 0.0f, 0.0f);
+        glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
     }
 
     // render those nodes
@@ -1584,7 +1588,7 @@ void BackgroundRenderer::drawAdvancedGroundReceivers(SceneRenderer& renderer)
 
 void BackgroundRenderer::drawMountains(void)
 {
-    glColor3f(1.0f, 1.0f, 1.0f);
+    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
     for (int i = 0; i < numMountainTextures; i++)
     {
         mountainsGState[i].setState();

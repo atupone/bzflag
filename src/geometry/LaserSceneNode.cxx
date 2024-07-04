@@ -234,7 +234,8 @@ void LaserSceneNode::LaserRenderNode::renderFlatLaser()
     if (sceneNode->texturing)
     {
         glScalef(len, 1.0f, 1.0f);
-        myColor3f(1.0f, 1.0f, 1.0f);
+        if (!colorOverride)
+            ::glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
         laserChunk.draw(GL_TRIANGLE_FAN);
         // 6 verts -> 4 tris
 
