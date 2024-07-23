@@ -1366,15 +1366,17 @@ void BackgroundRenderer::drawGroundReceivers(SceneRenderer& renderer)
         glEnd();
         triangleCount += receiverSlices;
 
+        GLfloat outerSize = receiverRingSize;
+        d = hypotf(outerSize, pos[2]);
+        I = B / (atten[0] + d * (atten[1] + d * atten[2]));
+        I *= pos[2] / d;
+
+        glBegin(GL_TRIANGLE_STRIP);
         for (i = 1; i < receiverRings; i++)
         {
-            const GLfloat innerSize = receiverRingSize * GLfloat(i * i);
-            const GLfloat outerSize = receiverRingSize * GLfloat((i + 1) * (i + 1));
+            const GLfloat innerSize = outerSize;
+            outerSize = receiverRingSize * GLfloat((i + 1) * (i + 1));
 
-            // compute inner and outer lit colors
-            d = hypotf(innerSize, pos[2]);
-            I = B / (atten[0] + d * (atten[1] + d * atten[2]));
-            I *= pos[2] / d;
             float innerAlpha = I;
 
             if (i + 1 == receiverRings)
@@ -1387,7 +1389,6 @@ void BackgroundRenderer::drawGroundReceivers(SceneRenderer& renderer)
             }
             float outerAlpha = I;
 
-            glBegin(GL_TRIANGLE_STRIP);
             {
                 for (j = 0; j <= receiverSlices; j++)
                 {
@@ -1399,8 +1400,8 @@ void BackgroundRenderer::drawGroundReceivers(SceneRenderer& renderer)
                     glVertex(angle[j] * outerSize);
                 }
             }
-            glEnd();
         }
+        glEnd();
         triangleCount += (receiverSlices * receiverRings * 2);
 
         glTranslatef(-pos[0], -pos[1], 0.0f);
@@ -1531,6 +1532,7 @@ void BackgroundRenderer::drawAdvancedGroundReceivers(SceneRenderer& renderer)
         triangleCount += receiverSlices;
 
         bool moreRings = true;
+        glBegin(GL_TRIANGLE_STRIP);
         for (i = 2; moreRings; i++)
         {
             // inner ring
@@ -1549,7 +1551,6 @@ void BackgroundRenderer::drawAdvancedGroundReceivers(SceneRenderer& renderer)
             }
             outerColor = I * baseColor;
 
-            glBegin(GL_TRIANGLE_STRIP);
             {
                 for (j = 0; j <= receiverSlices; j++)
                 {
@@ -1559,8 +1560,8 @@ void BackgroundRenderer::drawAdvancedGroundReceivers(SceneRenderer& renderer)
                     glVertex(angle[j] * outerSize);
                 }
             }
-            glEnd();
         }
+        glEnd();
         triangleCount += (receiverSlices * 2 * (i - 2));
 
         glTranslatef(-pos[0], -pos[1], 0.0f);
