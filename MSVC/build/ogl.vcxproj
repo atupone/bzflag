@@ -276,6 +276,7 @@
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
+    <ClCompile Include="..\..\src\ogl\Shader.cxx" />
     <ClCompile Include="..\..\src\ogl\Vertex_Chunk.cxx" />
     <ClCompile Include="..\..\src\ogl\VBO_Element.cxx" />
     <ClCompile Include="..\..\src\ogl\VBO_Handler.cxx" />
@@ -292,6 +293,7 @@
     <ClInclude Include="..\..\include\OpenGLTexture.h" />
     <ClInclude Include="..\..\include\OpenGLUtils.h" />
     <ClInclude Include="..\..\include\RenderNode.h" />
+    <ClInclude Include="..\..\include\Shader.h" />
     <ClInclude Include="..\..\include\Vertex_Chunk.h" />
     <ClInclude Include="..\..\src\ogl\VBO_Element.h" />
     <ClInclude Include="..\..\src\ogl\VBO_Handler.h" />
