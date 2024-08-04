@@ -61,7 +61,7 @@ private:
     RadarRenderer(const RadarRenderer&);
     RadarRenderer&  operator=(const RadarRenderer&);
 
-    void        setTankColor(const class Player* player);
+    glm::vec3   getTankColor(const class Player *player);
     void        drawTank(const glm::vec3 &pos,
                          const class Player* player,
                          bool useSquares);
