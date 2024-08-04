@@ -142,7 +142,10 @@ glm::vec3 RadarRenderer::getTankColor(const Player* player)
     return color;
 }
 
-void RadarRenderer::drawTank(const glm::vec3 &pos, const Player* player, bool useSquares)
+void RadarRenderer::drawTank(const glm::vec3 &pos,
+                             float myAngle,
+                             float tankSize, float flagSize,
+                             const Player* player, bool useSquares)
 {
     auto flag = player->getFlag();
 
@@ -150,23 +153,21 @@ void RadarRenderer::drawTank(const glm::vec3 &pos, const Player* player, bool us
     if (flag != Flags::Null)
     {
         glColor(flag->getRadarColor());
-        drawFlagOnTank();
+        glPushMatrix();
+
+        // align it to the screen axes
+        glRotatef(float(myAngle * 180.0 / M_PI), 0.0f, 0.0f, 1.0f);
+
+        glScalef(flagSize, flagSize, 0);
+        DRAWER.cross();
+
+        glPopMatrix();
     }
 
-    // 'ps' is pixel scale, setup in render()
-    const float tankRadius = BZDBCache::tankRadius;
-    float minSize = 1.5f + (ps * BZDBCache::radarTankPixels);
-    GLfloat size;
-    if (tankRadius < minSize)
-        size = minSize;
-    else
-        size = tankRadius;
     if (pos[2] < 0.0f)
-        size = 0.5f;
+        tankSize = 0.5f;
 
     // NOTE: myTank was checked in render()
-    const float myAngle = LocalPlayer::getMyTank()->getAngle();
-
     // draw the tank
     if (!useSquares)
     {
@@ -184,17 +185,17 @@ void RadarRenderer::drawTank(const glm::vec3 &pos, const Player* player, bool us
     if (useSquares)
     {
         glPushMatrix();
-        glScalef(size, size, 0.0f);
+        glScalef(tankSize, tankSize, 0.0f);
         DRAWER.simmetricRect();
         glPopMatrix();
     }
 
     // adjust with height box size
     const float boxHeight = BZDB.eval(StateDatabase::BZDB_BOXHEIGHT);
-    size = size * (1.0f + (0.5f * (pos[2] / boxHeight)));
+    tankSize *= 1.0f + 0.5f * pos[2] / boxHeight;
 
     // draw the height box
-    glScalef(size, size, 0.0f);
+    glScalef(tankSize, tankSize, 0.0f);
     DRAWER.diamondLoop();
 }
 
@@ -242,23 +243,6 @@ void RadarRenderer::drawFlag(const glm::vec3 &pos)
     DRAWER.cross();
     glPopMatrix();
 }
-
-void RadarRenderer::drawFlagOnTank()
-{
-    glPushMatrix();
-
-    // align it to the screen axes
-    const float angle = LocalPlayer::getMyTank()->getAngle();
-    glRotatef(float(angle * 180.0 / M_PI), 0.0f, 0.0f, 1.0f);
-
-    float tankRadius = BZDBCache::tankRadius;
-    GLfloat s = 2.5f * tankRadius > 4.0f * ps ? 2.5f * tankRadius : 4.0f * ps;
-    glScalef(s, s, 0);
-    DRAWER.cross();
-
-    glPopMatrix();
-}
-
 
 void RadarRenderer::renderFrame(SceneRenderer& renderer)
 {
@@ -550,6 +534,11 @@ void RadarRenderer::render(SceneRenderer& renderer, bool blank, bool observer)
             }
         }
 
+        const float tankRadius = BZDBCache::tankRadius;
+        // 'ps' is pixel scale, setup in render()
+        const float minSize    = 1.5f + ps * BZDBCache::radarTankPixels;
+        const float tankSize   = std::max(minSize, tankRadius);
+        const float flagSize   = std::max(2.5f * tankRadius, 4.0f * ps);
         // draw other tanks (and any flags on them)
         // note about flag drawing.  each line segment is drawn twice
         // (once in each direction);  this degrades the antialiasing
@@ -576,9 +565,9 @@ void RadarRenderer::render(SceneRenderer& renderer, bool blank, bool observer)
             glTranslatef(position[0], position[1], 0.0f);
 
             if (!observer)
-                drawTank(position, player, true);
+                drawTank(position, myAngle, tankSize, flagSize, player, true);
             else
-                drawTank(position, player, !useTankModels);
+                drawTank(position, myAngle, tankSize, flagSize, player, !useTankModels);
 
             glPopMatrix();
         }
@@ -682,7 +671,7 @@ void RadarRenderer::render(SceneRenderer& renderer, bool blank, bool observer)
             glPushMatrix();
 
             // my tank
-            drawTank(myPos, myTank, !useTankModels);
+            drawTank(myPos, myAngle, tankSize, flagSize, myTank, !useTankModels);
 
             glPopMatrix();
 
