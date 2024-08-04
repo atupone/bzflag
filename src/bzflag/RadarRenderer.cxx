@@ -98,7 +98,7 @@ void RadarRenderer::setDimming(float newDimming)
 }
 
 
-void RadarRenderer::setTankColor(const Player* player)
+glm::vec3 RadarRenderer::getTankColor(const Player* player)
 {
     //The height box also uses the tank color
 
@@ -106,30 +106,10 @@ void RadarRenderer::setTankColor(const Player* player)
 
     //my tank
     if (player->getId() == myTank->getId() )
-    {
-        glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-        return;
-    }
+        return glm::vec3(1.0f);
 
     //remote player
-    if (player->isPaused() || player->isNotResponding())
-    {
-        const float dimfactor = 0.4f;
 
-        glm::vec3 color;
-        if (myTank->getFlag() == Flags::Colorblindness)
-            color = Team::getRadarColor(RogueTeam);
-        else
-            color = Team::getRadarColor(player->getTeam());
-
-        const auto dimmedcolor = color * dimfactor;
-        glColor(dimmedcolor);
-    }
-    else
-    {
-        glColor(Team::getRadarColor(myTank->getFlag() ==
-                                    Flags::Colorblindness ? RogueTeam : player->getTeam()));
-    }
     // If this tank is hunted flash it on the radar
     if (player->isHunted() && myTank->getFlag() != Flags::Colorblindness)
     {
@@ -138,7 +118,7 @@ void RadarRenderer::setTankColor(const Player* player)
             if (!toggleTank)
             {
                 const auto flashcolor = glm::vec3(0.0f, 0.8f, 0.9f);
-                glColor(flashcolor);
+                return flashcolor;
             }
         }
         else
@@ -147,6 +127,19 @@ void RadarRenderer::setTankColor(const Player* player)
             flashTank.setClock(0.2f);
         }
     }
+
+    auto team = player->getTeam();
+
+    if (myTank->getFlag() == Flags::Colorblindness)
+        team = RogueTeam;
+
+    auto color = Team::getRadarColor(team);
+
+    const float dimfactor = 0.4f;
+    if (player->isPaused() || player->isNotResponding())
+        color *= dimfactor;
+
+    return color;
 }
 
 void RadarRenderer::drawTank(const glm::vec3 &pos, const Player* player, bool useSquares)
@@ -183,7 +176,8 @@ void RadarRenderer::drawTank(const glm::vec3 &pos, const Player* player, bool us
         drawFancyTank(player);
         glPopMatrix();
     }
-    setTankColor(player);
+    auto tankColor = getTankColor(player);
+    glColor(tankColor);
 
     // align to the screen axes
     glRotatef(float(myAngle * 180.0 / M_PI), 0.0f, 0.0f, 1.0f);
