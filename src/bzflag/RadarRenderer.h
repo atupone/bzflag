@@ -71,11 +71,12 @@ private:
 
     glm::vec3   getTankColor(const class Player *player);
     void        drawTank(const glm::vec3 &pos,
+                         float myAngle,
+                         float tankSize, float flagSize,
                          const class Player* player,
                          bool useSquares);
     void        drawFancyTank(const class Player* player);
     void        drawFlag(const glm::vec3 &pos);
-    void        drawFlagOnTank();
     void        buildBoxPyrMeshVBO();
     void        buildWallsVBO();
     void        buildBasesAndTelesVBO();
