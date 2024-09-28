@@ -22,6 +22,7 @@
 #include "OpenGLAPI.h"
 #include "VBO_Geometry.h"
 #include "VBO_Drawing.h"
+#include "PlayingShader.h"
 
 // FIXME (SceneRenderer.cxx is in src/bzflag)
 #include "SceneRenderer.h"
@@ -176,7 +177,7 @@ void LaserSceneNode::LaserRenderNode::renderGeoLaser()
 {
     const float len = sceneNode->length;
 
-    glDisable(GL_TEXTURE_2D);
+    SHADER.setTexturing(false);
 
     auto coreColor = sceneNode->centerColor;
     auto mainColor = sceneNode->color;
@@ -223,7 +224,7 @@ void LaserSceneNode::LaserRenderNode::renderGeoLaser()
         addTriangleCount(12 * 12 * 2);
     }
 
-    glEnable(GL_TEXTURE_2D);
+    SHADER.setTexturing(true);
 }
 
 
