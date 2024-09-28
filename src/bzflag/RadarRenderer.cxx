@@ -29,6 +29,7 @@
 #include "MeshObstacle.h"
 #include "OpenGLAPI.h"
 #include "VBO_Drawing.h"
+#include "PlayingShader.h"
 
 // local implementation headers
 #include "LocalPlayer.h"
@@ -416,7 +417,7 @@ void RadarRenderer::render(SceneRenderer& renderer, bool blank, bool observer)
 
             int noisePattern = 4 * int(floor(sequences * bzfrand()));
 
-            glEnable(GL_TEXTURE_2D);
+            SHADER.setTexturing(true);
             tm.bind(noiseTexture);
 
             glMatrixMode(GL_TEXTURE);
@@ -429,7 +430,7 @@ void RadarRenderer::render(SceneRenderer& renderer, bool blank, bool observer)
             glPopMatrix();
             glMatrixMode(GL_MODELVIEW);
 
-            glDisable(GL_TEXTURE_2D);
+            SHADER.setTexturing(false);
         }
         if (decay > 0.015f) decay *= 0.5f;
 
@@ -858,23 +859,16 @@ void RadarRenderer::renderBoxPyrMeshFast(float _range)
     OpenGLGState gs = gb.getState();
     gs.setState();
 
-    // now that the texture is bound, setup the clamp mode
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-
     // do this after the GState setting
     if (smooth)
         glEnable(GL_POLYGON_SMOOTH);
 
     // setup the texturing mapping
-    const float hf = 128.0f; // height factor, goes from 0.0 to 1.0 in texcoords
     const float vfz = RENDERER.getViewFrustum().getEye()[2];
-    const GLfloat plane[4] =
-    { 0.0f, 0.0f, (1.0f / hf), (((hf * 0.5f) - vfz) / hf) };
-    glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
-    glTexGenfv(GL_S, GL_EYE_PLANE, plane);
+    SHADER.setZTank(vfz);
 
     // setup texture generation
-    glEnable(GL_TEXTURE_GEN_S);
+    int oldTexGen = SHADER.setTexGen(SHADER.texGenLinear);
 
     // set the color
     glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
@@ -888,7 +882,7 @@ void RadarRenderer::renderBoxPyrMeshFast(float _range)
 //  }
 
     // restore texture generation
-    glDisable(GL_TEXTURE_GEN_S);
+    SHADER.setTexGen(oldTexGen);
 
     OpenGLGState::resetState();
 
