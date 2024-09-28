@@ -30,6 +30,7 @@
 #include "BZDBCache.h"
 #include "OpenGLAPI.h"
 #include "VBO_Drawing.h"
+#include "PlayingShader.h"
 
 // local headers
 #include "daylight.h"
@@ -886,7 +887,7 @@ void BackgroundRenderer::drawSkybox()
 
     OpenGLGState::resetState();
 
-    glEnable(GL_TEXTURE_2D);
+    SHADER.setTexturing(true);
     glDisable(GL_CULL_FACE);
     glShadeModel(GL_SMOOTH);
 
@@ -928,7 +929,7 @@ void BackgroundRenderer::drawSkybox()
 
     glShadeModel(GL_FLAT);
     glEnable(GL_CULL_FACE);
-    glDisable(GL_TEXTURE_2D);
+    SHADER.setTexturing(false);
 }
 
 
@@ -1059,7 +1060,7 @@ void BackgroundRenderer::drawSky(SceneRenderer& renderer, bool mirror)
             moonGState[doStars ? 1 : 0].setState();
             glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
             //   if (useMoonTexture)
-            //     glEnable(GL_TEXTURE_2D);
+            //     SHADER.setTexturing(true)
             drawMoon();
         }
 
@@ -1468,14 +1469,7 @@ void BackgroundRenderer::drawAdvancedGroundReceivers(SceneRenderer& renderer)
     if (useTexture)
     {
         const float repeat = BZDB.eval("groundHighResTexRepeat");
-        const float sPlane[4] = { repeat, 0.0f, 0.0f, 0.0f };
-        const float tPlane[4] = { 0.0f, repeat, 0.0f, 0.0f };
-        glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
-        glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
-        glTexGenfv(GL_S, GL_EYE_PLANE, sPlane);
-        glTexGenfv(GL_T, GL_EYE_PLANE, tPlane);
-        glEnable(GL_TEXTURE_GEN_S);
-        glEnable(GL_TEXTURE_GEN_T);
+        SHADER.setRepeat(repeat);
     }
 
     glPushMatrix();
@@ -1577,10 +1571,7 @@ void BackgroundRenderer::drawAdvancedGroundReceivers(SceneRenderer& renderer)
     glPopMatrix();
 
     if (useTexture)
-    {
-        glDisable(GL_TEXTURE_GEN_S);
-        glDisable(GL_TEXTURE_GEN_T);
-    }
+        SHADER.setRepeat(0.0f);
 
     glSetFogColor(fogColor);
 }

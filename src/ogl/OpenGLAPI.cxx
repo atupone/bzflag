@@ -21,6 +21,7 @@
 
 // common headers
 #include "bzfgl.h"
+#include "PlayingShader.h"
 
 void glColor(const glm::vec3 &c, float alpha)
 {
@@ -109,6 +110,16 @@ glm::ivec4 glGetViewport()
 void glClipPlane(int id, const glm::dvec4 &plane)
 {
     glClipPlane(id, glm::value_ptr(plane));
+}
+
+void glLightModelLocalViewer(bool enable)
+{
+    SHADER.setLocalViewer(enable);
+}
+
+void glLightModelSpecular(bool enable)
+{
+    SHADER.setSeparateColor(enable);
 }
 
 // Local Variables: ***

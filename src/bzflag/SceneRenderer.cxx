@@ -35,6 +35,7 @@
 #include "MeshSceneNode.h"
 #include "OpenGLAPI.h"
 #include "VBO_Drawing.h"
+#include "PlayingShader.h"
 
 /* FIXME - local implementation dependancies */
 #include "BackgroundRenderer.h"
@@ -230,7 +231,7 @@ void SceneRenderer::setQuality(int value)
         glHint(GL_POLYGON_SMOOTH_HINT, GL_FASTEST);
 
         // this can be modified by OpenGLMaterial
-        glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
+        glLightModelLocalViewer(true);
     }
 
     // this setting helps keep those specular highlights
@@ -238,7 +239,7 @@ void SceneRenderer::setQuality(int value)
     // It was mainlined in OpenGL Version 1.2
     // (there's also the GL_EXT_separate_specular_color extension)
     {
-        glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SEPARATE_SPECULAR_COLOR);
+        glLightModelSpecular(true);
     }
 
     BZDB.set("useQuality", TextUtils::format("%d", value));
@@ -776,7 +777,7 @@ void SceneRenderer::render(bool _lastFrame, bool _sameFrame)
 
     // finalize dimming
     if (mapFog)
-        glDisable(GL_FOG);
+        SHADER.setFogging(false);
 
     renderDimming();
 
@@ -888,9 +889,9 @@ void SceneRenderer::renderScene()
         const bool avoidSkyFog = (mapFog && BZDB.isTrue("_fogNoSky"));
         if (avoidSkyFog)
         {
-            glDisable(GL_FOG);
+            SHADER.setFogging(false);
             background->renderSky(*this, mirror);
-            glEnable(GL_FOG);
+            SHADER.setFogging(true);
         }
         else
             background->renderSky(*this, mirror);
@@ -1024,7 +1025,7 @@ static bool setupMapFog()
     RENDERER.setFogActive(false);
     if (BZDB.get(StateDatabase::BZDB_FOGMODE) == "none")
     {
-        glDisable(GL_FOG);
+        SHADER.setFogging(false);
         glHint(GL_FOG_HINT, GL_FASTEST);
         return false;
     }
@@ -1056,12 +1057,12 @@ static bool setupMapFog()
         glHint(GL_FOG_HINT, GL_FASTEST);
 
     // setup GL fog
-    glFogi(GL_FOG_MODE, fogMode);
+    SHADER.setFogMode(fogMode);
     glFogf(GL_FOG_DENSITY, fogDensity);
     glFogf(GL_FOG_START, fogStart);
     glFogf(GL_FOG_END, fogEnd);
     glSetFogColor(fogColor);
-    glEnable(GL_FOG);
+    SHADER.setFogging(true);
 
     RENDERER.setFogColor(fogColor);
     return true;

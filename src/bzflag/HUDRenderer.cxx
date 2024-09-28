@@ -27,6 +27,7 @@
 #include "OpenGLAPI.h"
 #include "VBO_Geometry.h"
 #include "VBO_Drawing.h"
+#include "PlayingShader.h"
 
 /* local implementation headers */
 #include "LocalPlayer.h"
@@ -1276,10 +1277,10 @@ void HUDRenderer::drawWaypointMarker(const EnhancedHUDMarker &marker,
         hudColor3Afv( color, alpha );
         float textOffset = 5.0f;
         float width = FontManager::instance().getStrLength(headingFontFace, headingFontSize, name);
-        glEnable(GL_TEXTURE_2D);
+        SHADER.setTexturing(true);
         FontManager::instance().drawString(-width * 0.5f, textOffset + triangleSize,
                                            0, headingFontFace, headingFontSize, name);
-        glDisable(GL_TEXTURE_2D);
+        SHADER.setTexturing(false);
     }
 
     glPopMatrix();
@@ -1345,10 +1346,10 @@ void HUDRenderer::drawLockonMarker(const EnhancedHUDMarker &marker,
         hudColor3Afv( color, alpha );
         float textOffset = 5.0f;
         float width = FontManager::instance().getStrLength(headingFontFace, headingFontSize, name);
-        glEnable(GL_TEXTURE_2D);
+        SHADER.setTexturing(true);
         FontManager::instance().drawString(-width * 0.5f, textOffset + lockonSize,
                                            0, headingFontFace, headingFontSize, name);
-        glDisable(GL_TEXTURE_2D);
+        SHADER.setTexturing(false);
     }
 
     glPopMatrix();
@@ -1720,11 +1721,11 @@ void            HUDRenderer::renderPlaying(SceneRenderer& renderer)
 
     if (!BZDB.isTrue("_forbidMarkers") && experimental)
     {
-        glDisable(GL_TEXTURE_2D);
+        SHADER.setTexturing(false);
 
         drawMarkersInView(centerx,centery,myTank);
 
-        glEnable(GL_TEXTURE_2D);
+        SHADER.setTexturing(true);
     }
 
 
