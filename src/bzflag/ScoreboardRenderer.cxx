@@ -26,6 +26,7 @@
 #include "TimeKeeper.h"
 #include "OpenGLAPI.h"
 #include "VBO_Drawing.h"
+#include "PlayingShader.h"
 
 /* local implementation headers */
 #include "LocalPlayer.h"
@@ -637,7 +638,7 @@ void ScoreboardRenderer::drawRoamTarget(float _x0, float _y0,
 
     glPushAttrib(GL_ALL_ATTRIB_BITS);
     glDisable(GL_BLEND);
-    glDisable(GL_LIGHTING);
+    SHADER.setLighting(false);
     glDisable(GL_TEXTURE_2D);
     glColor(c0);
     glPushMatrix();

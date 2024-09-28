@@ -30,6 +30,7 @@
 #include "TextUtils.h"
 #include "OpenGLAPI.h"
 #include "VBO_Drawing.h"
+#include "PlayingShader.h"
 
 // Local implementation headers
 #include "ImageFont.h"
@@ -332,7 +333,7 @@ void FontManager::drawString(float x, float y, float z, int faceID, float size,
             pFont->drawString(scale, color, opacity, &tmpText[startSend], len);
             if (underline)
             {
-                glDisable(GL_TEXTURE_2D);
+                SHADER.setTexturing(false);
                 glEnable(GL_BLEND);
                 if (underlineColor[0] >= 0)
                 {
@@ -347,7 +348,7 @@ void FontManager::drawString(float x, float y, float z, int faceID, float size,
                 // with respect to the string just drawn
                 glScalef(width, 0.0f, 0.0f);
                 DRAWER.asimmetricLineX();
-                glEnable(GL_TEXTURE_2D);
+                SHADER.setTexturing(true);
             }
             glDepthMask(depthMask);
             glPopMatrix();

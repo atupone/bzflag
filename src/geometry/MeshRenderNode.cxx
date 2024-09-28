@@ -24,7 +24,7 @@
 #include "SceneNode.h"
 #include "SceneRenderer.h"
 #include "OpenGLAPI.h"
-
+#include "PlayingShader.h"
 #include "Extents.h"
 #include "StateDatabase.h"
 #include "BZDBCache.h"
@@ -74,14 +74,14 @@ void OpaqueRenderNode::render()
         glMultMatrixf(xformMatrix);
     }
     if (normalize)
-        glEnable(GL_NORMALIZE);
+        SHADER.setNormalizeNormal(true);
 
     // draw the elements
     drawMgr->executeSet(lod, set, BZDBCache::lighting, BZDBCache::texture);
 
     // undo the transformation
     if (normalize)
-        glDisable(GL_NORMALIZE);
+        SHADER.setNormalizeNormal(false);
     if (xformMatrix)
         glPopMatrix();
 
