@@ -26,6 +26,7 @@
 #include "Vertex_Chunk.h"
 #include "VBO_Geometry.h"
 #include "VBO_Drawing.h"
+#include "PlayingShader.h"
 
 // local implementation headers
 #include "ViewFrustum.h"
@@ -384,7 +385,6 @@ void            FlagSceneNode::FlagRenderNode::render(bool shadow)
 {
     float base = BZDBCache::flagPoleSize;
     float poleWidth = BZDBCache::flagPoleWidth;
-    const bool doing_texturing = sceneNode->texturing;
     const bool is_billboard = sceneNode->billboard;
 
     const auto &sphere = getPosition();
@@ -448,8 +448,7 @@ void            FlagSceneNode::FlagRenderNode::render(bool shadow)
         if (!colorOverride)
             glColor4f(0.0f, 0.0f, 0.0f, sceneNode->color[3]);
 
-        if (doing_texturing)
-            glDisable(GL_TEXTURE_2D);
+        const bool doing_texturing = SHADER.setTexturing(false);
 
         static float oldTopHeigth = -1.0f;
         static float oldPoleWidth = -1.0f;
@@ -491,8 +490,7 @@ void            FlagSceneNode::FlagRenderNode::render(bool shadow)
             addTriangleCount(2);
         }
 
-        if (doing_texturing)
-            glEnable(GL_TEXTURE_2D);
+        SHADER.setTexturing(doing_texturing);
     }
     glPopMatrix();
 }

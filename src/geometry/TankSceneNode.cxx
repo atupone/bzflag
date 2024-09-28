@@ -24,6 +24,7 @@
 #include "BZDBCache.h"
 #include "OpenGLAPI.h"
 #include "Vertex_Chunk.h"
+#include "PlayingShader.h"
 
 // local implementation headers
 #include "ViewFrustum.h"
@@ -900,7 +901,7 @@ void TankSceneNode::TankRenderNode::render()
     {
         const auto &dims = sceneNode->dimensions;
         glScalef(dims[0], dims[1], dims[2]);
-        glEnable(GL_NORMALIZE);
+        SHADER.setNormalizeNormal(true);
     }
 
     // disable the dynamic lights, if it might help
@@ -975,7 +976,7 @@ void TankSceneNode::TankRenderNode::render()
         RENDERER.reenableLights();
 
     if (sceneNode->useDimensions)
-        glDisable(GL_NORMALIZE);
+        SHADER.setNormalizeNormal(false);
 
     // restore the MODELVIEW matrix
     glPopMatrix();
