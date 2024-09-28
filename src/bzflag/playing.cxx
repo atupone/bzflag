@@ -64,6 +64,7 @@
 #include "WordFilter.h"
 #include "ZSceneDatabase.h"
 #include "VBO_Drawing.h"
+#include "PlayingShader.h"
 
 // local implementation headers
 #include "AutoPilot.h"
@@ -6915,6 +6916,7 @@ static void     playingLoop()
     // main loop
     while (!CommandsStandard::isQuit())
     {
+        SHADER.push();
 
         BZDBCache::update();
 
@@ -7428,6 +7430,7 @@ static void     playingLoop()
         // handle incoming packets
         doMessages();
 
+        SHADER.pop();
     } // end main client loop
 
     dropLastExplosions();

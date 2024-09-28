@@ -1,5 +1,9 @@
 SUBDIRS = l10n fonts
 
+validate:
+	glslangValidator playing.vert
+	glslangValidator playing.frag
+
 dist_pkgdata_DATA =		\
 	automatic_icon.png	\
 	blue_basetop.png	\
@@ -68,6 +72,8 @@ dist_pkgdata_DATA =		\
 	mountain5.png		\
 	observer_icon.png	\
 	phantom.wav		\
+	playing.frag		\
+	playing.vert		\
 	pop.wav			\
 	puddle.png		\
 	puffs.png		\
