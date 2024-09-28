@@ -36,6 +36,8 @@ extern glm::ivec4 glGetViewport();
 extern void glVertexPointer(const glm::vec3 vertices[]);
 extern void glTexCoordPointer(const glm::vec2 texCoords[]);
 extern void glClipPlane(int id, const glm::dvec4 &plane);
+extern void glLightModelLocalViewer(bool enable);
+extern void glLightModelSpecular(bool enable);
 
 #endif // _OPENGLAPI_H
 
