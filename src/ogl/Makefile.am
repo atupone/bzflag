@@ -26,6 +26,7 @@ libGLKit_la_SOURCES =			\
 	RenderNode.cxx			\
 	Shader.cxx			\
 	Vertex_Chunk.cxx                \
+	Vertex_Chunkes.cxx              \
 	VBO_Element.h			\
 	VBO_Element.cxx                 \
 	VBO_Handler.h			\
