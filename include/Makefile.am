@@ -127,6 +127,7 @@ noinst_HEADERS =			\
 	TimeKeeper.h			\
 	TriWallSceneNode.h		\
 	Vertex_Chunk.h			\
+	Vertex_Chunkes.h		\
 	ViewFrustum.h			\
 	VotingBooth.h			\
 	VBO_Geometry.h			\
