@@ -44,6 +44,7 @@ void PlayingShader::init()
     texGenUniform           = getUniformLocation("texGen");
     zTankUniform            = getUniformLocation("zTank");
     repeatUniform           = getUniformLocation("repeat");
+    csProcUniform           = getUniformLocation("csProc");
 
     glGetIntegerv(GL_MAX_LIGHTS, &maxLights);
     if (maxLights > 128)
@@ -134,6 +135,11 @@ void PlayingShader::setZTank(float zTank)
 void PlayingShader::setRepeat(float repeat)
 {
     setUniform(repeatUniform, repeat);
+}
+
+void PlayingShader::setColorProcessing(int csProc)
+{
+    setUniform(csProcUniform, csProc);
 }
 
 

@@ -681,9 +681,7 @@ void            OpenGLGStateState::setOpenGLState(
             SHADER.setTexturing(true);
         }
         else
-        {
             SHADER.setTexturing(false);
-        }
 
         // texture transformation matrix
         if (sorted.hasTextureMatrix)
@@ -1296,6 +1294,7 @@ void OpenGLGState::initGLState()
     SHADER.setRescaleNormal(false);
     SHADER.setFogging(false);
     SHADER.setRepeat(0.0f);
+    SHADER.setColorProcessing(SHADER.csNone);
     glDisable(GL_COLOR_MATERIAL);
     glDisable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
