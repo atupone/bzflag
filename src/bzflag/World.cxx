@@ -64,6 +64,7 @@ World::World() :
     flags(NULL),
     flagNodes(NULL),
     flagWarpNodes(NULL),
+    flagsUpdated(false),
     wind(),
     oldFogEffect(),
     oldUseDrawInfo()
@@ -531,6 +532,7 @@ void            World::freeFlags()
     flags = NULL;
     flagNodes = NULL;
     flagWarpNodes = NULL;
+    flagsUpdated = true;
 }
 
 void            World::makeMeshDrawMgrs()
@@ -696,6 +698,7 @@ void            World::initFlag(int index)
         flagWarpNodes[index]->move(pos);
         flagWarpNodes[index]->setSizeFraction(0.0f);
     }
+    flagsUpdated = true;
 }
 
 void            World::updateWind(float UNUSED(dt))
@@ -750,6 +753,7 @@ void            World::updateFlag(int index, float dt)
             flag.position.z += flag.flightTime
                                * (flag.initialVelocity + 0.5f * BZDBCache::gravity * flag.flightTime);
         }
+        flagsUpdated = true;
         break;
 
     case FlagComing:
@@ -794,6 +798,7 @@ void            World::updateFlag(int index, float dt)
                 flagWarpNodes[index]->setSizeFraction(t);
             }
         }
+        flagsUpdated = true;
         break;
 
     case FlagGoing:
@@ -837,6 +842,7 @@ void            World::updateFlag(int index, float dt)
                 flagWarpNodes[index]->setSizeFraction(t);
             }
         }
+        flagsUpdated = true;
         break;
     }
 
@@ -1359,6 +1365,13 @@ RemotePlayer* World::getCurrentRabbit() const
             return p;
     }
     return NULL;
+}
+
+bool World::areFlagsUpdated()
+{
+    auto temp    = flagsUpdated;
+    flagsUpdated = false;
+    return temp;
 }
 
 

@@ -270,7 +270,10 @@ void Vertex_Chunk::normalData(const std::vector<glm::vec3> normals)
 
 void Vertex_Chunk::colorData(const std::vector<glm::vec4> colors)
 {
-    colorData(&colors[0][0], colors.size());
+    if (colors.empty())
+        colorData(static_cast<const GLfloat *>(nullptr), 0);
+    else
+        colorData(&colors[0][0], colors.size());
 }
 
 void Vertex_Chunk::draw(GLenum mode)

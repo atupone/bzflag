@@ -40,10 +40,15 @@ public:
     int  setTexGen(int texGenMode);
     void setZTank(float zTank);
     void setRepeat(float repeat);
+    void setColorProcessing(int csProc);
 
     const int texGenNone      = 0;
     const int texGenSphereMap = 1;
     const int texGenLinear    = 2;
+
+    const int csNone  = 0;
+    const int csColor = 1;
+    const int csColTr = 2;
 
 protected:
     friend class Singleton<PlayingShader>;
@@ -65,6 +70,7 @@ private:
     GLint texGenUniform;
     GLint zTankUniform;
     GLint repeatUniform;
+    GLint csProcUniform;
 
     GLint   lightEnabled[128];
     GLint   maxLights;

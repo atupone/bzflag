@@ -21,10 +21,15 @@ uniform bool  localViewer;
 uniform int   texGen;
 uniform float zTank;
 uniform float repeat;
+uniform int   csProc;
 
 const int texGenNone      = 0;
 const int texGenSphereMap = 1;
 const int texGenLinear    = 2;
+
+const int csNone  = 0;
+const int csColor = 1;
+const int csColTr = 2;
 
 vec3 ecPosition3;
 vec3 normal;
@@ -94,6 +99,40 @@ void Light(in gl_LightProducts lightProduct,
     specular += lightProduct.specular * pf * attenuation;
 }
 
+float colorScale(float z, float h)
+{
+    float atten = zTank - (z + h);
+    if (atten < 0.0)
+        atten = z - zTank;
+    if (atten < 0.0)
+        atten = 0.0;
+
+    const float colorFactor = 40.0;
+    atten /= colorFactor;
+
+    float scale = max(1.0 - atten, 0.35);
+
+    return scale;
+}
+
+float transScale(const float z, const float h)
+{
+    float atten = zTank - (z + h);
+
+    if (atten <= 0.0)
+        atten = z - zTank;
+
+    if (atten <= 0.0)
+        atten = 0.0;
+
+    const float colorFactor = 40.0;
+    atten /= colorFactor;
+
+    float scale = max(1.0 - atten, 0.5);
+
+    return scale;
+}
+
 void setOutput(in vec4 ecPosition, in vec4 texCoord, in vec4 color)
 {
     // Transform vertex to clip space
@@ -105,7 +144,23 @@ void setOutput(in vec4 ecPosition, in vec4 texCoord, in vec4 color)
 
     gl_ClipVertex  = ecPosition;
     gl_TexCoord[0] = texCoord;
-    gl_FrontColor          = color;
+    if (csProc == csNone)
+    {
+        gl_FrontColor = color;
+    }
+    else
+    {
+        float z     = ecPosition.z;
+        float bh    = color.a;
+        float scale = colorScale(z, bh);
+        if (csProc == csColTr)
+        {
+            float trans = transScale(z, bh);
+            gl_FrontColor = vec4(scale * color.rgb, trans);
+        }
+        else if (csProc == csColor)
+            gl_FrontColor = vec4(scale * color.rgb, 1.0);
+    }
     gl_FrontSecondaryColor = vec4(0.0, 0.0, 0.0, 1.0);
     gl_BackSecondaryColor  = gl_FrontSecondaryColor;
     gl_BackColor           = gl_FrontColor;

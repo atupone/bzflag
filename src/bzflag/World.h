@@ -113,6 +113,7 @@ public:
     void        addFlags(SceneDatabase*, bool seerView);
     void        updateWind(float dt);
     void        getWind(float wind[3], const glm::vec3 &pos) const;
+    bool        areFlagsUpdated();
 
     void        makeMeshDrawMgrs();
 
@@ -184,6 +185,7 @@ private:
     Flag*       flags;
     FlagSceneNode** flagNodes;
     FlagWarpSceneNode** flagWarpNodes;
+    bool                flagsUpdated;
 
     int         drawInfoCount;
     MeshDrawInfo**  drawInfoArray;

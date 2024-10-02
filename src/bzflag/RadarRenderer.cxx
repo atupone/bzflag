@@ -496,6 +496,8 @@ void RadarRenderer::render(SceneRenderer& renderer, bool blank, bool observer)
         // setup the blending function
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+        SHADER.setZTank(myPos.z);
+
         // draw the buildings
         renderObstacles(fastRadar, radarRange);
 
@@ -506,19 +508,17 @@ void RadarRenderer::render(SceneRenderer& renderer, bool blank, bool observer)
             glEnable(GL_POINT_SMOOTH);
         }
 
+        SHADER.setColorProcessing(SHADER.csColor);
         // draw my shots
         int maxShots = world->getMaxShots();
         int i;
         float muzzleHeight = BZDB.eval(StateDatabase::BZDB_MUZZLEHEIGHT);
+        glColor4f(1.0f, 1.0f, 1.0f, muzzleHeight);
         for (i = 0; i < maxShots; i++)
         {
             auto shot = myTank->getShot(i);
             if (shot)
-            {
-                const float cs = colorScale(shot->getPosition()[2], muzzleHeight);
-                glColor4f(1.0f * cs, 1.0f * cs, 1.0f * cs, 1.0f);
                 shot->radarRender();
-            }
         }
 
         //draw world weapon shots
@@ -528,12 +528,10 @@ void RadarRenderer::render(SceneRenderer& renderer, bool blank, bool observer)
         {
             auto shot = worldWeapons->getShot(i);
             if (shot)
-            {
-                const float cs = colorScale(shot->getPosition()[2], muzzleHeight);
-                glColor4f(1.0f * cs, 1.0f * cs, 1.0f * cs, 1.0f);
                 shot->radarRender();
-            }
         }
+
+        SHADER.setColorProcessing(SHADER.csNone);
 
         const float tankRadius = BZDBCache::tankRadius;
         // 'ps' is pixel scale, setup in render()
@@ -577,6 +575,7 @@ void RadarRenderer::render(SceneRenderer& renderer, bool blank, bool observer)
         // draw other tanks' shells
         bool iSeeAll = myTank && (myTank->getFlag() == Flags::Seer);
         maxShots = World::getWorld()->getMaxShots();
+        SHADER.setColorProcessing(SHADER.csColor);
         for (i = 0; i < curMaxPlayers; i++)
         {
             RemotePlayer* player = world->getPlayer(i);
@@ -586,18 +585,17 @@ void RadarRenderer::render(SceneRenderer& renderer, bool blank, bool observer)
                 auto shot = player->getShot(j);
                 if (shot && (shot->getFlag() != Flags::InvisibleBullet || iSeeAll))
                 {
-                    const float cs = colorScale(shot->getPosition()[2], muzzleHeight);
+                    glm::vec3 shotcolor;
                     if (coloredShot)
                     {
-                        glm::vec3 shotcolor;
                         if (myTank->getFlag() == Flags::Colorblindness)
                             shotcolor = Team::getRadarColor(RogueTeam);
                         else
                             shotcolor = Team::getRadarColor(player->getTeam());
-                        glColor(shotcolor * cs);
                     }
                     else
-                        glColor4f(cs, cs, cs, 1.0f);
+                        shotcolor = glm::vec3(1.0f);
+                    glColor(shotcolor, muzzleHeight);
                     shot->radarRender();
                 }
             }
@@ -606,35 +604,83 @@ void RadarRenderer::render(SceneRenderer& renderer, bool blank, bool observer)
         // draw flags not on tanks.
         // draw them in reverse order so that the team flags
         // (which come first), are drawn on top of the normal flags.
+        GLfloat s = BZDBCache::flagRadius > 3.0f * ps ? BZDBCache::flagRadius : 3.0f * ps;
+
         const int maxFlags = world->getMaxFlags();
-        const bool drawNormalFlags = BZDB.isTrue("displayRadarFlags");
-        const bool hideTeamFlagsOnRadar = BZDB.isTrue(StateDatabase::BZDB_HIDETEAMFLAGSONRADAR);
-        const bool hideFlagsOnRadar = BZDB.isTrue(StateDatabase::BZDB_HIDEFLAGSONRADAR);
-        for (i = (maxFlags - 1); i >= 0; i--)
+
+        bool flagsToBeUpdated = world->areFlagsUpdated();
+
+        static GLfloat oldSize = -1.0f;
+        if (s != oldSize)
         {
-            const Flag& flag = world->getFlag(i);
-            // don't draw flags that don't exist or are on a tank
-            if (flag.status == FlagNoExist || flag.status == FlagOnTank)
-                continue;
-            // don't draw normal flags if we aren't supposed to
-            if (flag.type->flagTeam == NoTeam && !drawNormalFlags)
-                continue;
-            if (hideTeamFlagsOnRadar)
-            {
-                if (flag.type->flagTeam != ::NoTeam)
-                    continue;
-            }
-            if (hideFlagsOnRadar)
-            {
-                if (flag.type)
-                    continue;
-            }
-            // Flags change color by height
-            const float cs = colorScale(flag.position[2], muzzleHeight);
-            const auto &flagcolor = flag.type->getRadarColor();
-            glColor(flagcolor * cs);
-            drawFlag(flag.position);
+            oldSize = s;
+            flagsToBeUpdated = true;
         }
+
+        static bool drawNormalFlags = true;
+        if (drawNormalFlags != BZDB.isTrue("displayRadarFlags"))
+        {
+            drawNormalFlags  = !drawNormalFlags;
+            flagsToBeUpdated = true;
+        }
+
+        static bool hideTeamFlagsOnRadar = true;
+        if (hideTeamFlagsOnRadar != BZDB.isTrue(StateDatabase::BZDB_HIDETEAMFLAGSONRADAR))
+        {
+            hideTeamFlagsOnRadar = !hideTeamFlagsOnRadar;
+            flagsToBeUpdated     = true;
+        }
+
+        static bool hideFlagsOnRadar = true;
+        if (hideFlagsOnRadar != BZDB.isTrue(StateDatabase::BZDB_HIDEFLAGSONRADAR))
+        {
+            hideFlagsOnRadar = !hideFlagsOnRadar;
+            flagsToBeUpdated = true;
+        }
+
+        if (flagsToBeUpdated)
+        {
+            std::vector<glm::vec3> vertexes;
+            std::vector<glm::vec4> colors;
+            for (i = (maxFlags - 1); i >= 0; i--)
+            {
+                const Flag& flag = world->getFlag(i);
+                // don't draw flags that don't exist or are on a tank
+                if (flag.status == FlagNoExist || flag.status == FlagOnTank)
+                    continue;
+                // don't draw normal flags if we aren't supposed to
+                if (flag.type->flagTeam == NoTeam && !drawNormalFlags)
+                    continue;
+                if (hideTeamFlagsOnRadar)
+                {
+                    if (flag.type->flagTeam != ::NoTeam)
+                        continue;
+                }
+                if (hideFlagsOnRadar)
+                {
+                    if (flag.type)
+                        continue;
+                }
+                // Flags change color by height
+                const auto &flagcolor = flag.type->getRadarColor();
+                auto color = glm::vec4(flagcolor, muzzleHeight);
+                colors.push_back(color);
+                vertexes.push_back(flag.position - glm::vec3(s, 0, 0));
+                colors.push_back(color);
+                vertexes.push_back(flag.position + glm::vec3(s, 0, 0));
+                colors.push_back(color);
+                vertexes.push_back(flag.position - glm::vec3(0, s, 0));
+                colors.push_back(color);
+                vertexes.push_back(flag.position + glm::vec3(0, s, 0));
+            }
+            flagsVBO = Vertex_Chunk(Vertex_Chunk::VC, vertexes.size());
+            flagsVBO.vertexData(vertexes);
+            flagsVBO.colorData(colors);
+        }
+
+        SHADER.setColorProcessing(SHADER.csColor);
+        flagsVBO.draw(GL_LINES);
+        SHADER.setColorProcessing(SHADER.csNone);
         // draw antidote flag
         const auto *antidotePos =
             LocalPlayer::getMyTank()->getAntidoteLocation();
@@ -701,55 +747,6 @@ void RadarRenderer::render(SceneRenderer& renderer, bool blank, bool observer)
     }
 
     triangleCount = RenderNode::getTriangleCount();
-}
-
-
-float RadarRenderer::colorScale(const float z, const float h)
-{
-    float scaleColor;
-    if (BZDBCache::radarStyle > 0)
-    {
-        const LocalPlayer* myTank = LocalPlayer::getMyTank();
-
-        // Scale color so that objects that are close to tank's level are opaque
-        const float zTank = myTank->getPosition()[2];
-
-        if (zTank > (z + h))
-            scaleColor = 1.0f - (zTank - (z + h)) / colorFactor;
-        else if (zTank < z)
-            scaleColor = 1.0f - (z - zTank) / colorFactor;
-        else
-            scaleColor = 1.0f;
-
-        // Don't fade all the way
-        if (scaleColor < 0.35f)
-            scaleColor = 0.35f;
-    }
-    else
-        scaleColor = 1.0f;
-
-    return scaleColor;
-}
-
-
-float RadarRenderer::transScale(const float z, const float h)
-{
-    float scaleColor;
-    const LocalPlayer* myTank = LocalPlayer::getMyTank();
-
-    // Scale color so that objects that are close to tank's level are opaque
-    const float zTank = myTank->getPosition()[2];
-    if (zTank > (z + h))
-        scaleColor = 1.0f - (zTank - (z + h)) / colorFactor;
-    else if (zTank < z)
-        scaleColor = 1.0f - (z - zTank) / colorFactor;
-    else
-        scaleColor = 1.0f;
-
-    if (scaleColor < 0.5f)
-        scaleColor = 0.5f;
-
-    return scaleColor;
 }
 
 
@@ -863,10 +860,6 @@ void RadarRenderer::renderBoxPyrMeshFast(float _range)
     if (smooth)
         glEnable(GL_POLYGON_SMOOTH);
 
-    // setup the texturing mapping
-    const float vfz = RENDERER.getViewFrustum().getEye()[2];
-    SHADER.setZTank(vfz);
-
     // setup texture generation
     int oldTexGen = SHADER.setTexGen(SHADER.texGenLinear);
 
@@ -900,9 +893,9 @@ void RadarRenderer::renderBoxPyrMeshFast(float _range)
 
 void RadarRenderer::buildBoxPyrMeshVBO()
 {
+    meshVBO.clear();
     if (world == nullptr)
     {
-        meshVBO.clear();
         boxVBO.clear();
         pyrVBO.clear();
         boxOutlVBO.clear();
@@ -913,33 +906,61 @@ void RadarRenderer::buildBoxPyrMeshVBO()
 
     int i;
 
+    const bool  enhanced       = BZDBCache::radarStyle > 0;
     const ObstacleList& meshes = OBSTACLEMGR.getMeshes();
     int count = meshes.size();
-    meshVBO.resize(count);
-
     for (i = 0; i < count; i++)
     {
         const MeshObstacle* mesh = (const MeshObstacle*) meshes[i];
         int faces = mesh->getFaceCount();
-        meshVBO[i].resize(faces);
 
         for (int f = 0; f < faces; f++)
         {
             const MeshFace* face = mesh->getFace(f);
+            if (enhanced)
+            {
+                if (face->getPlane()[2] <= 0.0f)
+                    continue;
+                const BzMaterial* bzmat = face->getMaterial();
+                if ((bzmat != NULL) && bzmat->getNoRadar())
+                    continue;
+            }
+
+            float z = face->getPosition()[2];
+            float bh = face->getSize()[2];
+
+            if (BZDBCache::useMeshForRadar)
+            {
+                z = mesh->getPosition()[2];
+                bh = mesh->getSize()[2];
+            }
+
+            // draw death faces with a soupcon of red
+            const PhysicsDriver* phydrv = PHYDRVMGR.getDriver(face->getPhysicsDriver());
+            glm::vec4 color;
+            if ((phydrv != NULL) && phydrv->getIsDeath())
+                color = glm::vec4(0.75f, 0.25f, 0.25f, bh);
+            else
+                color = glm::vec4(0.25f, 0.5f,  0.5f,  bh);
 
             // draw the face as a triangle fan
             int vertexCount = face->getVertexCount();
 
             std::vector<glm::vec3> vertex;
+            std::vector<glm::vec4> colors;
             for (int v = 0; v < vertexCount; v++)
             {
                 const auto pos = face->getVertex(v);
-                vertex.push_back(glm::vec3(pos.x, pos.y, 0.0f));
+                vertex.push_back(glm::vec3(pos.x, pos.y, z));
+                colors.push_back(color);
             }
-            meshVBO[i][f] = Vertex_Chunk(Vertex_Chunk::V, vertexCount);
-            meshVBO[i][f].vertexData(vertex);
+            Vertex_Chunk vbo(Vertex_Chunk::VC, vertexCount);
+            vbo.vertexData(vertex);
+            vbo.colorData(colors);
+            meshVBO.push_back(std::move(vbo));
         }
     }
+    meshChunkes.setChunkes(meshVBO);
 
     // draw box buildings.
     const ObstacleList& boxes = OBSTACLEMGR.getBoxes();
@@ -955,19 +976,27 @@ void RadarRenderer::buildBoxPyrMeshVBO()
         const float s = sinf(box.getRotation());
         const float wx = c * box.getWidth(), wy = s * box.getWidth();
         const float hx = -s * box.getBreadth(), hy = c * box.getBreadth();
+        const float bh = box.getHeight();
         const auto &pos = box.getPosition();
+        boxVBO[i] = Vertex_Chunk(Vertex_Chunk::VC, 4);
+        auto color = glm::vec4(0.25f, 0.5f, 0.5f, bh);
         glm::vec3 v[4];
-        v[0] = glm::vec3(pos[0] - wx - hx, pos[1] - wy - hy, 0.0f);
-        v[1] = glm::vec3(pos[0] + wx - hx, pos[1] + wy - hy, 0.0f);
-        v[2] = glm::vec3(pos[0] - wx + hx, pos[1] - wy + hy, 0.0f);
-        v[3] = glm::vec3(pos[0] + wx + hx, pos[1] + wy + hy, 0.0f);
-        boxVBO[i] = Vertex_Chunk(Vertex_Chunk::V, 4);
+        v[0] = glm::vec3(pos[0] - wx - hx, pos[1] - wy - hy, pos.z);
+        v[1] = glm::vec3(pos[0] + wx - hx, pos[1] + wy - hy, pos.z);
+        v[2] = glm::vec3(pos[0] - wx + hx, pos[1] - wy + hy, pos.z);
+        v[3] = glm::vec3(pos[0] + wx + hx, pos[1] + wy + hy, pos.z);
         boxVBO[i].vertexData(v);
-        v[2] = glm::vec3(pos[0] + wx + hx, pos[1] + wy + hy, 0.0f);
-        v[3] = glm::vec3(pos[0] - wx + hx, pos[1] - wy + hy, 0.0f);
-        boxOutlVBO[i] = Vertex_Chunk(Vertex_Chunk::V, 4);
+        glm::vec4 col[4];
+        for (int j = 0; j < 4; j++)
+            col[j] = color;
+        boxVBO[i].colorData(col);
+        boxOutlVBO[i] = Vertex_Chunk(Vertex_Chunk::VC, 4);
+        std::swap(v[2], v[3]);
         boxOutlVBO[i].vertexData(v);
+        boxOutlVBO[i].colorData(col);
     }
+    boxChunkes.setChunkes(boxVBO);
+    boxOutlChunkes.setChunkes(boxOutlVBO);
 
     // draw pyramid buildings
     const ObstacleList& pyramids = OBSTACLEMGR.getPyrs();
@@ -981,26 +1010,42 @@ void RadarRenderer::buildBoxPyrMeshVBO()
         const float s = sinf(pyr.getRotation());
         const float wx = c * pyr.getWidth(), wy = s * pyr.getWidth();
         const float hx = -s * pyr.getBreadth(), hy = c * pyr.getBreadth();
+        const float bh = pyr.getHeight();
         const auto &pos = pyr.getPosition();
+        pyrVBO[i] = Vertex_Chunk(Vertex_Chunk::VC, 4);
+        auto color = glm::vec4(0.25f, 0.5f, 0.5f, bh);
         glm::vec3 v[4];
-        v[0] = glm::vec3(pos[0] - wx - hx, pos[1] - wy - hy, 0.0f);
-        v[1] = glm::vec3(pos[0] + wx - hx, pos[1] + wy - hy, 0.0f);
-        v[2] = glm::vec3(pos[0] - wx + hx, pos[1] - wy + hy, 0.0f);
-        v[3] = glm::vec3(pos[0] + wx + hx, pos[1] + wy + hy, 0.0f);
-        pyrVBO[i] = Vertex_Chunk(Vertex_Chunk::V, 4);
+        v[0] = glm::vec3(pos[0] - wx - hx, pos[1] - wy - hy, pos.z);
+        v[1] = glm::vec3(pos[0] + wx - hx, pos[1] + wy - hy, pos.z);
+        v[2] = glm::vec3(pos[0] - wx + hx, pos[1] - wy + hy, pos.z);
+        v[3] = glm::vec3(pos[0] + wx + hx, pos[1] + wy + hy, pos.z);
         pyrVBO[i].vertexData(v);
-        v[2] = glm::vec3(pos[0] + wx + hx, pos[1] + wy + hy, 0.0f);
-        v[3] = glm::vec3(pos[0] - wx + hx, pos[1] - wy + hy, 0.0f);
-        pyrOutlVBO[i] = Vertex_Chunk(Vertex_Chunk::V, 4);
+        glm::vec4 col[4];
+        for (int j = 0; j < 4; j++)
+            col[j] = color;
+        pyrVBO[i].colorData(col);
+        pyrOutlVBO[i] = Vertex_Chunk(Vertex_Chunk::VC, 4);
+        std::swap(v[2], v[3]);
         pyrOutlVBO[i].vertexData(v);
+        pyrOutlVBO[i].colorData(col);
     }
+    pyrChunkes.setChunkes(pyrVBO);
+    pyrOutlChunkes.setChunkes(pyrOutlVBO);
 }
 
 void RadarRenderer::renderBoxPyrMesh()
 {
-    int i;
+    const bool  enhanced           = (BZDBCache::radarStyle > 0);
+    static bool oldEnhanced        = false;
+    static bool oldUseMeshForRadar = false;
 
-    const bool enhanced = (BZDBCache::radarStyle > 0);
+    if ((enhanced != oldEnhanced)
+            || (BZDBCache::useMeshForRadar != oldUseMeshForRadar))
+    {
+        buildBoxPyrMeshVBO();
+        oldEnhanced        = enhanced;
+        oldUseMeshForRadar = BZDBCache::useMeshForRadar;
+    }
 
     if (!smooth)
     {
@@ -1019,75 +1064,21 @@ void RadarRenderer::renderBoxPyrMesh()
         }
     }
 
+    SHADER.setColorProcessing(SHADER.csColTr);
+
     // draw box buildings.
-    const ObstacleList& boxes = OBSTACLEMGR.getBoxes();
-    int count = boxes.size();
-    for (i = 0; i < count; i++)
-    {
-        const BoxBuilding& box = *((const BoxBuilding*) boxes[i]);
-        const float z = box.getPosition()[2];
-        const float bh = box.getHeight();
-        const float cs = colorScale(z, bh);
-        glColor4f(0.25f * cs, 0.5f * cs, 0.5f * cs, transScale(z, bh));
-        boxVBO[i].draw(GL_TRIANGLE_STRIP);
-    }
+    boxChunkes.draw(GL_TRIANGLE_STRIP);
 
     // draw pyramid buildings
-    const ObstacleList& pyramids = OBSTACLEMGR.getPyrs();
-    count = pyramids.size();
-    for (i = 0; i < count; i++)
-    {
-        const PyramidBuilding& pyr = *((const PyramidBuilding*) pyramids[i]);
-        const float z = pyr.getPosition()[2];
-        const float bh = pyr.getHeight();
-        const float cs = colorScale(z, bh);
-        glColor4f(0.25f * cs, 0.5f * cs, 0.5f * cs, transScale(z, bh));
-        pyrVBO[i].draw(GL_TRIANGLE_STRIP);
-    }
+    pyrChunkes.draw(GL_TRIANGLE_STRIP);
 
     // draw mesh obstacles
     if (smooth)
         glEnable(GL_POLYGON_SMOOTH);
     if (!enhanced)
         glDisable(GL_CULL_FACE);
-    const ObstacleList& meshes = OBSTACLEMGR.getMeshes();
-    count = meshes.size();
-    for (i = 0; i < count; i++)
-    {
-        const MeshObstacle* mesh = (const MeshObstacle*) meshes[i];
-        int faces = mesh->getFaceCount();
-
-        for (int f = 0; f < faces; f++)
-        {
-            const MeshFace* face = mesh->getFace(f);
-            if (enhanced)
-            {
-                if (face->getPlane()[2] <= 0.0f)
-                    continue;
-                const BzMaterial* bzmat = face->getMaterial();
-                if ((bzmat != NULL) && bzmat->getNoRadar())
-                    continue;
-            }
-            float z = face->getPosition()[2];
-            float bh = face->getSize()[2];
-
-            if (BZDBCache::useMeshForRadar)
-            {
-                z = mesh->getPosition()[2];
-                bh = mesh->getSize()[2];
-            }
-
-            const float cs = colorScale(z, bh);
-            // draw death faces with a soupcon of red
-            const PhysicsDriver* phydrv = PHYDRVMGR.getDriver(face->getPhysicsDriver());
-            if ((phydrv != NULL) && phydrv->getIsDeath())
-                glColor4f(0.75f * cs, 0.25f * cs, 0.25f * cs, transScale(z, bh));
-            else
-                glColor4f(0.25f * cs, 0.5f * cs, 0.5f * cs, transScale(z, bh));
-            // draw the face as a triangle fan
-            meshVBO[i][f].draw(GL_TRIANGLE_FAN);
-        }
-    }
+    // Scale color so that objects that are close to tank's level are opaque
+    meshChunkes.draw(GL_TRIANGLE_FAN);
     if (!enhanced)
         glEnable(GL_CULL_FACE);
     if (smooth)
@@ -1101,29 +1092,12 @@ void RadarRenderer::renderBoxPyrMesh()
     if (smooth)
     {
         glEnable(GL_BLEND); // NOTE: revert from the enhanced setting
-        count = boxes.size();
-        for (i = 0; i < count; i++)
-        {
-            const BoxBuilding& box = *((const BoxBuilding*) boxes[i]);
-            const float z = box.getPosition()[2];
-            const float bh = box.getHeight();
-            const float cs = colorScale(z, bh);
-            glColor4f(0.25f * cs, 0.5f * cs, 0.5f * cs, transScale(z, bh));
-            boxOutlVBO[i].draw(GL_LINE_LOOP);
-        }
+        boxOutlChunkes.draw(GL_LINE_LOOP);
 
-        count = pyramids.size();
-        for (i = 0; i < count; i++)
-        {
-            const PyramidBuilding& pyr = *((const PyramidBuilding*) pyramids[i]);
-            const float z = pyr.getPosition()[2];
-            const float bh = pyr.getHeight();
-            const float cs = colorScale(z, bh);
-            glColor4f(0.25f * cs, 0.5f * cs, 0.5f * cs, transScale(z, bh));
-            pyrOutlVBO[i].draw(GL_LINE_LOOP);
-        }
+        pyrOutlChunkes.draw(GL_LINE_LOOP);
     }
 
+    SHADER.setColorProcessing(SHADER.csNone);
     return;
 }
 
@@ -1178,44 +1152,56 @@ void RadarRenderer::buildBasesAndTelesVBO()
     for (i = 0; i < count; i++)
     {
         const Teleporter & tele = *((const Teleporter *) teleporters[i]);
+        const float bh = tele.getHeight();
+        const auto &pos = tele.getPosition();
         if (tele.isHorizontal ())
         {
-            glm::vec3 v[10];
+            telesVBO[i] = Vertex_Chunk(Vertex_Chunk::VC, 10);
+
             const float c = cosf (tele.getRotation ());
             const float s = sinf (tele.getRotation ());
             const float wx = c * tele.getWidth (), wy = s * tele.getWidth ();
             const float hx = -s * tele.getBreadth (), hy = c * tele.getBreadth ();
-            const auto &pos = tele.getPosition ();
-            v[0] = glm::vec3(pos[0] - wx - hx, pos[1] - wy - hy, 0.0f);
-            v[1] = glm::vec3(pos[0] + wx - hx, pos[1] + wy - hy, 0.0f);
 
-            v[2] = glm::vec3(pos[0] + wx - hx, pos[1] + wy - hy, 0.0f);
-            v[3] = glm::vec3(pos[0] + wx + hx, pos[1] + wy + hy, 0.0f);
-
-            v[4] = glm::vec3(pos[0] + wx + hx, pos[1] + wy + hy, 0.0f);
-            v[5] = glm::vec3(pos[0] - wx + hx, pos[1] - wy + hy, 0.0f);
-
-            v[6] = glm::vec3(pos[0] - wx + hx, pos[1] - wy + hy, 0.0f);
-            v[7] = glm::vec3(pos[0] - wx - hx, pos[1] - wy - hy, 0.0f);
-
-            v[8] = glm::vec3(pos[0] - wx - hx, pos[1] - wy - hy, 0.0f);
-            v[9] = glm::vec3(pos[0] - wx - hx, pos[1] - wy - hy, 0.0f);
-            telesVBO[i] = Vertex_Chunk(Vertex_Chunk::V, 10);
+            glm::vec3 v[10];
+            v[0] = glm::vec3(pos[0] - wx - hx, pos[1] - wy - hy, pos.z);
+            v[1] = glm::vec3(pos[0] + wx - hx, pos[1] + wy - hy, pos.z);
+            v[2] = glm::vec3(pos[0] + wx - hx, pos[1] + wy - hy, pos.z);
+            v[3] = glm::vec3(pos[0] + wx + hx, pos[1] + wy + hy, pos.z);
+            v[4] = glm::vec3(pos[0] + wx + hx, pos[1] + wy + hy, pos.z);
+            v[5] = glm::vec3(pos[0] - wx + hx, pos[1] - wy + hy, pos.z);
+            v[6] = glm::vec3(pos[0] - wx + hx, pos[1] - wy + hy, pos.z);
+            v[7] = glm::vec3(pos[0] - wx - hx, pos[1] - wy - hy, pos.z);
+            v[8] = glm::vec3(pos[0] - wx - hx, pos[1] - wy - hy, pos.z);
+            v[9] = glm::vec3(pos[0] - wx - hx, pos[1] - wy - hy, pos.z);
             telesVBO[i].vertexData(v);
+
+            glm::vec4 col[10];
+            const auto color = glm::vec4(1.0f, 1.0f, 1.0f, bh);
+            for (int j = 0; j < 10; j++)
+                col[j] = color;
+            telesVBO[i].colorData(col);
         }
         else
         {
-            glm::vec3 v[4];
+            telesVBO[i] = Vertex_Chunk(Vertex_Chunk::VC, 4);
+
             const float tw = tele.getBreadth ();
             const float c = tw * cosf (tele.getRotation ());
             const float s = tw * sinf (tele.getRotation ());
-            const auto &pos = tele.getPosition ();
-            v[0] = glm::vec3(pos[0] - s, pos[1] + c, 0.0f);
-            v[1] = glm::vec3(pos[0] + s, pos[1] - c, 0.0f);
-            v[2] = glm::vec3(pos[0] + s, pos[1] - c, 0.0f);
-            v[3] = glm::vec3(pos[0] - s, pos[1] + c, 0.0f);
-            telesVBO[i] = Vertex_Chunk(Vertex_Chunk::V, 4);
+
+            glm::vec3 v[4];
+            v[0] = glm::vec3(pos[0] - s, pos[1] + c, pos.z);
+            v[1] = glm::vec3(pos[0] + s, pos[1] - c, pos.z);
+            v[2] = glm::vec3(pos[0] + s, pos[1] - c, pos.z);
+            v[3] = glm::vec3(pos[0] - s, pos[1] + c, pos.z);
             telesVBO[i].vertexData(v);
+
+            glm::vec4 col[4];
+            const auto color = glm::vec4(1.0f, 1.0f, 1.0f, bh);
+            for (int j = 0; j < 4; j++)
+                col[j] = color;
+            telesVBO[i].colorData(col);
         }
     }
 
@@ -1232,38 +1218,22 @@ void RadarRenderer::renderBasesAndTeles()
     {
         for (i = 1; i < NumTeams; i++)
         {
-            for (int j = 0;; j++)
-            {
-                glm::vec3 basePos;
-                float rotation;
-                float ww, bb, hh;
-                const bool baseExist = world->getBase(i, j, basePos, rotation,
-                                                      ww, bb, hh);
-                if (!baseExist)
-                    break;
-                glColor(Team::getRadarColor(TeamColor(i)));
-                baseVBO[i][j].draw(GL_LINE_LOOP);
-            }
+            glColor(Team::getRadarColor(TeamColor(i)));
+            for (auto &vbo : baseVBO[i])
+                vbo.draw(GL_LINE_LOOP);
         }
     }
 
+    SHADER.setColorProcessing(SHADER.csColTr);
     // draw teleporters.  teleporters are pretty thin so use lines
     // (which, if longer than a pixel, are guaranteed to draw something;
     // not so for a polygon).  just in case the system doesn't correctly
     // filter the ends of line segments, we'll draw the line in each
     // direction (which degrades the antialiasing).  Newport graphics
     // is one system that doesn't do correct filtering.
-    const ObstacleList& teleporters = OBSTACLEMGR.getTeles();
-    int count = teleporters.size();
-    for (i = 0; i < count; i++)
-    {
-        const Teleporter & tele = *((const Teleporter *) teleporters[i]);
-        const float z = tele.getPosition ()[2];
-        const float bh = tele.getHeight ();
-        const float cs = colorScale (z, bh);
-        glColor4f (1.0f * cs, 1.0f * cs, 0.25f * cs, transScale (z, bh));
-        telesVBO[i].draw(GL_LINES);
-    }
+    for (auto &vbo : telesVBO)
+        vbo.draw(GL_LINES);
+    SHADER.setColorProcessing(SHADER.csNone);
 
     return;
 }

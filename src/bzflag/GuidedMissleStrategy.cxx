@@ -24,6 +24,7 @@
 #include "Intersect.h"
 #include "OpenGLAPI.h"
 #include "VBO_Drawing.h"
+#include "PlayingShader.h"
 
 /* local implementation headers */
 #include "LocalPlayer.h"
@@ -479,13 +480,13 @@ void GuidedMissileStrategy::radarRender()
 
     float shotTailLength = BZDB.eval(StateDatabase::BZDB_SHOTTAILLENGTH);
     glPushMatrix();
-    glTranslatef(orig[0], orig[1], 0.0f);
+    glTranslate(orig);
     // Display leading lines
     if (length > 0)
     {
         const auto vel = getPath().getVelocity();
         const auto dir = glm::normalize(vel) * shotTailLength * float(length);
-        glScalef(dir[0], dir[1], 0.0f);
+        glScalef(dir[0], dir[1], 1.0f);
         if (BZDBCache::leadingShotLine == 1)   //leading
             DRAWER.leadingLine();
         else if (BZDBCache::leadingShotLine == 0)     //lagging
@@ -496,10 +497,12 @@ void GuidedMissileStrategy::radarRender()
         // draw a "bright reddish" missle tip
         if (size > 0)
         {
+            SHADER.setColorProcessing(SHADER.csNone);
             glColor4f(1.0f, 0.75f, 0.75f, 1.0f);
             glPointSize((float)size);
             DRAWER.point();
             glPointSize(1.0f);
+            SHADER.setColorProcessing(SHADER.csColor);
         }
     }
     else
