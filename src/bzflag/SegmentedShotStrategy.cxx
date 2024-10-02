@@ -26,6 +26,7 @@
 #include "mathRoutine.h"
 #include "OpenGLAPI.h"
 #include "VBO_Drawing.h"
+#include "PlayingShader.h"
 
 /* local implementation headers */
 #include "sound.h"
@@ -326,7 +327,7 @@ void SegmentedShotStrategy::radarRender()
     float shotTailLength = BZDB.eval(StateDatabase::BZDB_SHOTTAILLENGTH);
 
     glPushMatrix();
-    glTranslatef(orig[0], orig[1], 0.0f);
+    glTranslate(orig);
     // Display leading lines
     if (length > 0)
     {
@@ -337,7 +338,7 @@ void SegmentedShotStrategy::radarRender()
         dir *= d;
 
         glPushMatrix();
-        glScalef(dir[0], dir[1], 0.0f);
+        glScalef(dir[0], dir[1], 1.0f);
         if (BZDBCache::leadingShotLine == 0)   //lagging
             DRAWER.laggingLine();
         else if (BZDBCache::leadingShotLine == 2)     //both
@@ -351,11 +352,16 @@ void SegmentedShotStrategy::radarRender()
     if (size > 0)
     {
         if (length > 0)
+        {
+            SHADER.setColorProcessing(SHADER.csNone);
             glColor4f(0.75, 0.75, 0.75, 1.0f);
+        }
         // draw a sized bullet
         glPointSize((float)size);
         DRAWER.point();
         glPointSize(1.0f);
+        if (length > 0)
+            SHADER.setColorProcessing(SHADER.csColor);
     }
     else if (length <= 0)
         // draw the tiny little bullet
@@ -629,8 +635,8 @@ ThiefStrategy::ThiefStrategy(ShotPath *_path) :
 
         thiefNodes[i]->setColor(0, 1, 1);
         thiefNodes[i]->setCenterColor(0, 0, 0);
-        v.push_back(glm::vec3(glm::vec2(origin), 0.0f));
-        v.push_back(glm::vec3(glm::vec2(origin + dir), 0.0f));
+        v.push_back(origin);
+        v.push_back(origin + dir);
     }
     radarChunk.vertexData(v);
     setCurrentSegment(numSegments - 1);
@@ -787,8 +793,8 @@ LaserStrategy::LaserStrategy(ShotPath* _path) :
 
         if (i == 0)
             laserNodes[i]->setFirst();
-        v.push_back(glm::vec3(glm::vec2(origin), 0.0f));
-        v.push_back(glm::vec3(glm::vec2(origin + dir), 0.0f));
+        v.push_back(origin);
+        v.push_back(origin + dir);
     }
     radarChunk.vertexData(v);
     setCurrentSegment(numSegments - 1);

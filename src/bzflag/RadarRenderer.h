@@ -28,7 +28,7 @@
 #include "bzfgl.h"
 #include "Obstacle.h"
 #include "Vertex_Chunk.h"
-
+#include "Vertex_Chunkes.h"
 
 class SceneRenderer;
 class World;
@@ -73,9 +73,7 @@ private:
     void        buildWallsVBO();
     void        buildBasesAndTelesVBO();
 
-    static float    colorScale(const float z, const float h);
-    static float    transScale(const float z, const float h);
-
+private:
     void        renderFrame(SceneRenderer&);
 
     void        renderObstacles(bool fastRadar, float range);
@@ -85,7 +83,6 @@ private:
     void        renderBasesAndTeles();
 
 
-private:
     World*      world;
     int         x, y;
     int         w, h;
@@ -98,14 +95,20 @@ private:
     bool        jammed;
     bool        useTankModels;
     int         triangleCount;
-    std::vector<std::vector<Vertex_Chunk>> meshVBO;
+    std::vector<Vertex_Chunk>              meshVBO;
+    Vertex_Chunkes                         meshChunkes;
     std::vector<Vertex_Chunk>              boxVBO;
+    Vertex_Chunkes                         boxChunkes;
     std::vector<Vertex_Chunk>              pyrVBO;
+    Vertex_Chunkes                         pyrChunkes;
     Vertex_Chunk                           wallsVBO;
     std::vector<std::vector<Vertex_Chunk>> baseVBO;
     std::vector<Vertex_Chunk>              telesVBO;
     std::vector<Vertex_Chunk>              boxOutlVBO;
+    Vertex_Chunkes                         boxOutlChunkes;
     std::vector<Vertex_Chunk>              pyrOutlVBO;
+    Vertex_Chunkes                         pyrOutlChunkes;
+    Vertex_Chunk                           flagsVBO;
     static const float  colorFactor;
 };
 
