@@ -605,9 +605,17 @@ void RadarRenderer::render(SceneRenderer& renderer, bool blank, bool observer)
         // draw them in reverse order so that the team flags
         // (which come first), are drawn on top of the normal flags.
         GLfloat s = BZDBCache::flagRadius > 3.0f * ps ? BZDBCache::flagRadius : 3.0f * ps;
+
         const int maxFlags = world->getMaxFlags();
 
         bool flagsToBeUpdated = world->areFlagsUpdated();
+
+        static GLfloat oldSize = -1.0f;
+        if (s != oldSize)
+        {
+            oldSize = s;
+            flagsToBeUpdated = true;
+        }
 
         static bool drawNormalFlags = true;
         if (drawNormalFlags != BZDB.isTrue("displayRadarFlags"))
