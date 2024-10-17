@@ -15,7 +15,8 @@
 #include "VBO_Vertex.h"
 
 Vertex_Chunkes::Vertex_Chunkes():
-    drawCount(0)
+    drawCount(0),
+    myVBO(nullptr)
 {
 }
 
