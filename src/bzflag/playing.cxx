@@ -6276,7 +6276,7 @@ void drawFrame(const float dt)
             viewFrustum.setView(eyePoint, targetPoint);
 
             // draw rear channel
-            sceneRenderer->render(true, true, true);
+            sceneRenderer->render(true, true);
 #endif
             // back to center channel
             mainWindow->setQuadrant(MainWindow::UpperRight);
