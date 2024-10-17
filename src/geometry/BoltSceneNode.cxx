@@ -597,6 +597,7 @@ void BoltSceneNode::BoltRenderNode::renderGeoPill(
     GeoPillVBOs &geoPill)
 {
     float lenMinusRads = len - 2 * radius;
+    int segments;
 
     if (radius > 0)
     {
@@ -604,18 +605,22 @@ void BoltSceneNode::BoltRenderNode::renderGeoPill(
         glScalef(radius, radius, radius);
         // 4 parts of the first hemisphere
         geoPill.emi1st1.draw(GL_TRIANGLE_STRIP);
+        segments = (geoPill.emi1st1.indexSize / 2 - 1);
         addTriangleCount(segments);
         glTranslatef(0, 0, 0.1f);
 
         geoPill.emi1st2.draw(GL_TRIANGLE_STRIP);
+        segments = (geoPill.emi1st2.indexSize / 2 - 1);
         addTriangleCount(segments);
         glTranslatef(0, 0, 0.15f);
 
         geoPill.emi1st3.draw(GL_TRIANGLE_STRIP);
+        segments = (geoPill.emi1st3.indexSize / 2 - 1);
         addTriangleCount(segments);
         glTranslatef(0, 0, 0.25f);
 
         geoPill.emi1st4.draw(GL_TRIANGLE_STRIP);
+        segments = (geoPill.emi1st4.indexSize / 2 - 1);
         addTriangleCount(segments);
         glTranslatef(0, 0, 0.5f);
         glPopMatrix();
@@ -629,6 +634,7 @@ void BoltSceneNode::BoltRenderNode::renderGeoPill(
         glScalef(radius, radius, lenMinusRads);
         geoPill.shaft.draw(GL_TRIANGLE_STRIP);
         glPopMatrix();
+        segments = (geoPill.shaft.indexSize / 2 - 1);
         addTriangleCount(segments);
         glTranslatef(0,0,lenMinusRads);
     }
@@ -638,20 +644,27 @@ void BoltSceneNode::BoltRenderNode::renderGeoPill(
         // 4 parts of the last hemisphere
         glScalef(radius, radius, radius);
         geoPill.emi2nd4.draw(GL_TRIANGLE_STRIP);
+        segments = (geoPill.emi2nd4.indexSize / 2 - 1);
         addTriangleCount(segments);
         glTranslatef(0,0,0.5f);
 
         geoPill.emi2nd3.draw(GL_TRIANGLE_STRIP);
+        segments = (geoPill.emi2nd3.indexSize / 2 - 1);
         addTriangleCount(segments);
         glTranslatef(0,0,0.25f);
 
         geoPill.emi2nd2.draw(GL_TRIANGLE_STRIP);
+        segments = (geoPill.emi2nd2.indexSize / 2 - 1);
         addTriangleCount(segments);
         glTranslatef(0,0,0.15f);
 
         geoPill.emi2nd1.draw(GL_TRIANGLE_STRIP);
+        segments = (geoPill.emi2nd1.indexSize / 2 - 1);
         addTriangleCount(segments);
     }
+    // Without DEBUG this variable is not used
+    // the next line drop the warning
+    (void)segments;
 }
 
 void            BoltSceneNode::BoltRenderNode::render()

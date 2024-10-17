@@ -481,7 +481,7 @@ void            FlagSceneNode::FlagRenderNode::render(bool shadow)
         }
         if (is_billboard && realFlag)
         {
-            pole3D.draw(GL_TRIANGLE_STRIP)
+            pole3D.draw(GL_TRIANGLE_STRIP);
             addTriangleCount(8);
         }
         else
