@@ -45,8 +45,8 @@
 /* libm includes acosf */
 #define HAVE_ACOSF 1
 
-/* Define if libcares includes ares_library_init. */
-#define HAVE_ARES_LIBRARY_INIT 1
+/* Define if libcares includes ares_getaddrinfo */
+#define HAVE_ARES_GETADDRINFO 1
 
 /* libm includes asinf */
 #define HAVE_ASINF 1

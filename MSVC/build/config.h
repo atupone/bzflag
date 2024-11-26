@@ -108,7 +108,7 @@
 #define HAVE_STD__MIN 1
 #define HAVE_STD__MAX 1
 
-#define HAVE_ARES_LIBRARY_INIT 1
+#define HAVE_ARES_GETADDRINFO 1
 
 #ifndef DEBUG_TRACE
 #define DEBUG_TRACE
