@@ -12,6 +12,7 @@ BZFlag 2.4.27
 * Fix authentication when behind CGNAT (requires updated client and server)
     - Tim Riker, Scott Wichser
 * Fix libcurl deprecation warnings - Alfredo Tupone
+* Fix c-ares deprecation warnings - Alfredo Tupone
 * Add Dockerfile for bzfs container - Vladimir Jimenez, Scott Wichser
 * Fix various memory leaks, crashes, buffer overflows, divide by zero errors
     - Alfredo Tupone
