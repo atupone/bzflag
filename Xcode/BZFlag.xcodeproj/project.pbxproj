@@ -6902,7 +6902,7 @@
 				HEADER_SEARCH_PATHS = (
 					../include,
 					../Xcode,
-					"../dependencies/output-macOS-${CONFIGURATION}-${CURRENT_ARCH}/include",
+					"../dependencies/macOS-${CONFIGURATION}-${CURRENT_ARCH}/include",
 					/usr/local/include,
 				);
 				"HEADER_SEARCH_PATHS[arch=arm64]" = (
@@ -6911,7 +6911,7 @@
 				);
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/../PlugIns";
 				LIBRARY_SEARCH_PATHS = (
-					"../dependencies/output-macOS-${CONFIGURATION}-${CURRENT_ARCH}/lib",
+					"../dependencies/macOS-${CONFIGURATION}-${CURRENT_ARCH}/lib",
 					/usr/local/lib,
 				);
 				"LIBRARY_SEARCH_PATHS[arch=arm64]" = (
@@ -6944,7 +6944,7 @@
 				HEADER_SEARCH_PATHS = (
 					../include,
 					../Xcode,
-					"../dependencies/output-macOS-${CONFIGURATION}-${CURRENT_ARCH}/include",
+					"../dependencies/macOS-${CONFIGURATION}-${CURRENT_ARCH}/include",
 					/usr/local/include,
 				);
 				"HEADER_SEARCH_PATHS[arch=arm64]" = (
@@ -6953,7 +6953,7 @@
 				);
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/../PlugIns";
 				LIBRARY_SEARCH_PATHS = (
-					"../dependencies/output-macOS-${CONFIGURATION}-${CURRENT_ARCH}/lib",
+					"../dependencies/macOS-${CONFIGURATION}-${CURRENT_ARCH}/lib",
 					/usr/local/lib,
 				);
 				"LIBRARY_SEARCH_PATHS[arch=arm64]" = (
