@@ -55,6 +55,7 @@
 // common implementation headers
 #include "Obstacle.h"
 #include "ObstacleMgr.h"
+#include "WallObstacle.h"
 #include "CollisionManager.h"
 #include "BaseBuilding.h"
 #include "AnsiCodes.h"
@@ -1050,6 +1051,13 @@ static void relayPlayerPacket(int index, uint16_t len, const void *rawbuf, uint1
     }
 }
 
+void addWall(float x, float y, float z, float r, float w, float h)
+{
+    const float pos[3] = { x, y, z };
+    WallObstacle* wall = new WallObstacle(pos, r, w, h, false);
+    OBSTACLEMGR.addWorldObstacle(wall);
+}
+
 void makeWalls ( void )
 {
     float worldSize = BZDBCache::worldSize;
@@ -1079,16 +1087,16 @@ void makeWalls ( void )
             float x = sinf(midpointAngle*degToRad)*midpointRad;
             float y = cosf(midpointAngle*degToRad)*midpointRad;
 
-            world->addWall(x, y, 0.0f, (270.0f-midpointAngle)*degToRad, (float)segmentLen, wallHeight);
+            addWall(x, y, 0.0f, (270.0f-midpointAngle)*degToRad, (float)segmentLen, wallHeight);
 
         }
     }
     else
     {
-        world->addWall(0.0f, 0.5f * worldSize, 0.0f, (float)(1.5 * M_PI), 0.5f * worldSize, wallHeight);
-        world->addWall(0.5f * worldSize, 0.0f, 0.0f, (float)M_PI, 0.5f * worldSize, wallHeight);
-        world->addWall(0.0f, -0.5f * worldSize, 0.0f, (float)(0.5 * M_PI), 0.5f * worldSize, wallHeight);
-        world->addWall(-0.5f * worldSize, 0.0f, 0.0f, 0.0f, 0.5f * worldSize, wallHeight);
+        addWall(0.0f, 0.5f * worldSize, 0.0f, (float)(1.5 * M_PI), 0.5f * worldSize, wallHeight);
+        addWall(0.5f * worldSize, 0.0f, 0.0f, (float)M_PI, 0.5f * worldSize, wallHeight);
+        addWall(0.0f, -0.5f * worldSize, 0.0f, (float)(0.5 * M_PI), 0.5f * worldSize, wallHeight);
+        addWall(-0.5f * worldSize, 0.0f, 0.0f, 0.0f, 0.5f * worldSize, wallHeight);
     }
 }
 

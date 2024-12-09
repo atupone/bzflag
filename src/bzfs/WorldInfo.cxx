@@ -39,7 +39,6 @@
 #include "BaseBuilding.h"
 #include "TetraBuilding.h"
 #include "Teleporter.h"
-#include "WallObstacle.h"
 #include "MeshObstacle.h"
 #include "ArcObstacle.h"
 #include "ConeObstacle.h"
@@ -75,15 +74,6 @@ WorldInfo::~WorldInfo()
     OBSTACLEMGR.clear();
     finished = false;
 }
-
-
-void WorldInfo::addWall(float x, float y, float z, float r, float w, float h)
-{
-    const float pos[3] = {x, y, z};
-    WallObstacle* wall = new WallObstacle(pos, r, w, h, false);
-    OBSTACLEMGR.addWorldObstacle(wall);
-}
-
 
 void WorldInfo::addLink(int src, int dst)
 {
