@@ -526,7 +526,7 @@ void            joinGame()
         }
         if (worldDatabase)
         {
-            delete[] worldDatabase;
+            free(worldDatabase);
             worldDatabase = NULL;
         }
         HUDDialogStack::get()->setFailedMessage("Download stopped by user action");
