@@ -1836,6 +1836,7 @@ static void loadCachedWorld()
     {
         delete world;
         world = NULL;
+        World::setWorld(world);
     }
     if (!worldBuilder->unpack(localWorldDatabase))
     {
