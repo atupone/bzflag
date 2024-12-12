@@ -7325,7 +7325,7 @@ static void     playingLoop()
         }
 
         // do motion
-        if (myTank)
+        if (myTank && world)
         {
             if (myTank->isAlive() && !myTank->isPaused())
             {
