@@ -31,6 +31,7 @@
 #include "MainWindow.h"
 #include "SceneNode.h"
 #include "effectsRenderer.h"
+#include "World.h"
 
 static const GLfloat    squareShape[4][2] =
 {
@@ -664,7 +665,8 @@ void BackgroundRenderer::renderGroundEffects(SceneRenderer& renderer,
 
     if (!blank)
     {
-        if (doShadows && shadowsVisible && !drawingMirror)
+        const World *_world = World::getWorld();
+        if (doShadows && shadowsVisible && !drawingMirror && _world)
             drawGroundShadows(renderer);
 
         // draw light receivers on ground (little meshes under light sources so

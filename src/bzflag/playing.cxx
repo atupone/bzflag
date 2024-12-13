@@ -2016,6 +2016,7 @@ static void     handleServerMessage(bool human, uint16_t code,
 {
     bool checkScores = false;
     static WordFilter *wordfilter = (WordFilter *)BZDB.getPointer("filter");
+    const World *_world = World::getWorld();
 
     switch (code)
     {
@@ -2340,7 +2341,10 @@ static void     handleServerMessage(bool human, uint16_t code,
         for (int i = 0; i < numTeams; i++)
         {
             msg = nboUnpackUShort(msg, team);
-            msg = teams[int(team)].unpack(msg);
+            Team uTeam;
+            msg = uTeam.unpack(msg);
+            if (_world)
+                teams[int(team)] = uTeam;
         }
         checkScores = true;
         break;
@@ -5745,8 +5749,10 @@ static void drawUI()
         hud->setFrameRadarTriangleCount(0);
     }
 
+    const World *_world = World::getWorld();
+
     // update the HUD (player list, alerts)
-    if (World::getWorld() && hud)
+    if (_world && hud)
         hud->render(*sceneRenderer);
 
     // draw the control panel
@@ -5754,7 +5760,7 @@ static void drawUI()
         controlPanel->render(*sceneRenderer);
 
     // draw the radar
-    if (radar)
+    if (radar && _world)
     {
         const bool showBlankRadar = !myTank || (myTank && myTank->isPaused());
         const bool observer = myTank && (myTank->getTeam() == ObserverTeam);
@@ -6124,7 +6130,8 @@ void drawFrame(const float dt)
 
         // add dynamic nodes
         SceneDatabase* scene = sceneRenderer->getSceneDatabase();
-        if (scene && myTank && world)
+        World *_world = World::getWorld();
+        if (scene && myTank && _world)
         {
 
             int i;
@@ -7324,7 +7331,7 @@ static void     playingLoop()
         }
 
         // do motion
-        if (myTank && world)
+        if (myTank && _world)
         {
             if (myTank->isAlive() && !myTank->isPaused())
             {
@@ -7374,7 +7381,7 @@ static void     playingLoop()
 #endif
 
         // adjust properties based on flags (dimensions, cloaking, etc...)
-        if (myTank)
+        if (myTank && _world)
             myTank->updateTank(dt, true);
         for (i = 0; i < curMaxPlayers; i++)
         {
