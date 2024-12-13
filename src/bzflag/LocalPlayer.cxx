@@ -909,23 +909,6 @@ void            LocalPlayer::doUpdateMotion(float dt)
 }
 
 
-const Obstacle* LocalPlayer::getHitBuilding(const float* p, float a,
-        bool phased, bool& expelled) const
-{
-    const float* dims = getDimensions();
-    const Obstacle* obstacle =
-        World::getWorld()->hitBuilding(p, a, dims[0], dims[1], dims[2]);
-
-    expelled = (obstacle != NULL);
-    if (expelled && phased)
-        expelled = (obstacle->getType() == WallObstacle::getClassName() ||
-                    obstacle->getType() == Teleporter::getClassName() ||
-                    (getFlag() == Flags::OscillationOverthruster && desiredSpeed < 0.0f &&
-                     p[2] == 0.0f));
-    return obstacle;
-}
-
-
 const Obstacle* LocalPlayer::getHitBuilding(const float* oldP, float oldA,
         const float* p, float a,
         bool phased, bool& expelled)

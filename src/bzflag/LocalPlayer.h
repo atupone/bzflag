@@ -115,8 +115,6 @@ public:
     static LocalPlayer*   getMyTank();
     static void       setMyTank(LocalPlayer*);
 
-    const Obstacle*   getHitBuilding(const float* pos, float angle,
-                                     bool phased, bool& expel) const;
     const Obstacle*   getHitBuilding(const float* oldPos, float oldAngle,
                                      const float* pos, float angle,
                                      bool phased, bool& expel);
