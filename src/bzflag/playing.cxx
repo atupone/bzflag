@@ -6124,7 +6124,7 @@ void drawFrame(const float dt)
 
         // add dynamic nodes
         SceneDatabase* scene = sceneRenderer->getSceneDatabase();
-        if (scene && myTank)
+        if (scene && myTank && world)
         {
 
             int i;
@@ -6143,8 +6143,7 @@ void drawFrame(const float dt)
             myTank->addShots(scene, false);
 
             // add server shells
-            if (world)
-                world->getWorldWeapons()->addShots(scene, false);
+            world->getWorldWeapons()->addShots(scene, false);
 
             // add antidote flag
             myTank->addAntidote(scene);
