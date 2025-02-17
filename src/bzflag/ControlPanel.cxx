@@ -320,10 +320,6 @@ void            ControlPanel::render(SceneRenderer& _renderer)
 
     if (!resized) resize();
 
-    // optimization for software rendering folks
-    if (!changedMessage && _renderer.getPanelOpacity() == 1.0f)
-        return;
-
     int i, j;
     const int x = window.getOriginX();
     const int y = window.getOriginY();
