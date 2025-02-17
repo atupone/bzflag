@@ -5754,7 +5754,7 @@ static void drawUI()
         controlPanel->render(*sceneRenderer);
 
     // draw the radar
-    if (radar && _world)
+    if (radar)
     {
         const bool showBlankRadar = !myTank || (myTank && myTank->isPaused());
         const bool observer = myTank && (myTank->getTeam() == ObserverTeam);
