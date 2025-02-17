@@ -6278,6 +6278,9 @@ void drawFrame(const float dt)
         // draw frame
         if (viewType == SceneRenderer::ThreeChannel)
         {
+#if !defined(DEBUG_RENDERING)
+            glClear(GL_COLOR_BUFFER_BIT);
+#endif
             // draw center channel
             sceneRenderer->render(false);
             drawUI();
