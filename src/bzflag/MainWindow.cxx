@@ -287,6 +287,11 @@ void            MainWindow::resize()
 {
     window->getSize(trueWidth, trueHeight);
     window->makeCurrent();
+
+    // When resizing the window, set the scissor box to the whole window.
+    // Otherwise it remains at the original window size.
+    glScissor(0, 0, trueWidth, trueHeight);
+
     setQuadrant(quadrant);
 }
 
