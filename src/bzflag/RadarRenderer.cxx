@@ -385,7 +385,8 @@ void RadarRenderer::render(SceneRenderer& renderer, bool blank, bool observer)
     // render the frame
     renderFrame(renderer);
 
-    if (blank || !world) {
+    if (blank || !world)
+    {
         glPopAttrib();
         return;
     }
