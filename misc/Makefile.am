@@ -24,7 +24,6 @@ EXTRA_DIST =				\
 	fonts/LICENSE.DejaVu		\
 	fonts/README			\
 	groups.conf			\
-	libtool.m4			\
 	man2html.c			\
 	maps/flagbuffet.bzw		\
 	maps/fountains.bzw		\
