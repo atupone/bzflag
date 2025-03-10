@@ -856,9 +856,6 @@ void SceneRenderer::renderScene(bool UNUSED(_lastFrame), bool UNUSED(_sameFrame)
     int i;
     const bool lightLists = BZDB.isTrue("lightLists");
 
-    const World* world = World::getWorld();
-
-
     // avoid OpenGL calls as long as possible -- there's a good
     // chance we're waiting on the vertical retrace.
 
@@ -866,8 +863,7 @@ void SceneRenderer::renderScene(bool UNUSED(_lastFrame), bool UNUSED(_sameFrame)
     getLights();
 
     // get the obstacle sceneNodes and shadowNodes
-    if (world)
-        getRenderNodes();
+    getRenderNodes();
 
     // prepare transforms
     // note -- lights should not be positioned before view is set
@@ -995,16 +991,17 @@ void SceneRenderer::renderScene(bool UNUSED(_lastFrame), bool UNUSED(_sameFrame)
         if (useHiddenLineOn)
             glEnable(GL_POLYGON_OFFSET_FILL);
 
+
         ///////////////////////
         // THE BIG RENDERING //
         ///////////////////////
-        if (world)
-            doRender();
+        doRender();
 
 
         if (scene && BZDBCache::showCullingGrid)
             scene->drawCuller();
 
+        const World* world = World::getWorld();
         if (scene && BZDBCache::showCollisionGrid && (world != NULL))
             world->drawCollisionGrid();
 

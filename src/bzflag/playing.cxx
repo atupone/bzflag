@@ -2016,7 +2016,6 @@ static void     handleServerMessage(bool human, uint16_t code,
 {
     bool checkScores = false;
     static WordFilter *wordfilter = (WordFilter *)BZDB.getPointer("filter");
-    const World *_world = World::getWorld();
 
     switch (code)
     {
@@ -2341,10 +2340,7 @@ static void     handleServerMessage(bool human, uint16_t code,
         for (int i = 0; i < numTeams; i++)
         {
             msg = nboUnpackUShort(msg, team);
-            Team uTeam;
-            msg = uTeam.unpack(msg);
-            if (_world)
-                teams[int(team)] = uTeam;
+            msg = teams[int(team)].unpack(msg);
         }
         checkScores = true;
         break;
@@ -5743,10 +5739,8 @@ static void drawUI()
         hud->setFrameRadarTriangleCount(0);
     }
 
-    const World *_world = World::getWorld();
-
     // update the HUD (player list, alerts)
-    if (_world && hud)
+    if (World::getWorld() && hud)
         hud->render(*sceneRenderer);
 
     // draw the control panel
@@ -6124,8 +6118,7 @@ void drawFrame(const float dt)
 
         // add dynamic nodes
         SceneDatabase* scene = sceneRenderer->getSceneDatabase();
-        World *_world = World::getWorld();
-        if (scene && myTank && _world)
+        if (scene && myTank && world)
         {
 
             int i;
@@ -7324,7 +7317,7 @@ static void     playingLoop()
         }
 
         // do motion
-        if (myTank && _world)
+        if (myTank && world)
         {
             if (myTank->isAlive() && !myTank->isPaused())
             {
@@ -7374,7 +7367,7 @@ static void     playingLoop()
 #endif
 
         // adjust properties based on flags (dimensions, cloaking, etc...)
-        if (myTank && _world)
+        if (myTank)
             myTank->updateTank(dt, true);
         for (i = 0; i < curMaxPlayers; i++)
         {
