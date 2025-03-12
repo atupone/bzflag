@@ -5,16 +5,11 @@ BZFlag is supported on macOS 10.13 (High Sierra) and later, and official builds
 are available for both Intel (x86_64) and Apple Silicon (arm64) processors.
 BZFlag may be installed by downloading an official build from the BZFlag web
 site (https://www.bzflag.org/downloads), expanding the archive (if necessary),
-and moving the game to the Applications folder. Please note that the official
-builds are not currently being signed or notarized by Apple, so on the first
-launch you must bypass Gatekeeper using the contextual menu by right-clicking,
-two-finger-clicking, or control-clicking on the application, selecting "Open,"
-and confirming when prompted.
+and moving the game to the Applications folder.
 
-BZFlag is also available as a Homebrew cask using the following command (please
-note the --no-quarantine flag to bypass Gatekeeper for the reason stated above):
+BZFlag is also available as a Homebrew cask using the following command:
 
-  brew install --cask --no-quarantine bzflag
+  brew install --cask bzflag
 
 The BZFlag macOS application package also contains the BZFlag server (bzfs),
 the text-based client (bzadmin), server plugins, and various other tools. You
@@ -62,9 +57,7 @@ note that a debug build is configured by default. A release build may be
 configured by clicking the "BZFlag" scheme button at the top of the screen,
 selecting "Edit Scheme..." at the bottom of the pop-up menu, selecting the "Run"
 phase in the left sidebar, selecting the "Info" tab, and setting the desired
-build configuration. To compile BZFlag for a different architecture, in the
-project build settings set "Build Active Architecture Only" to "No" and manually
-set "Architectures" to the target architecture name ("x86_64" or "arm64").
+build configuration.
 
 You may also build BZFlag from source code using the standard autotools build
 process, but please keep in mind that this method on macOS receives less
