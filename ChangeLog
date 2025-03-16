@@ -1,8 +1,11 @@
 			     BZFlag Release Notes
 			     ====================
 
-BZFlag 2.4.29
--------------
+BZFlag 2.4.30  "All Is Clear" (2025-03-16)
+------------------------------------------
+
+* Revert a change that caused menu transparency issues in medium quality
+    - Scott Wichser
 
 
 BZFlag 2.4.28  "Full of Dangers" (2025-02-24)
