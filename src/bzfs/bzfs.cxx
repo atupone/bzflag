@@ -6279,11 +6279,7 @@ void UPnP::setIGD()
 {
 #ifdef HAVE_MINIUPNPC_MINIUPNPC_H
     // Discover uPnP devices waiting for 200ms
-#if (MINIUPNPC_API_VERSION >= 14)
     struct UPNPDev *devlist = upnpDiscover(200, NULL, NULL, 0, 0, 2, NULL);
-#else
-    struct UPNPDev *devlist = upnpDiscover(200, NULL, NULL, 0, 0, NULL);
-#endif
     if (!devlist)
     {
         std::cerr << "No UPnP device found"
@@ -6291,7 +6287,11 @@ void UPnP::setIGD()
         return;
     }
     // Select a good IGD (Internet Gateway Device)
+#if (MINIUPNPC_API_VERSION >= 18)
+    int i = UPNP_GetValidIGD(devlist, &urls, &data, lanaddr, sizeof(lanaddr), nullptr, 0);
+#else
     int i = UPNP_GetValidIGD(devlist, &urls, &data, lanaddr, sizeof(lanaddr));
+#endif
     freeUPNPDevlist(devlist);
     if (!i)
         std::cerr << "No recognized device" << std::endl;
