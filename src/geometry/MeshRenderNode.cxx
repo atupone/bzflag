@@ -62,8 +62,11 @@ void OpaqueRenderNode::render()
     myColor4fv(color);
 
     // do the transformation
-    glPushMatrix();
-    glMultMatrixf(xformMatrix);
+    if (xformMatrix)
+    {
+        glPushMatrix();
+        glMultMatrixf(xformMatrix);
+    }
     if (normalize)
         glEnable(GL_NORMALIZE);
 
@@ -73,7 +76,8 @@ void OpaqueRenderNode::render()
     // undo the transformation
     if (normalize)
         glDisable(GL_NORMALIZE);
-    glPopMatrix();
+    if (xformMatrix)
+        glPopMatrix();
 
     if (switchLights)
         RENDERER.reenableLights();
@@ -86,10 +90,14 @@ void OpaqueRenderNode::render()
 
 void OpaqueRenderNode::renderShadow()
 {
-    glPushMatrix();
-    glMultMatrixf(xformMatrix);
+    if (xformMatrix)
+    {
+        glPushMatrix();
+        glMultMatrixf(xformMatrix);
+    }
     drawMgr->executeSetGeometry(lod, set);
-    glPopMatrix();
+    if (xformMatrix)
+        glPopMatrix();
 
     addTriangleCount(triangles);
 

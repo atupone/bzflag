@@ -79,7 +79,7 @@ private:
     bool animRepos;
 
     // transform display list
-    GLfloat xformMatrix[16];
+    GLfloat *xformMatrix;
 
     struct MeshMaterial
     {

@@ -54,6 +54,7 @@ float MeshSceneNode::LodScale = 1.0f;
 float MeshSceneNode::RadarLodScale = 1.0f;
 
 MeshSceneNode::MeshSceneNode(const MeshObstacle* _mesh)
+    : xformMatrix(nullptr)
 {
     mesh = _mesh;
 
@@ -564,6 +565,8 @@ void MeshSceneNode::makeXFormList()
         };
 
         // oops, transpose
+        if (!xformMatrix)
+            xformMatrix = new GLfloat[16];
         for (int i = 0; i < 4; i++)
         {
             for (int j = 0; j < 4; j++)
