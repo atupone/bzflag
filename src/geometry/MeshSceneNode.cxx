@@ -54,7 +54,7 @@ float MeshSceneNode::LodScale = 1.0f;
 float MeshSceneNode::RadarLodScale = 1.0f;
 
 MeshSceneNode::MeshSceneNode(const MeshObstacle* _mesh)
-    : xformMatrix(nullptr)
+    : xformPtr(nullptr)
 {
     mesh = _mesh;
 
@@ -153,7 +153,6 @@ MeshSceneNode::MeshSceneNode(const MeshObstacle* _mesh)
 
     // build the transform display list
     makeXFormList();
-    OpenGLGState::registerContextInitializer(freeContext, initContext, this);
 
     // build gstates and render nodes
     notifyStyleChange();
@@ -180,8 +179,6 @@ MeshSceneNode::~MeshSceneNode()
 
     delete [] lodLengths;
     delete [] radarLengths;
-
-    OpenGLGState::unregisterContextInitializer(freeContext, initContext, this);
 
     return;
 }
@@ -345,7 +342,7 @@ void MeshSceneNode::notifyStyleChange()
             if (!mat.needsSorting)
             {
                 setNode.node =
-                    new OpaqueRenderNode(drawMgr, xformMatrix, normalize,
+                    new OpaqueRenderNode(drawMgr, xformPtr, normalize,
                                          mat.colorPtr, lod, set, extPtr,
                                          drawSet.triangleCount);
                 mat.animRepos = false;
@@ -357,7 +354,7 @@ void MeshSceneNode::notifyStyleChange()
                 if (xformTool != NULL)
                     xformTool->modifyVertex(setPos);
                 setNode.node =
-                    new AlphaGroupRenderNode(drawMgr, xformMatrix, normalize,
+                    new AlphaGroupRenderNode(drawMgr, xformPtr, normalize,
                                              mat.colorPtr, lod, set, extPtr, setPos,
                                              drawSet.triangleCount);
                 if ((fabsf(drawSet.sphere[0]) > 0.001f) &&
@@ -373,7 +370,7 @@ void MeshSceneNode::notifyStyleChange()
             }
 
             setNode.radarNode =
-                new OpaqueRenderNode(drawMgr, xformMatrix, normalize,
+                new OpaqueRenderNode(drawMgr, xformPtr, normalize,
                                      mat.colorPtr, lod, set, extPtr,
                                      drawSet.triangleCount);
         }
@@ -545,47 +542,16 @@ void MeshSceneNode::updateMaterial(MeshSceneNode::MeshMaterial* mat)
 
 void MeshSceneNode::makeXFormList()
 {
-    GLenum error;
     const MeshTransform::Tool* xformTool = drawInfo->getTransformTool();
     if (xformTool != NULL)
     {
-        int errCount = 0;
-        // reset the error state
-        while (true)
-        {
-            error = glGetError();
-            if (error == GL_NO_ERROR)
-                break;
-            errCount++; // avoid a possible spin-lock?
-            if (errCount > 666)
-            {
-                logDebugMessage(0,"ERROR: MeshSceneNode::makeXFormList() glError: %i\n", error);
-                return; // don't make the list, something is borked
-            }
-        };
-
+        xformPtr = &xformMatrix[0][0];
         // oops, transpose
-        if (!xformMatrix)
-            xformMatrix = new GLfloat[16];
         for (int i = 0; i < 4; i++)
-        {
             for (int j = 0; j < 4; j++)
-                xformMatrix[(i*4)+j] = xformTool->getMatrix()[(j*4)+i];
-        }
+                xformMatrix[i][j] = xformTool->getMatrix()[(j*4)+i];
     }
     return;
-}
-
-
-void MeshSceneNode::initContext(void* data)
-{
-    ((MeshSceneNode*)data)->makeXFormList();
-    return;
-}
-
-
-void MeshSceneNode::freeContext(void*)
-{
 }
 
 

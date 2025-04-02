@@ -63,8 +63,6 @@ public:
     void getRenderNodes(std::vector<RenderSet>& rnodes);
 
     void makeXFormList();
-    static void initContext(void* data);
-    static void freeContext(void* data);
 
     static void setLodScale(int pixelsX, float fovx,
                             int pixelsY, float fovy);
@@ -79,7 +77,8 @@ private:
     bool animRepos;
 
     // transform display list
-    GLfloat *xformMatrix;
+    GLfloat *xformPtr;
+    GLfloat  xformMatrix[4][4];
 
     struct MeshMaterial
     {
