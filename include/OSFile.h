@@ -130,8 +130,7 @@ protected:
     class OSDirInfo;
     OSDirInfo    *info;
 
-    bool windowsAddFileStack(std::string pathName, std::string fileMask, bool bRecursive);
-    bool linuxAddFileStack(std::string pathName, std::string fileMask, bool bRecursive);
+    void addFileStack(std::string pathName, std::string fileMask, bool bRecursive);
 };
 
 

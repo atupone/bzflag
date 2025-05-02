@@ -550,9 +550,7 @@ bool OSDir::getNextFile(OSFile &oFile, const char* fileMask, bool bRecursive)
     if (info->namePos == -1)
     {
         info->nameList.clear();
-        //FIXME -- just do the #ifdef'ing here?
-        windowsAddFileStack(getFullOSPath(), realMask, bRecursive);
-        linuxAddFileStack(getFullOSPath(), realMask, bRecursive);
+        addFileStack(getFullOSPath(), realMask, bRecursive);
 
         info->namePos = 0;
     }
@@ -578,9 +576,9 @@ bool OSDir::getNextFile(OSFile &oFile, const char* fileMask, bool bRecursive)
     return true;
 }
 
-bool OSDir::windowsAddFileStack(std::string pathName, std::string fileMask, bool bRecursive)
-{
 #ifdef _WIN32
+void OSDir::addFileStack(std::string pathName, std::string fileMask, bool bRecursive)
+{
     struct _finddata_t fileInfo;
 
     long    hFile;
@@ -611,7 +609,7 @@ bool OSDir::windowsAddFileStack(std::string pathName, std::string fileMask, bool
                 FilePath += fileInfo.name;
 
                 if ((fileInfo.attrib & _A_SUBDIR) && bRecursive)
-                    windowsAddFileStack(FilePath,fileMask,bRecursive);
+                    addFileStack(FilePath,fileMask,bRecursive);
                 else if (!(fileInfo.attrib & _A_SUBDIR))
                     info->nameList.push_back(FilePath);
             }
@@ -619,17 +617,8 @@ bool OSDir::windowsAddFileStack(std::string pathName, std::string fileMask, bool
                 bDone = true;
         }
     }
-    return true;
-#else
-    // quell warnings
-    if (!bRecursive)
-    {
-        fileMask.size();
-        pathName.size();
-    }
-    return false;
-#endif
 }
+#endif
 
 // linux mask filter functions
 // we don't need these for windows as it can do it right in findNextFile
@@ -734,17 +723,9 @@ static int match_mask (const char *mask, const char *string)
 }
 #endif
 
-bool OSDir::linuxAddFileStack(std::string pathName, std::string fileMask, bool bRecursive)
+#ifndef _WIN32
+void OSDir::addFileStack(std::string pathName, std::string fileMask, bool bRecursive)
 {
-#ifdef _WIN32
-    // quell warnings
-    if (!bRecursive)
-    {
-        fileMask.size();
-        pathName.size();
-    }
-    return false;
-#else
     DIR  *directory;
     dirent  *fileInfo;
     struct stat  statbuf;
@@ -758,7 +739,7 @@ bool OSDir::linuxAddFileStack(std::string pathName, std::string fileMask, bool b
         searchstr[pathLen] = '/';
     directory = opendir(searchstr);
     if (!directory)
-        return false;
+        return;
 
     // TODO: make it use the filemask
     while ((fileInfo = readdir(directory)))
@@ -772,15 +753,14 @@ bool OSDir::linuxAddFileStack(std::string pathName, std::string fileMask, bool b
             stat(FilePath.c_str(), &statbuf);
 
             if (S_ISDIR(statbuf.st_mode) && bRecursive)
-                linuxAddFileStack(FilePath,fileMask,bRecursive);
+                addFileStack(FilePath,fileMask,bRecursive);
             else if (match_mask(fileMask.c_str(), fileInfo->d_name))
                 info->nameList.push_back(FilePath);
         }
     }
     closedir(directory);
-    return true;
-#endif// !Win32
 }
+#endif// !Win32
 
 // Local Variables: ***
 // mode: C++ ***
