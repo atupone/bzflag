@@ -27,7 +27,6 @@ void death();
 void shotFired();
 void laserFired();
 void shockwaveFired();
-void solidMatterFriction();
 
 }
 
