@@ -164,18 +164,12 @@ InputMenu::InputMenu() : keyboardMapMenu(nullptr), joystickTestMenu(nullptr)
     option = new HUDuiList;
     // force feedback
     option->setFontFace(fontFace);
-    option->setLabel("Force Feedback:");
+    option->setLabel("Rumble:");
     option->setCallback(callback, "F");
     options = &option->getList();
-    options->push_back(std::string("None"));
-    options->push_back(std::string("Rumble"));
-    options->push_back(std::string("Directional"));
-    for (i = 0; i < (int)options->size(); i++)
-    {
-        std::string currentOption = (*options)[i];
-        if (BZDB.get("forceFeedback") == currentOption)
-            option->setIndex(i);
-    }
+    options->push_back(std::string("Off"));
+    options->push_back(std::string("On"));
+    option->setIndex(BZDB.isTrue("rumble") ? 1 : 0);
     option->update();
     listHUD.push_back(option);
     joystickTest = new HUDuiLabel;
@@ -277,7 +271,13 @@ void InputMenu::fillJSOptions()
         }
     }
     if (!found)
-        jsx->setIndex(0);
+    {
+        // If there are at least two axes, use the first one for X
+        if (xoptions->size() > 2)
+            jsx->setIndex(1);
+        else
+          jsx->setIndex(0);
+    }
     jsx->update();
     found = false;
     for (i = 0; i < (int)yoptions->size(); i++)
@@ -301,6 +301,7 @@ void InputMenu::fillJSOptions()
     }
     if (!found)
     {
+        // If there are at least two axes, use the second one for Y
         if (yoptions->size() > 2)
             jsy->setIndex(2);
         else
@@ -469,9 +470,9 @@ void            InputMenu::callback(HUDuiControl* w, const void* data)
     }
     break;
 
-    /* Force Feedback */
+    /* Rumble Feedback */
     case 'F':
-        BZDB.set("forceFeedback", selectedOption);
+        BZDB.setBool("rumble", listHUD->getIndex() == 1);
         break;
 
     /* Joystick Range Limit */

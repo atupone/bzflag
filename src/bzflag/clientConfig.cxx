@@ -301,8 +301,9 @@ void updateConfigFile(void)
         BZDB.set("list", BZDB.getDefault("list"));
     }
 
-    // Upgrade 2.4.26 to 2.4.28
-    if (configVersion <= 5)
+    // Upgrade to 2.4.32. This was 2.4.28, but a merge error brought back the forceFeedback option instead of rumble).
+    // Client config version was 5 for 2.4.28, so we'll bump this to 6 to *actually* upgrade the config.
+    if (configVersion <= 6)
         BZDB.unset("forceFeedback");
 
     if (configVersion < 0 || configVersion > BZ_CONFIG_FILE_VERSION)    // hm, we don't know about this one...
