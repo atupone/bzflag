@@ -1323,9 +1323,13 @@ void OpenGLGState::initContext()
     }
 
     GLenum err = glewInit();
-    if (GLEW_OK != err)
+    // Running the client using SDL's Wayland driver causes glewInit() to return GLEW_ERROR_NO_GLX_DISPLAY. We do not
+    // check for or use GLX extensions, so I think it's safe to allow for this error code.
+    // https://github.com/nigels-com/glew/issues/417
+    // https://github.com/BZFlag-Dev/bzflag/issues/377
+    if (GLEW_OK != err && GLEW_ERROR_NO_GLX_DISPLAY != err)
     {
-        printf("Error: %s\n", glewGetErrorString(err));
+        printf("initContext() Error: %s\n", glewGetErrorString(err));
         return;
     }
 
