@@ -276,7 +276,7 @@ void InputMenu::fillJSOptions()
         if (xoptions->size() > 2)
             jsx->setIndex(1);
         else
-          jsx->setIndex(0);
+            jsx->setIndex(0);
     }
     jsx->update();
     found = false;
