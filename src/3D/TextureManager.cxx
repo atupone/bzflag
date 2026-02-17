@@ -58,12 +58,7 @@ TextureManager::TextureManager()
 TextureManager::~TextureManager()
 {
     // we are done remove all textures
-    for (TextureNameMap::iterator it = textureNames.begin(); it != textureNames.end(); ++it)
-    {
-        ImageInfo &tex = it->second;
-        if (tex.texture != NULL)
-            delete tex.texture;
-    }
+    // unique_ptr handles the deletion of ImageInfo and its members automatically
     textureNames.clear();
     textureIDs.clear();
 }
@@ -79,7 +74,7 @@ int TextureManager::getTextureID( const char* name, bool reportFail )
     // see if we have the texture
     TextureNameMap::iterator it = textureNames.find(name);
     if (it != textureNames.end())
-        return it->second.id;
+        return it->second->id;
     else   // we don't have it so try and load it
     {
 
@@ -118,7 +113,7 @@ bool TextureManager::removeTexture(const std::string& name)
         return false;
 
     // delete the OpenGLTexture
-    ImageInfo& info = it->second;
+    ImageInfo& info = *(it->second);
     delete info.texture;
     info.texture = NULL;
 
@@ -134,12 +129,8 @@ bool TextureManager::removeTexture(const std::string& name)
 
 bool TextureManager::reloadTextures()
 {
-    TextureNameMap::iterator it = textureNames.begin();
-    while (it != textureNames.end())
-    {
-        reloadTextureImage(it->first);
-        ++it;
-    }
+    for (auto const& pair : textureNames)
+        reloadTextureImage(pair.first);
     return true;
 }
 
@@ -150,7 +141,7 @@ bool TextureManager::reloadTextureImage(const std::string& name)
     if (it == textureNames.end())
         return false;
 
-    ImageInfo& info = it->second;
+    ImageInfo& info = *(it->second);
     OpenGLTexture* oldTex = info.texture;
     OpenGLTexture::Filter filter = oldTex->getFilter();
 
@@ -207,10 +198,10 @@ bool TextureManager::bind ( const char* name )
         return false;
     }
 
-    int id = it->second.id;
+    int id = it->second->id;
     if (id != lastBoundID)
     {
-        it->second.texture->execute();
+        it->second->texture->execute();
         lastBoundID = id;
     }
     return true;
@@ -257,14 +248,12 @@ void TextureManager::setMaxFilter (OpenGLTexture::Filter filter )
 void TextureManager::updateTextureFilters()
 {
     // reset all texture filters to the current maxFilter
-    TextureNameMap::iterator itr = textureNames.begin();
-    while (itr != textureNames.end())
+    for (auto& pair : textureNames)
     {
-        OpenGLTexture* texture = itr->second.texture;
+        OpenGLTexture* texture = pair.second->texture;
         // getting, then setting re-clamps the filter level
         OpenGLTexture::Filter current = texture->getFilter();
         texture->setFilter(current);
-        ++itr;
     }
 
     // rebuild proc textures
@@ -305,7 +294,7 @@ const ImageInfo& TextureManager::getInfo ( const char* name )
     if (it == textureNames.end())
         return crapInfo;
 
-    return it->second;
+    return *(it->second);
 }
 
 
@@ -320,23 +309,29 @@ int TextureManager::addTexture( const char* name, OpenGLTexture *texture )
     if (it != textureNames.end())
     {
         logDebugMessage(3,"Texture %s already exists, overwriting\n", name);
-        textureIDs.erase(it->second.id);
-        delete it->second.texture;
+        textureIDs.erase(it->second->id);
     }
-    ImageInfo info;
-    info.name = name;
-    info.texture = texture;
-    info.id = ++lastImageID;
-    info.alpha = texture->hasAlpha();
-    info.x = texture->getWidth();
-    info.y = texture->getHeight();
 
-    textureNames[name] = info;
-    textureIDs[info.id] = &textureNames[name];
+    // Create the new Info object
+    std::unique_ptr<ImageInfo> info(new ImageInfo());
+    info->name = name;
+    info->texture = texture;
+    info->id = ++lastImageID;
+    info->alpha = texture->hasAlpha();
+    info->x = texture->getWidth();
+    info->y = texture->getHeight();
 
-    logDebugMessage(4,"Added texture %s: id %d\n", name, info.id);
+    int newId = info->id;
 
-    return info.id;
+    // Store raw pointer for lookup
+    textureIDs[newId] = info.get();
+
+    // Move ownership into the main map
+    textureNames[name] = std::move(info);
+
+    logDebugMessage(4,"Added texture %s: id %d\n", name, newId);
+
+    return newId;
 }
 
 OpenGLTexture* TextureManager::loadTexture(FileTextureInit &init, bool reportFail)

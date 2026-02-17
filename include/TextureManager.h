@@ -18,6 +18,7 @@
 // System headers
 #include <string>
 #include <map>
+#include <memory>
 
 // Common headers
 #include "OpenGLTexture.h"
@@ -93,7 +94,7 @@ private:
     int addTexture( const char*, OpenGLTexture *texture );
     OpenGLTexture* loadTexture( FileTextureInit &init, bool reportFail = true );
 
-    typedef std::map<std::string, ImageInfo> TextureNameMap;
+    typedef std::map<std::string, std::unique_ptr<ImageInfo>> TextureNameMap;
     typedef std::map<int, ImageInfo*> TextureIDMap;
 
     int       lastImageID;
