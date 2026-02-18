@@ -319,8 +319,8 @@ void    SDLMedia::setDevice(std::string deviceName)
     putenv(envAssign);
 }
 
-float*      SDLMedia::doReadSound(const std::string &filename, int &numFrames,
-                                  int &rate) const
+std::unique_ptr<float[]> SDLMedia::doReadSound(const std::string &filename, int &numFrames,
+        int &rate) const
 {
     SDL_AudioSpec wav_spec;
     Uint32    wav_length;
@@ -330,7 +330,6 @@ float*      SDLMedia::doReadSound(const std::string &filename, int &numFrames,
     int16_t      *cvt16;
     int      i;
 
-    float *data;
     rate  = defaultAudioRate;
     if (!SDL_LoadWAV(filename.c_str(), &wav_spec, &wav_buffer, &wav_length))
         return NULL;
@@ -355,7 +354,7 @@ float*      SDLMedia::doReadSound(const std::string &filename, int &numFrames,
     SDL_ConvertAudio(&wav_cvt);
     numFrames = (int)(wav_length * wav_cvt.len_ratio / 4);
     cvt16     = (int16_t *)wav_cvt.buf;
-    data      = new float[numFrames * 2];
+    std::unique_ptr<float[]> data(new float[numFrames * 2]);
     for (i = 0; i < numFrames * 2; i++)
         data[i] = cvt16[i];
     free(wav_cvt.buf);

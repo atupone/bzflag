@@ -126,12 +126,14 @@ std::unique_ptr<unsigned char[]> BzfMedia::readImage(const std::string& filename
     return NULL;
 }
 
-float*          BzfMedia::readSound(const std::string& filename,
-                                    int& numFrames, int& rate) const
+std::unique_ptr<float[]> BzfMedia::readSound(const std::string& filename,
+        int& numFrames, int& rate) const
 {
+    std::unique_ptr<float[]> sound;
+
     // try mediaDir/filename
     std::string name = makePath(mediaDir, filename);
-    float* sound = doReadSound(name, numFrames, rate);
+    sound = doReadSound(name, numFrames, rate);
     if (sound) return sound;
 
     // try filename as is
@@ -409,7 +411,7 @@ bool            BzfMedia::doReadRLE(FILE* file,
     return true;
 }
 
-float*          BzfMedia::doReadSound(const std::string&, int&, int&) const
+std::unique_ptr<float[]> BzfMedia::doReadSound(const std::string&, int&, int&) const
 {
     return NULL;
 }

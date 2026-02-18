@@ -59,8 +59,8 @@ public:
     // in the range -1 to 1.  numFrames returns the number of left,right
     // pairs.  rate is in frames per second.  use delete[] to release
     // the returned memory.
-    float*      readSound(const std::string& filename,
-                          int& numFrames, int& rate) const;
+    std::unique_ptr<float[]> readSound(const std::string& filename,
+                                       int& numFrames, int& rate) const;
 
     // sleep for given number of seconds
     virtual double  stopwatch(bool start);
@@ -138,8 +138,8 @@ protected:
             int& width, int& height, int& depth) const;
 
     // return NULL on failure
-    virtual float*  doReadSound(const std::string& filename,
-                                int& numFrames, int& rate) const;
+    virtual std::unique_ptr<float[]> doReadSound(const std::string& filename,
+            int& numFrames, int& rate) const;
 
     // concatenate directory to filename
     virtual std::string makePath(const std::string& dir,

@@ -501,15 +501,13 @@ static bool     allocAudioSamples()
         std::string sound( TextUtils::tolower(soundFiles[i]) );
         // read it
         int numFrames, rate;
-        float* samples = PlatformFactory::getMedia()->readSound(sound.c_str(), numFrames, rate);
+        auto samples = PlatformFactory::getMedia()->readSound(sound.c_str(), numFrames, rate);
         AudioSamples newSample;
-        if (newSample.resample(samples, numFrames, rate, sound))
+        if (newSample.resample(samples.get(), numFrames, rate, sound))
             anyFile = true;
         soundSamples.push_back(newSample);
         // If a "custom" sound wants to play this, make it available
         customSamples[sound] = i;
-
-        delete[] samples;
     }
 
     return anyFile;
@@ -591,15 +589,14 @@ void            playLocalSound(std::string sound)
     if (itr == customSamples.end())
     {
         int numFrames(0), rate(0);
-        float* samples( PlatformFactory::getMedia()->readSound(sound.c_str(), numFrames, rate) );
+        auto samples( PlatformFactory::getMedia()->readSound(sound.c_str(), numFrames, rate) );
         AudioSamples newSample;
-        if (newSample.resample(samples, numFrames, rate, sound))
+        if (newSample.resample(samples.get(), numFrames, rate, sound))
         {
             soundSamples.push_back(newSample);
             soundCode = (int)soundSamples.size()-1;
             customSamples[sound] = soundCode;
         }
-        delete[] samples;
     }
     else
         soundCode = itr->second;
