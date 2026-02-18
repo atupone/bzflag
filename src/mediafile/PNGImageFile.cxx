@@ -57,12 +57,9 @@ PNGImageFile::PNGImageFile(std::istream* input) : ImageFile(input), palette(NULL
     if (strncmp((char*)PNGHEADER, buffer, 8) != 0)
         return;
 
-    PNGChunk *c = PNGChunk::readChunk(input);
+    std::unique_ptr<PNGChunk> c = PNGChunk::readChunk(input);
     if (c->getType() != PNGChunk::IHDR)
-    {
-        delete c;
         return;
-    }
 
     const void* data = c->getData();
     int32_t myWidth, myHeight;
@@ -74,8 +71,6 @@ PNGImageFile::PNGImageFile(std::istream* input) : ImageFile(input), palette(NULL
     data = nboUnpackUByte(data, compressionMethod);
     data = nboUnpackUByte(data, filterMethod);
     data = nboUnpackUByte(data, interlaceMethod);
-
-    delete c;
 
     int channels;
     switch (colorDepth)
@@ -166,15 +161,14 @@ bool PNGImageFile::read(void* buffer)
 
 bool                    PNGImageFile::read(void* buffer)
 {
-    PNGChunk *c;
+    std::unique_ptr<PNGChunk> c;
     int   bufferPos = getWidth() * getNumChannels() * (getHeight() - 1);
 
     c = PNGChunk::readChunk(getStream());
     while ((c->getType() != PNGChunk::IDAT) && (c->getType() != PNGChunk::IEND))
     {
         if (c->getType() == PNGChunk::PLTE)
-            palette = readPalette(c);
-        delete c;
+            palette = readPalette(c.get());
         c = PNGChunk::readChunk(getStream());
     }
 
@@ -191,7 +185,6 @@ bool                    PNGImageFile::read(void* buffer)
     if (err != Z_OK)
     {
         logDebugMessage(3,"PNGImageFile: inflateInit() error\n");
-        delete c;
         return false;
     }
 
@@ -205,16 +198,10 @@ bool                    PNGImageFile::read(void* buffer)
         {
 
             if (!filter())
-            {
-                delete c;
                 return false;
-            }
 
             if (!expand((unsigned char*)buffer+bufferPos))
-            {
-                delete c;
                 return false;
-            }
             bufferPos -= realBufferSize-1;
 
             switchLineBuffers();
@@ -228,17 +215,14 @@ bool                    PNGImageFile::read(void* buffer)
         if ((err != Z_STREAM_END) && (err != Z_OK) && (zStream.avail_in != 0))
         {
             logDebugMessage(3,"PNGImageFile: Z_STREAM error: %d\n", err);
-            delete c;
             return false;
         }
 
-        delete c;
         c = PNGChunk::readChunk(getStream());
     }
 
     inflateEnd(&zStream);
 
-    delete c;
     return true;
 }
 
@@ -589,17 +573,19 @@ PNGChunk *PNGChunk::readChunk(std::istream *stream)
   Static factory function for parsing and creating an arbitrary PNG chunk
 */
 
-PNGChunk *PNGChunk::readChunk(std::istream *input)
+std::unique_ptr<PNGChunk> PNGChunk::readChunk(std::istream *input)
 {
-    PNGChunk *c = new PNGChunk();
+    // Use unique_ptr to ensure the chunk is destroyed if input->read fails
+    auto c = std::unique_ptr<PNGChunk>(new PNGChunk());
+
     input->read((char *) &c->length, 4);
     c->length = ntohl(c->length);
     input->read((char *) &c->type, 4);
     c->type = ntohl(c->type);
     if (c->length > 0)
     {
-        c->data = new unsigned char[c->length];
-        input->read((char*) c->data, c->length);
+        c->data.reset(new unsigned char[c->length]);
+        input->read((char*) c->data.get(), c->length);
     }
     input->read((char *) &c->crc, 4);
     c->crc = ntohl(c->crc);
@@ -625,8 +611,6 @@ PNGChunk::~PNGChunk()
 
 PNGChunk::~PNGChunk()
 {
-    if (data != NULL)
-        delete[] data;
 }
 
 /*
@@ -659,7 +643,7 @@ unsigned char *PNGChunk::getData()
 
 unsigned char *PNGChunk::getData()
 {
-    return data;
+    return data.get();
 }
 
 // Local Variables: ***

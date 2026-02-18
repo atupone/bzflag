@@ -13,7 +13,11 @@
 #ifndef BZF_PNG_IMAGE_FILE_H
 #define BZF_PNG_IMAGE_FILE_H
 
+//Inherits from
 #include "ImageFile.h"
+
+// System headers
+#include <memory>
 
 class PNGPalette;
 class PNGChunk;
@@ -89,7 +93,7 @@ private:
 class PNGChunk
 {
 public:
-    static PNGChunk *readChunk(std::istream *stream);
+    static std::unique_ptr<PNGChunk> readChunk(std::istream *stream);
     ~PNGChunk();
     int getLength();
     int getType();
@@ -103,7 +107,7 @@ private:
     PNGChunk();
     int           length;
     int           type;
-    unsigned char     *data;
+    std::unique_ptr<unsigned char[]> data;
     int           crc;
 
 };
