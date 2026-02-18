@@ -21,6 +21,7 @@
 #include <sstream>
 #include <errno.h>
 #include <string.h>
+#include <memory>
 
 // common headers
 #include "Pack.h"
@@ -108,35 +109,35 @@ std::string BzPNG::create(const std::vector<Chunk>& extraChunks,
     writeChunk(ss, "IHDR", IHDR, sizeof(IHDR));
 
     // Extra chunks
-    for (size_t i = 0; i < extraChunks.size(); i++)
+    for (const auto &chunk : extraChunks)
     {
-        const Chunk& chunk = extraChunks[i];
         if (chunk.type.size() != 4)
             return "ERROR: bad chunk type size";
-        else
-        {
-            writeChunk(ss, chunk.type.data(), chunk.data.data(),
-                       chunk.data.size());
-        }
+
+        writeChunk(ss, chunk.type.data(), chunk.data.data(),
+                   chunk.data.size());
     }
 
     // IDAT chunk
     const uint32_t xbytes = (cc * sx);
     const uint32_t datLen = (sy * xbytes) + (sy);
-    Bytef* dat = new Bytef[datLen];
-    void* d = dat;
+
+    // Use unique_ptr for automatic memory management
+    std::unique_ptr<Bytef[]> dat(new Bytef[datLen]);
+    void* d = dat.get();
+
     for (uint32_t y = 0; y < sy; y++)
     {
         d = nboPackUByte(d, 0); // prepend the scanline filter type, 0 = none
         const uint32_t iy = (sy - y - 1); // flip the vertical
         d = nboPackString(d, pixels + (iy * xbytes), xbytes);
     }
+
     uLongf zLen = compressBound(datLen);
-    Bytef* zDat = new Bytef[zLen];
-    compress2(zDat, &zLen, (Bytef*)dat, datLen, 9);
-    writeChunk(ss, "IDAT", zDat, zLen);
-    delete[] zDat;
-    delete[] dat;
+    std::unique_ptr<Bytef[]> zDat(new Bytef[zLen]);
+
+    compress2(zDat.get(), &zLen, dat.get(), datLen, 9);
+    writeChunk(ss, "IDAT", zDat.get(), zLen);
 
     // IEND chunk
     writeChunk(ss, "IEND", "", 0);
@@ -170,97 +171,6 @@ bool BzPNG::save(const std::string& filename,
     fclose(f);
     return true;
 }
-
-
-//============================================================================//
-//============================================================================//
-
-/*
-float* MediaFile::readSound(const std::string& filename,
-                int* _numFrames, int* rate)
-{
-  // try opening as an audio file
-  std::istream* stream;
-  AudioFile* file = NULL;
-  if (file == NULL)
-    OPENMEDIA(WaveAudioFile);
-
-  // read the audio
-  float* audio = NULL;
-  if (file != NULL) {
-    // get the audio info
-    *rate      = file->getFramesPerSecond();
-    int numChannels = file->getNumChannels();
-    int numFrames   = file->getNumFrames();
-    int sampleWidth = file->getSampleWidth();
-
-    // make a buffer to read into
-    unsigned char* raw = new unsigned char[numFrames * numChannels * sampleWidth];
-
-    // read raw samples
-    if (file->read(raw, numFrames)) {
-      // prepare conversion parameters
-      int step   = 1;
-#if defined(HALF_RATE_AUDIO)
-      step      *= 2;
-      numFrames /= 2;
-      *rate     /= 2;
-#endif
-
-      // make final audio buffer
-      audio = new float[2 * numFrames];
-
-      // convert
-      if (numChannels == 1) {
-    if (sampleWidth == 1) {
-      signed char* src = reinterpret_cast<signed char*>(raw);
-      for (int i = 0; i < numFrames; ++i) {
-        audio[2 * i] = audio[2 * i + 1] = 257.0f * static_cast<float>(*src);
-        src += step;
-      }
-    } else {
-      int16_t* src = reinterpret_cast<int16_t*>(raw);
-      for (int i = 0; i < numFrames; ++i) {
-        audio[2 * i] = audio[2 * i + 1] = static_cast<float>(*src);
-        src += step;
-      }
-    }
-      } else {
-    step *= 2;
-    if (sampleWidth == 1) {
-      signed char* src = reinterpret_cast<signed char*>(raw);
-      for (int i = 0; i < numFrames; ++i) {
-        audio[2 * i]     = 257.0f * static_cast<float>(src[0]);
-        audio[2 * i + 1] = 257.0f * static_cast<float>(src[1]);
-        src += step;
-      }
-    } else {
-      int16_t* src = reinterpret_cast<int16_t*>(raw);
-      for (int i = 0; i < numFrames; ++i) {
-        audio[2 * i]     = static_cast<float>(src[0]);
-        audio[2 * i + 1] = static_cast<float>(src[1]);
-        src += step;
-      }
-    }
-      }
-    }
-
-    // clean up
-    delete[] raw;
-    delete file;
-    *_numFrames = numFrames;
-  }
-
-  // clean up
-  delete stream;
-
-  return audio;
-}
-*/
-
-
-//============================================================================//
-//============================================================================//
 
 
 // Local Variables: ***
