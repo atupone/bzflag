@@ -144,7 +144,7 @@ do {                            \
   }                         \
 } while (0)
 
-unsigned char*      MediaFile::readImage(
+std::unique_ptr<unsigned char[]> MediaFile::readImage(
     std::string filename,
     int* width, int* height)
 {
@@ -165,87 +165,91 @@ unsigned char*      MediaFile::readImage(
     if (file == NULL)
         OPENMEDIA(SGIImageFile);
 
-    // read the image
-    unsigned char* image = NULL;
-    if (file != NULL)
+    if (file == NULL)
     {
-        // get the image size
-        int dx = *width  = file->getWidth();
-        int dy = *height = file->getHeight();
-        int dz =       file->getNumChannels();
-
-        // make buffer for final image
-        image = new unsigned char[dx * dy * 4];
-
-        // make buffer to read image.  if the image file has 4 channels
-        // then read directly into the final image buffer.
-        unsigned char* buffer = (dz == 4) ? image : new unsigned char[dx * dy * dz];
-
-        // read the image
-        if (image != NULL && buffer != NULL)
-        {
-            if (!file->read(buffer))
-            {
-                // failed to read image.  clean up.
-                if (buffer != image)
-                    delete[] buffer;
-                delete[] image;
-                image  = NULL;
-                buffer = NULL;
-            }
-            else
-            {
-                // expand image into 4 channels
-                int n = dx * dy;
-                const unsigned char* src = buffer;
-                unsigned char* dst = image;
-                if (dz == 1)
-                {
-                    // r=g=b=i, a=max
-                    for (; n > 0; --n)
-                    {
-                        dst[0] = dst[1] = dst[2] = src[0];
-                        dst[3] = 0xff;
-                        src += 1;
-                        dst += 4;
-                    }
-                }
-                else if (dz == 2)
-                {
-                    // r=g=b=i
-                    for (; n > 0; --n)
-                    {
-                        dst[0] = dst[1] = dst[2] = src[0];
-                        dst[3] = src[1];
-                        src += 2;
-                        dst += 4;
-                    }
-                }
-                else if (dz == 3)
-                {
-                    // a=max
-                    for (; n > 0; --n)
-                    {
-                        dst[0] = src[0];
-                        dst[1] = src[1];
-                        dst[2] = src[2];
-                        dst[3] = 0xff;
-                        src += 3;
-                        dst += 4;
-                    }
-                }
-            }
-        }
-
-        // clean up
-        if (buffer != image)
-            delete[] buffer;
-        delete file;
+        delete stream;
+        return nullptr;
     }
 
-    // clean up
-    delete stream;
+    // get the image size
+    int dx = *width  = file->getWidth();
+    int dy = *height = file->getHeight();
+    int dz =       file->getNumChannels();
 
+    // read the image
+    // Allocate exactly what is in the file (dx * dy * dz)
+    std::unique_ptr<unsigned char[]> buffer(new unsigned char[dx * dy * dz]);
+
+    // read the image
+    if (!buffer)
+    {
+        // clean up
+        delete file;
+        delete stream;
+        return nullptr;
+    }
+
+    if (!file->read(buffer.get()))
+    {
+        // clean up
+        delete file;
+        delete stream;
+        return nullptr;
+    }
+
+    if (dz == 4)
+    {
+        // If it's already 4-channel, 'buffer' IS our image.
+        // We just return it.
+        delete file;
+        delete stream;
+        return buffer;
+    }
+
+    // Conversion needed (e.g., RGB to RGBA)
+    std::unique_ptr<unsigned char[]> image(new unsigned char[dx * dy * 4]);
+
+    // expand image into 4 channels
+    int n = dx * dy;
+    const unsigned char* src = buffer.get();
+    unsigned char* dst = image.get();
+    if (dz == 1)
+    {
+        // r=g=b=i, a=max
+        for (; n > 0; --n)
+        {
+            dst[0] = dst[1] = dst[2] = src[0];
+            dst[3] = 0xff;
+            src += 1;
+            dst += 4;
+        }
+    }
+    else if (dz == 2)
+    {
+        // r=g=b=i
+        for (; n > 0; --n)
+        {
+            dst[0] = dst[1] = dst[2] = src[0];
+            dst[3] = src[1];
+            src += 2;
+            dst += 4;
+        }
+    }
+    else if (dz == 3)
+    {
+        // a=max
+        for (; n > 0; --n)
+        {
+            dst[0] = src[0];
+            dst[1] = src[1];
+            dst[2] = src[2];
+            dst[3] = 0xff;
+            src += 3;
+            dst += 4;
+        }
+    }
+    delete file;
+    delete stream;
     return image;
 }
 

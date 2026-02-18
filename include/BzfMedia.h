@@ -17,6 +17,7 @@
 
 #include <string>
 #include <stdio.h>
+#include <memory>
 
 static const std::string    DEFAULT_MEDIA_DIR = "data";
 
@@ -51,8 +52,8 @@ public:
     // images are stored RGBARGBA..., left to right, bottom to top.
     // depth indicates how many channels were in the stored image.
     // use delete[] to release the returned memory.
-    unsigned char*  readImage(const std::string& filename,
-                              int& width, int& height, int& depth) const;
+    std::unique_ptr<unsigned char[]> readImage(const std::string& filename,
+            int& width, int& height, int& depth) const;
 
     // sounds are stored as left, right, left, right ..., values are
     // in the range -1 to 1.  numFrames returns the number of left,right
@@ -133,8 +134,8 @@ protected:
     virtual std::string getSoundExtension() const;
 
     // return NULL on failure
-    virtual unsigned char* doReadImage(const std::string& filename,
-                                       int& width, int& height, int& depth) const;
+    std::unique_ptr<unsigned char[]> doReadImage(const std::string& filename,
+            int& width, int& height, int& depth) const;
 
     // return NULL on failure
     virtual float*  doReadSound(const std::string& filename,

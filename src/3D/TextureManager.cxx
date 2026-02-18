@@ -337,7 +337,7 @@ int TextureManager::addTexture( const char* name, OpenGLTexture *texture )
 OpenGLTexture* TextureManager::loadTexture(FileTextureInit &init, bool reportFail)
 {
     int width, height;
-    unsigned char* image = MediaFile::readImage(init.name, &width, &height);
+    auto image = MediaFile::readImage(init.name, &width, &height);
 
     if (!image)
     {
@@ -351,9 +351,7 @@ OpenGLTexture* TextureManager::loadTexture(FileTextureInit &init, bool reportFai
     }
 
     OpenGLTexture *texture =
-        new OpenGLTexture(width, height, image, init.filter, true);
-
-    delete[] image;
+        new OpenGLTexture(width, height, image.get(), init.filter, true);
 
     return texture;
 }

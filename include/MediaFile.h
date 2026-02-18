@@ -17,6 +17,7 @@
 
 /* system interface headers */
 #include <string>
+#include <memory>
 
 /* common interface headers */
 #include "bzfio.h"
@@ -39,8 +40,8 @@ public:
     /** Read an image file.  Use delete[] to release the returned
         image.  Returns NULL on failure.  Images are stored RGBA,
         left to right, bottom to top. */
-    static unsigned char* readImage(std::string filename,
-                                    int* width, int* height);
+    static std::unique_ptr<unsigned char[]> readImage(std::string filename,
+            int* width, int* height);
 
     // read a sound file.  use delete[] to release the returned
     // audio.  returns NULL on failure.  sounds are stored

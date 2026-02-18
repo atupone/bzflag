@@ -42,12 +42,14 @@ void            BzfMedia::setMediaDirectory(const std::string& _dir)
     mediaDir = _dir;
 }
 
-unsigned char*      BzfMedia::readImage(const std::string& filename,
-                                        int& width, int& height, int& depth) const
+std::unique_ptr<unsigned char[]> BzfMedia::readImage(const std::string& filename,
+        int& width, int& height, int& depth) const
 {
+    std::unique_ptr<unsigned char[]> image;
+
     // try mediaDir/filename
     std::string name = makePath(mediaDir, filename);
-    unsigned char* image = doReadImage(name, width, height, depth);
+    image = doReadImage(name, width, height, depth);
     if (image) return image;
 
     // try filename as is
@@ -250,7 +252,7 @@ std::string     BzfMedia::getSoundExtension() const
     return std::string("wav");
 }
 
-unsigned char*      BzfMedia::doReadImage(const std::string& filename,
+std::unique_ptr<unsigned char[]> BzfMedia::doReadImage(const std::string& filename,
         int& dx, int& dy, int&) const
 {
     return MediaFile::readImage( filename, &dx, &dy );
