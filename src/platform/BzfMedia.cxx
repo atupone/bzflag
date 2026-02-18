@@ -325,25 +325,20 @@ bool            BzfMedia::doReadRLE(FILE* file,
 
     // read offset tables
     const int tableSize = dy * dz;
-    int32_t* startTable  = new int32_t[tableSize];
-    if (fread(startTable, 4 * tableSize, 1, file) != 1)
-    {
-        delete[] startTable;
+    std::unique_ptr<uint32_t[]> startTable(new uint32_t[tableSize]);
+    std::unique_ptr<uint32_t[]> lengthTable(new uint32_t[tableSize]);
+
+    if (fread(startTable.get(), 4 * tableSize, 1, file) != 1)
         return false;
-    }
-    int32_t* lengthTable = new int32_t[tableSize];
-    if (fread(lengthTable, 4 * tableSize, 1, file) != 1)
-    {
-        delete[] startTable;
-        delete[] lengthTable;
+
+    if (fread(lengthTable.get(), 4 * tableSize, 1, file) != 1)
         return false;
-    }
 
     // convert offset tables to proper endianness
     for (int n = 0; n < tableSize; ++n)
     {
-        startTable[n]  = getLong(startTable + n);
-        lengthTable[n] = getLong(lengthTable + n);
+        startTable[n]  = getLong(startTable.get() + n);
+        lengthTable[n] = getLong(lengthTable.get() + n);
     }
 
     // read each channel one after the other
@@ -357,11 +352,7 @@ bool            BzfMedia::doReadRLE(FILE* file,
             const int32_t length = lengthTable[j + k * dy];
             if (fseek(file, startTable[j + k * dy], SEEK_SET) < 0 ||
                     fread(row, length, 1, file) != 1)
-            {
-                delete[] startTable;
-                delete[] lengthTable;
                 return false;
-            }
 
             // decode
             unsigned char* src = row;
@@ -369,11 +360,7 @@ bool            BzfMedia::doReadRLE(FILE* file,
             {
                 // check for error in image
                 if (src - row >= length)
-                {
-                    delete[] startTable;
-                    delete[] lengthTable;
                     return false;
-                }
 
                 // get next code
                 const unsigned char type = *src++;
@@ -406,8 +393,6 @@ bool            BzfMedia::doReadRLE(FILE* file,
         }
     }
 
-    delete[] startTable;
-    delete[] lengthTable;
     return true;
 }
 
