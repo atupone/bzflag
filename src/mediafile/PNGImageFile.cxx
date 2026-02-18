@@ -202,6 +202,7 @@ bool                    PNGImageFile::read(void* buffer)
 
             if (!expand((unsigned char*)buffer+bufferPos))
                 return false;
+
             bufferPos -= realBufferSize-1;
 
             switchLineBuffers();
