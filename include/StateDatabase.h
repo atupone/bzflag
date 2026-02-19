@@ -18,7 +18,7 @@
 
 // system headers
 #include <vector>
-#include <map>
+#include <unordered_map>
 #include <iostream>
 #include <string>
 
@@ -367,7 +367,7 @@ private:
         Permission          permission;
         CallbackList<Callback>  callbacks;
     };
-    typedef std::map<std::string, Item> Map;
+    typedef std::unordered_map<std::string, Item> Map;
 
     Map::iterator         lookup(const std::string&);
     void              notify(Map::iterator);
@@ -417,7 +417,7 @@ public:
 private:
     static Expression     infixToPrefix(const Expression &infix);
     float             evaluate(Expression e) const;
-    typedef std::map<std::string,float> EvalMap;
+    typedef std::unordered_map<std::string,float> EvalMap;
     EvalMap           evalCache;
     bool              debug;
     bool              saveDefault;
