@@ -6188,13 +6188,11 @@ void drawFrame(const float dt)
 
             // if inside a building, add some eighth dimension scene nodes.
             const std::vector<const Obstacle*>& list = myTank->getInsideBuildings();
-            for (unsigned int n = 0; n < list.size(); n++)
+            for (const auto* obs : list) // Range-based loop over buildings
             {
-                const Obstacle* obs = list[n];
-                const int nodeCount = obs->getInsideSceneNodeCount();
-                SceneNode** nodeList = obs->getInsideSceneNodeList();
-                for (int o = 0; o < nodeCount; o++)
-                    scene->addDynamicNode(nodeList[o]);
+                // High-speed range-based loop over nodes
+                for (auto* node : obs->getInsideNodes())
+                    scene->addDynamicNode(node);
             }
         }
 

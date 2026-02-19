@@ -28,6 +28,7 @@
 // system headers
 #include <string>
 #include <iostream>
+#include <vector>
 
 // common headers
 #include "Extents.h"
@@ -231,8 +232,10 @@ public:
     // inside sceneNodes
     void addInsideSceneNode(SceneNode* node);
     void freeInsideSceneNodeList();
-    int getInsideSceneNodeCount() const;
-    SceneNode** getInsideSceneNodeList() const;
+    const std::vector<SceneNode*>& getInsideNodes() const
+    {
+        return insideNodes;
+    }
 
     /** This boolean is used by CollisionManager.
         Someone else can 'friend'ify it later.
@@ -289,8 +292,7 @@ protected:
     char source;
 
 private:
-    int insideNodeCount;
-    SceneNode** insideNodes;
+    std::vector<SceneNode*> insideNodes;
 
 private:
     static int objCounter;

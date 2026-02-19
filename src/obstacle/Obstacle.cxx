@@ -36,9 +36,6 @@ Obstacle::Obstacle()
     ricochet     = false;
     ZFlip = false;
     source = WorldSource;
-
-    insideNodeCount = 0;
-    insideNodes = NULL;
 }
 
 Obstacle::Obstacle(const float* _pos, float _angle,
@@ -58,15 +55,12 @@ Obstacle::Obstacle(const float* _pos, float _angle,
     ricochet     = rico;
     ZFlip = false;
     source = WorldSource;
-
-    insideNodeCount = 0;
-    insideNodes = NULL;
 }
 
 Obstacle::~Obstacle()
 {
-    delete[] insideNodes;
-    return;
+    // Remove: delete[] insideNodes;
+    // The vector will automatically free its memory when the Obstacle is destroyed.
 }
 
 bool            Obstacle::isValid() const
@@ -235,37 +229,15 @@ float           Obstacle::getHitNormal(
 
 void Obstacle::addInsideSceneNode(SceneNode* node)
 {
-    insideNodeCount++;
-    SceneNode** tmp = new SceneNode*[insideNodeCount];
-    if (insideNodes)
-    {
-        memcpy(tmp, insideNodes, (insideNodeCount - 1) * sizeof(SceneNode*));
-        delete[] insideNodes;
-    }
-    insideNodes = tmp;
-    insideNodes[insideNodeCount - 1] = node;
+    insideNodes.push_back(node); // Fast C++11 growth
 }
 
 
 void Obstacle::freeInsideSceneNodeList()
 {
-    insideNodeCount = 0;
-    delete[] insideNodes;
-    insideNodes = NULL;
-    return;
+    insideNodes.clear(); // O(1) pointer reset
 }
 
-
-int Obstacle::getInsideSceneNodeCount() const
-{
-    return insideNodeCount;
-}
-
-
-SceneNode** Obstacle::getInsideSceneNodeList() const
-{
-    return insideNodes;
-}
 
 Obstacle* Obstacle::copyWithTransform(MeshTransform const&) const
 {

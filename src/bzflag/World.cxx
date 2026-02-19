@@ -591,37 +591,36 @@ void            World::updateAnimations(float UNUSED(dt))
 void            World::freeInsideNodes() const
 {
     unsigned int i;
-    int j;
     const ObstacleList& boxes = OBSTACLEMGR.getBoxes();
     for (i = 0; i < boxes.size(); i++)
     {
         Obstacle* obs = boxes[i];
-        for (j = 0; j < obs->getInsideSceneNodeCount(); j++)
-            delete obs->getInsideSceneNodeList()[j];
+        for (auto*node : obs->getInsideNodes())
+            delete node;
         obs->freeInsideSceneNodeList();
     }
     const ObstacleList& pyramids = OBSTACLEMGR.getPyrs();
     for (i = 0; i < pyramids.size(); i++)
     {
         Obstacle* obs = pyramids[i];
-        for (j = 0; j < obs->getInsideSceneNodeCount(); j++)
-            delete obs->getInsideSceneNodeList()[j];
+        for (auto*node : obs->getInsideNodes())
+            delete node;
         obs->freeInsideSceneNodeList();
     }
     const ObstacleList& basesR = OBSTACLEMGR.getBases();
     for (i = 0; i < basesR.size(); i++)
     {
         Obstacle* obs = basesR[i];
-        for (j = 0; j < obs->getInsideSceneNodeCount(); j++)
-            delete obs->getInsideSceneNodeList()[j];
+        for (auto*node : obs->getInsideNodes())
+            delete node;
         obs->freeInsideSceneNodeList();
     }
     const ObstacleList& meshes = OBSTACLEMGR.getMeshes();
     for (i = 0; i < meshes.size(); i++)
     {
         Obstacle* obs = meshes[i];
-        for (j = 0; j < obs->getInsideSceneNodeCount(); j++)
-            delete obs->getInsideSceneNodeList()[j];
+        for (auto*node : obs->getInsideNodes())
+            delete node;
         obs->freeInsideSceneNodeList();
     }
     return;
