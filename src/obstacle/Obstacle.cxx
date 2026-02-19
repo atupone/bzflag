@@ -11,12 +11,17 @@
  */
 
 #include "common.h"
+
+// System headers
 #include <math.h>
 #include <string.h>
 #include <iostream>
+
+// common headers
 #include "Obstacle.h"
 #include "Intersect.h"
 #include "StateDatabase.h"
+#include "SceneNode.h"
 
 
 // limits the maximum extent of any obstacle
@@ -229,7 +234,8 @@ float           Obstacle::getHitNormal(
 
 void Obstacle::addInsideSceneNode(SceneNode* node)
 {
-    insideNodes.push_back(node); // Fast C++11 growth
+    // Transfer ownership to the smart pointer
+    insideNodes.emplace_back(node); // Fast C++11 growth
 }
 
 

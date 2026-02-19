@@ -29,6 +29,7 @@
 #include <string>
 #include <iostream>
 #include <vector>
+#include <memory>
 
 // common headers
 #include "Extents.h"
@@ -232,7 +233,7 @@ public:
     // inside sceneNodes
     void addInsideSceneNode(SceneNode* node);
     void freeInsideSceneNodeList();
-    const std::vector<SceneNode*>& getInsideNodes() const
+    const std::vector<std::unique_ptr<SceneNode>>& getInsideNodes() const
     {
         return insideNodes;
     }
@@ -292,7 +293,7 @@ protected:
     char source;
 
 private:
-    std::vector<SceneNode*> insideNodes;
+    std::vector<std::unique_ptr<SceneNode>> insideNodes;
 
 private:
     static int objCounter;

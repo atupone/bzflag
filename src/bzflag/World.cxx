@@ -595,32 +595,24 @@ void            World::freeInsideNodes() const
     for (i = 0; i < boxes.size(); i++)
     {
         Obstacle* obs = boxes[i];
-        for (auto*node : obs->getInsideNodes())
-            delete node;
         obs->freeInsideSceneNodeList();
     }
     const ObstacleList& pyramids = OBSTACLEMGR.getPyrs();
     for (i = 0; i < pyramids.size(); i++)
     {
         Obstacle* obs = pyramids[i];
-        for (auto*node : obs->getInsideNodes())
-            delete node;
         obs->freeInsideSceneNodeList();
     }
     const ObstacleList& basesR = OBSTACLEMGR.getBases();
     for (i = 0; i < basesR.size(); i++)
     {
         Obstacle* obs = basesR[i];
-        for (auto*node : obs->getInsideNodes())
-            delete node;
         obs->freeInsideSceneNodeList();
     }
     const ObstacleList& meshes = OBSTACLEMGR.getMeshes();
     for (i = 0; i < meshes.size(); i++)
     {
         Obstacle* obs = meshes[i];
-        for (auto*node : obs->getInsideNodes())
-            delete node;
         obs->freeInsideSceneNodeList();
     }
     return;

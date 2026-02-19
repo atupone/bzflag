@@ -6191,8 +6191,8 @@ void drawFrame(const float dt)
             for (const auto* obs : list) // Range-based loop over buildings
             {
                 // High-speed range-based loop over nodes
-                for (auto* node : obs->getInsideNodes())
-                    scene->addDynamicNode(node);
+                for (const auto& node : obs->getInsideNodes())
+                    scene->addDynamicNode(node.get());
             }
         }
 
