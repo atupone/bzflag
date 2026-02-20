@@ -444,7 +444,7 @@ void FontManager::drawString(float x, float y, float z,
 float FontManager::getStrLength(int faceID, float size, const std::string &text,
                                 bool alreadyStripped)
 {
-    if (text.size() == 0)
+    if (text.empty())
         return 0.0f;
 
     if ((faceID < 0) || (faceID > getNumFaces()))
@@ -465,11 +465,38 @@ float FontManager::getStrLength(int faceID, float size, const std::string &text,
     float scale = size / (float)pFont->getSize();
 
     // don't include ansi codes in the length, but allow outside funcs to skip this step
-    float strippedLength;
     if (alreadyStripped)
-        strippedLength = pFont->getStrLength(scale, text);
-    else
-        strippedLength = pFont->getStrLength(scale, stripAnsiCodes(text));
+        return pFont->getStrLength(scale, text);
+
+    // Zero-allocation length calculation
+    float strippedLength = 0.0f;
+    const char* rawPtr = text.c_str();
+    const size_t totalLen = text.length();
+    size_t cursor = 0;
+
+    while (cursor < totalLen)
+    {
+        // Find the next ANSI escape sequence
+        size_t nextEsc = text.find("\033[", cursor);
+        size_t segmentLen = (nextEsc == std::string::npos) ? (totalLen - cursor) : (nextEsc - cursor);
+
+        // Add the width of the printable segment
+        if (segmentLen > 0)
+        {
+            strippedLength += pFont->getStrLength(scale, &rawPtr[cursor], (int)segmentLen);
+            cursor += segmentLen;
+        }
+
+        // Skip the ANSI code entirely
+        if (cursor < totalLen)
+        {
+            size_t mPos = text.find('m', cursor);
+            if (mPos != std::string::npos)
+                cursor = mPos + 1; // Advance past the 'm'
+            else
+                cursor += 2; // Broken escape, skip the "\033["
+        }
+    }
     return strippedLength;
 }
 
