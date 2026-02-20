@@ -214,10 +214,10 @@ const char* FontManager::getFaceName(int faceID)
 void FontManager::drawString(float x, float y, float z, int faceID, float size,
                              const std::string &text, const float* resetColor)
 {
-    if (text.size() == 0)
+    if (text.empty())
         return;
 
-    if ((faceID < 0) || (faceID > getNumFaces()))
+    if ((faceID < 0) || (faceID >= getNumFaces()))
     {
         logDebugMessage(2,"Trying to draw with invalid Font Face ID %d\n", faceID);
         return;
@@ -288,30 +288,25 @@ void FontManager::drawString(float x, float y, float z, int faceID, float size,
      * ANSI code interpretation is somewhat limited, we only accept values
      * which have been defined in AnsiCodes.h
      */
-    bool doneLastSection = false;
     int startSend = 0;
-    int endSend = (int)text.find("\033[", startSend);
+    int endSend = (int)text.length();
     bool tookCareOfANSICode = false;
     float width = 0;
-    // run at least once
-    if (endSend == -1)
-    {
-        endSend = (int)text.size();
-        doneLastSection = true;
-    }
+    const char* tmpText = text.c_str();
 
     // split string into parts based on the embedded ANSI codes, render each separately
     // there has got to be a faster way to do this
-    while (endSend >= 0)
+    while (startSend < endSend)
     {
         // pulsate the text, if desired
         if (pulsating)
             getPulseColor(color, color);
+        size_t nextEsc = text.find("\033[", startSend);
+
         // render text
-        int len = endSend - startSend;
+        int len = (int)(nextEsc == std::string::npos) ? (endSend - startSend) : (nextEsc - startSend);
         if (len > 0)
         {
-            const char* tmpText = text.c_str();
             // get substr width, we may need it a couple times
             width = pFont->getStrLength(scale, &tmpText[startSend], len);
             glPushMatrix();
@@ -343,18 +338,21 @@ void FontManager::drawString(float x, float y, float z, int faceID, float size,
             // x transform for next substr
             x += width;
         }
-        if (!doneLastSection)
-            startSend = (int)text.find('m', endSend) + 1;
+        startSend += len;
+        if (startSend >= endSend)
+            break;
         // we stopped sending text at an ANSI code, find out what it is
         // and do something about it
-        if (endSend != (int)text.size())
+        size_t mPos = text.find('m', startSend);
+        if (mPos != std::string::npos)
         {
             tookCareOfANSICode = false;
-            std::string tmpText = text.substr(endSend, (text.find('m', endSend) - endSend) + 1);
+            size_t codeLen = (mPos - startSend) + 1;
+
             // colors
             for (int i = 0; i <= LastColor; i++)
             {
-                if (tmpText == ColorStrings[i])
+                if (text.compare(startSend, codeLen, ColorStrings[i]) == 0)
                 {
                     if (bright)
                     {
@@ -376,7 +374,7 @@ void FontManager::drawString(float x, float y, float z, int faceID, float size,
             if (!tookCareOfANSICode)
             {
                 // settings other than a hardcoded color
-                if (tmpText == ANSI_STR_RESET)
+                if (text.compare(startSend, codeLen, ANSI_STR_RESET) == 0)
                 {
                     bright = true;
                     pulsating = false;
@@ -385,7 +383,7 @@ void FontManager::drawString(float x, float y, float z, int faceID, float size,
                     color[1] = resetColor[1] * darkness;
                     color[2] = resetColor[2] * darkness;
                 }
-                else if (tmpText == ANSI_STR_RESET_FINAL)
+                else if (text.compare(startSend, codeLen, ANSI_STR_RESET_FINAL) == 0)
                 {
                     bright = false;
                     pulsating = false;
@@ -394,47 +392,38 @@ void FontManager::drawString(float x, float y, float z, int faceID, float size,
                     color[1] = resetColor[1] * darkDim;
                     color[2] = resetColor[2] * darkDim;
                 }
-                else if (tmpText == ANSI_STR_BRIGHT)
+                else if (text.compare(startSend, codeLen, ANSI_STR_BRIGHT) == 0)
                     bright = true;
-                else if (tmpText == ANSI_STR_DIM)
+                else if (text.compare(startSend, codeLen, ANSI_STR_DIM) == 0)
                     bright = false;
-                else if (tmpText == ANSI_STR_UNDERLINE)
+                else if (text.compare(startSend, codeLen, ANSI_STR_UNDERLINE) == 0)
                     underline = true;
-                else if (tmpText == ANSI_STR_PULSATING)
+                else if (text.compare(startSend, codeLen, ANSI_STR_PULSATING) == 0)
                     pulsating = true;
-                else if (tmpText == ANSI_STR_NO_UNDERLINE)
+                else if (text.compare(startSend, codeLen, ANSI_STR_NO_UNDERLINE) == 0)
                     underline = false;
-                else if (tmpText == ANSI_STR_NO_PULSATE)
+                else if (text.compare(startSend, codeLen, ANSI_STR_NO_PULSATE) == 0)
                     pulsating = false;
-                else if (tmpText.substr(0, strlen(ANSI_STR_FG_RGB)) == ANSI_STR_FG_RGB)
+                else if (codeLen > 7 && text.compare(startSend, strlen(ANSI_STR_FG_RGB), ANSI_STR_FG_RGB) == 0)
                 {
                     // 24-bit foreground RGB (ISO-8613-3)
                     // format: \033[38;2;<r>;<g>;<b>m
-                    std::istringstream rgb(tmpText.substr(strlen(ANSI_STR_FG_RGB) + 1, tmpText.size() - strlen(ANSI_STR_FG_RGB) - 2));
-                    for (int i = 0; i <= 2; i++)
+                    int r, g, b;
+                    if (sscanf(&tmpText[startSend + 5], "2;%d;%d;%d", &r, &g, &b) == 3)
                     {
-                        short value = 0;
-                        rgb >> value;
-
-                        if (bright)
-                            color[i] = value * darkness / 255.0f;
-                        else
-                            color[i] = value * darkDim / 255.0f;
-
-                        // jump over the ; delimiter
-                        rgb.ignore();
+                        float factor = (bright ? darkness : darkDim) / 255.0f;
+                        color[0] = r * factor;
+                        color[1] = g * factor;
+                        color[2] = b * factor;
                     }
                 }
                 else
-                    logDebugMessage(2,"ANSI Code %s not supported\n", tmpText.c_str());
+                    logDebugMessage(2,"ANSI Code %s not supported\n", tmpText);
             }
+            startSend = mPos + 1;
         }
-        endSend = (int)text.find("\033[", startSend);
-        if ((endSend == -1) && !doneLastSection)
-        {
-            endSend = (int)text.size();
-            doneLastSection = true;
-        }
+        else
+            startSend += 2; // skip broken esc
     }
 
     // revert the filtering state
