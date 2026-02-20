@@ -20,6 +20,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <memory>
 
 // Common interfaces
 #include "bzfgl.h"
@@ -27,7 +28,7 @@
 
 class ImageFont;
 
-typedef std::map<int, ImageFont*> FontSizeMap;
+typedef std::map<int, std::unique_ptr<ImageFont>> FontSizeMap;
 typedef std::vector<FontSizeMap>    FontFaceList;
 typedef std::map<std::string, int>  FontFaceMap;
 

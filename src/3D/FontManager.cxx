@@ -56,23 +56,11 @@ void FontManager::callback(const std::string &, void *)
     // set underline color
     const std::string uColor = BZDB.get("underlineColor");
     if (strcasecmp(uColor.c_str(), "text") == 0)
-    {
-        underlineColor[0] = -1.0f;
-        underlineColor[1] = -1.0f;
-        underlineColor[2] = -1.0f;
-    }
+        underlineColor[0] = underlineColor[1] = underlineColor[2] = -1.0f;
     else if (strcasecmp(uColor.c_str(), "cyan") == 0)
-    {
-        underlineColor[0] = BrightColors[CyanColor][0];
-        underlineColor[1] = BrightColors[CyanColor][1];
-        underlineColor[2] = BrightColors[CyanColor][2];
-    }
+        std::copy(BrightColors[CyanColor], BrightColors[CyanColor] + 3, underlineColor);
     else if (strcasecmp(uColor.c_str(), "grey") == 0)
-    {
-        underlineColor[0] = BrightColors[GreyColor][0];
-        underlineColor[1] = BrightColors[GreyColor][1];
-        underlineColor[2] = BrightColors[GreyColor][2];
-    }
+        std::copy(BrightColors[GreyColor], BrightColors[GreyColor] + 3, underlineColor);
 }
 
 FontManager::FontManager() : Singleton<FontManager>(),
@@ -115,19 +103,7 @@ void FontManager::clear(void)   // clear all the lists
 {
     // destroy all the fonts
     faceNames.clear();
-    FontFaceList::iterator faceItr = fontFaces.begin();
-    while (faceItr != fontFaces.end())
-    {
-        FontSizeMap::iterator itr = faceItr->begin();
-        while (itr != faceItr->end())
-        {
-            delete(itr->second);
-            ++itr;
-        }
-        ++faceItr;
-    }
-    fontFaces.clear();
-    return;
+    fontFaces.clear(); // This single call now destroys all maps AND all Fonts
 }
 
 
@@ -156,7 +132,7 @@ void FontManager::loadAll(std::string directory)
 
         if (TextUtils::compare_nocase(ext, "fmt") == 0)
         {
-            ImageFont *pFont = new TextureFont;
+            std::unique_ptr<ImageFont> pFont(new TextureFont);
             if (pFont)
             {
                 if (pFont->load(file))
@@ -168,22 +144,18 @@ void FontManager::loadAll(std::string directory)
                     int faceID = 0;
                     if (faceItr == faceNames.end())
                     {
-                        // it's new
-                        FontSizeMap faceList;
-                        fontFaces.push_back(faceList);
+                        fontFaces.emplace_back();
                         faceID = (int)fontFaces.size() - 1;
                         faceNames[str] = faceID;
                     }
                     else
                         faceID = faceItr->second;
 
-                    fontFaces[faceID][pFont->getSize()] = pFont;
+                    // Move ownership into the map
+                    fontFaces[faceID][pFont->getSize()] = std::move(pFont);
                 }
                 else
-                {
                     logDebugMessage(4,"Font Texture load failed: %s\n", file.getOSName().c_str());
-                    delete(pFont);
-                }
             }
         }
     }
@@ -196,32 +168,28 @@ int FontManager::getFaceID(std::string faceName)
 
     faceName = TextUtils::toupper(faceName);
 
-    FontFaceMap::iterator faceItr = faceNames.find(faceName);
+    auto faceItr = faceNames.find(faceName);
+    if (faceItr != faceNames.end())
+        return faceItr->second;
 
+    // Define fallbacks as a static array to avoid repeated string object creation
+    static const char* fallbacks[] = {"DEFAULT", "ARIAL"};
+
+    for (const char* fallback : fallbacks)
+    {
+        logDebugMessage(4,"Requested font %s not found, trying &s\n", faceName.c_str(), fallback);
+        faceItr = faceNames.find(fallback);
+        if (faceItr != faceNames.end())
+            return faceItr->second;
+    }
+
+    // hell we are outta luck, you just get the first one
+    logDebugMessage(4,"Requested font %s not found, trying first-loaded\n", faceName.c_str());
+    faceItr = faceNames.begin();
     if (faceItr == faceNames.end())
     {
-        // see if there is a default
-        logDebugMessage(4,"Requested font %s not found, trying Default\n", faceName.c_str());
-        faceName = "DEFAULT";
-        faceItr = faceNames.find(faceName);
-        if (faceItr == faceNames.end())
-        {
-            // see if we have arial
-            logDebugMessage(4,"Requested font %s not found, trying Arial\n", faceName.c_str());
-            faceName = "ARIAL";
-            faceItr = faceNames.find(faceName);
-            if (faceItr == faceNames.end())
-            {
-                // hell we are outta luck, you just get the first one
-                logDebugMessage(4,"Requested font %s not found, trying first-loaded\n", faceName.c_str());
-                faceItr = faceNames.begin();
-                if (faceItr == faceNames.end())
-                {
-                    logDebugMessage(2,"No fonts loaded\n");
-                    return -1;    // we must have NO fonts, so you are screwed no matter what
-                }
-            }
-        }
+        logDebugMessage(2,"No fonts loaded\n");
+        return -1;    // we must have NO fonts, so you are screwed no matter what
     }
 
     return faceItr->second;
@@ -539,28 +507,22 @@ float FontManager::getStrHeight(std::string face, float size,
 
 void FontManager::unloadAll(void)
 {
-    FontFaceList::iterator faceItr = fontFaces.begin();
-
-    while (faceItr != fontFaces.end())
+    for (auto& fontSizeMap : fontFaces)
     {
-        FontSizeMap::iterator itr = faceItr->begin();
-        while (itr != faceItr->end())
-        {
-            itr->second->free();
-            ++itr;
-        }
-        ++faceItr;
+        for (const auto& pair : fontSizeMap)
+            pair.second->free();
     }
 }
 
 ImageFont* FontManager::getClosestSize(int faceID, float size, bool bigger)
 {
-    if (fontFaces[faceID].size() == 0)
-        return NULL;
+    const FontSizeMap &sizes = fontFaces[faceID];
+
+    if (sizes.empty())
+        return nullptr;
 
     const int rsize = int(size + 0.5f);
 
-    const FontSizeMap &sizes = fontFaces[faceID];
     FontSizeMap::const_iterator itr = sizes.lower_bound(rsize);
     if (bigger)
     {
@@ -569,11 +531,11 @@ ImageFont* FontManager::getClosestSize(int faceID, float size, bool bigger)
     }
     else
     {
-        if (itr != sizes.begin() && itr->first != rsize)
+        if (itr != sizes.begin() && (itr == sizes.end() || itr->first != rsize))
             --itr;
     }
 
-    return itr->second;
+    return itr->second.get();
 }
 
 ImageFont*    FontManager::getClosestRealSize(int faceID, float desiredSize, float &actualSize)
@@ -605,12 +567,18 @@ void        FontManager::getPulseColor(const GLfloat *color, GLfloat *pulseColor
     float pulseTime = (float)TimeKeeper::getCurrent().getSeconds();
 
     // depth is how dark it should get (1.0 is to black)
-    float pulseDepth = BZDBCache::pulseDepth;
+    const float pulseDepth = BZDBCache::pulseDepth;
     // rate is how fast it should pulsate (smaller is faster)
-    float pulseRate = BZDBCache::pulseRate;
+    const float pulseRate = BZDBCache::pulseRate;
 
-    float pulseFactor = fmodf(pulseTime, pulseRate) - pulseRate /2.0f;
-    pulseFactor = fabsf(pulseFactor) / (pulseRate/2.0f);
+    // Replace fmodf with a linear progress calculation
+    float progress = (pulseTime / pulseRate);
+    progress -= (int)progress; // Faster than fmodf for positive time values
+
+    // Convert 0->1 ramp into 0->1->0 pulse (Triangle Wave)
+    float pulseFactor = (progress > 0.5f) ? (2.0f - 2.0f * progress) : (2.0f * progress);
+
+    // Apply depth
     pulseFactor = pulseDepth * pulseFactor + (1.0f - pulseDepth);
 
     pulseColor[0] = color[0] * pulseFactor;
