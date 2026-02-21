@@ -409,9 +409,36 @@ void FontManager::drawString(float x, float y, float z, int faceID, float size,
                 {
                     // 24-bit foreground RGB (ISO-8613-3)
                     // format: \033[38;2;<r>;<g>;<b>m
-                    int r, g, b;
-                    if (sscanf(&tmpText[startSend + 5], "2;%d;%d;%d", &r, &g, &b) == 3)
+                    const char* p = &tmpText[startSend + 5];
+
+                    // Verify the '2;' prefix exists
+                    if (p[0] == '2' && p[1] == ';')
                     {
+                        p += 2; // Move to <r>
+
+                        // Helper to safely parse and advance
+                        auto safeParse = [&](int &val) -> bool
+                        {
+                            if (!*p || *p == 'm') return false; // Early termination
+                            val = atoi(p);
+                            while (*p && isdigit(*p)) p++;      // Skip digits
+                            if (*p == ';')
+                            {
+                                p++;    // Skip delimiter
+                                return true;
+                            }
+                            return (*p == 'm');                 // Final value check
+                        };
+
+                        int r = 0, g = 0, b = 0;
+                        if (safeParse(r) && safeParse(g) && safeParse(b))
+                        {
+                            // Clamp values to valid 0-255 range
+                            r = std::max(0, std::min(255, r));
+                            g = std::max(0, std::min(255, g));
+                            b = std::max(0, std::min(255, b));
+                        }
+
                         float factor = (bright ? darkness : darkDim) / 255.0f;
                         color[0] = r * factor;
                         color[1] = g * factor;
