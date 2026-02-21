@@ -32,6 +32,10 @@ public:
     virtual ~ImageFont();
 
     int getSize() const;
+    float getInvSize() const
+    {
+        return invSize;
+    };
     const char* getFaceName() const;
 
     bool load(OSFile &file);
@@ -64,6 +68,7 @@ protected:
     std::string faceName;
     std::string texture;
     long int    size;
+    float       invSize;
     int         textureXSize;
     int         textureYSize;
     int         textureZStep;

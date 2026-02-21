@@ -232,7 +232,8 @@ void FontManager::drawString(float x, float y, float z, int faceID, float size,
         return;
     }
 
-    float scale = size / (float)pFont->getSize();
+    // Use pre-calculated inverse size to replace division with multiplication
+    float scale = size * (float)pFont->getInvSize();
 
     // filtering is off by default for fonts.
     // if the font is large enough, and the scaling factor
@@ -462,7 +463,7 @@ float FontManager::getStrLength(int faceID, float size, const std::string &text,
         return 0.0f;
     }
 
-    float scale = size / (float)pFont->getSize();
+    float scale = size * (float)pFont->getInvSize();
 
     // don't include ansi codes in the length, but allow outside funcs to skip this step
     if (alreadyStripped)

@@ -28,6 +28,7 @@ ImageFont::ImageFont()
         fontMetrics[i].charWidth = -1;
 
     size = -1;
+    invSize = 0.0f;
 
     textureXSize = -1;
     textureYSize = -1;
@@ -135,6 +136,10 @@ bool ImageFont::load(OSFile &file)
     }
     faceName = texture.substr(0, underscore);
     size = strtol(texture.c_str() + underscore + 1, (char **)NULL, 10);
+    if (size > 0)
+        invSize = 1.0f / (float)size;
+    else
+        invSize = 0.0f;
 
     if (!file.open("rb"))
         return false;
