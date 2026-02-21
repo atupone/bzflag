@@ -295,6 +295,10 @@ void FontManager::drawString(float x, float y, float z, int faceID, float size,
     float width = 0;
     const char* tmpText = text.c_str();
 
+    GLboolean depthMask;
+    glGetBooleanv(GL_DEPTH_WRITEMASK, &depthMask);
+    glDepthMask(0);
+
     // split string into parts based on the embedded ANSI codes, render each separately
     // there has got to be a faster way to do this
     while (startSend < endSend)
@@ -312,9 +316,6 @@ void FontManager::drawString(float x, float y, float z, int faceID, float size,
             width = pFont->getStrLength(scale, &tmpText[startSend], len);
             glPushMatrix();
             glTranslatef(x, y, z);
-            GLboolean depthMask;
-            glGetBooleanv(GL_DEPTH_WRITEMASK, &depthMask);
-            glDepthMask(0);
             pFont->drawString(scale, color, &tmpText[startSend], len);
             if (underline)
             {
@@ -334,7 +335,6 @@ void FontManager::drawString(float x, float y, float z, int faceID, float size,
                 glEnd();
                 glEnable(GL_TEXTURE_2D);
             }
-            glDepthMask(depthMask);
             glPopMatrix();
             // x transform for next substr
             x += width;
@@ -426,6 +426,8 @@ void FontManager::drawString(float x, float y, float z, int faceID, float size,
         else
             startSend += 2; // skip broken esc
     }
+
+    glDepthMask(depthMask);
 
     // revert the filtering state
     if (filtering)
