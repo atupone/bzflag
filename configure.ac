@@ -171,6 +171,8 @@ if test x$enable_robots != xno; then
     AC_DEFINE(ROBOT, 1, [Enabling Robots])
 fi
 
+AC_ARG_ENABLE(native,    [  --enable-native         optimized for the CPU used to build])
+
 # debugging and profiling
 AC_ARG_ENABLE(debug,     [  --enable-debug          turn on debugging])
 AC_ARG_ENABLE(profiling, [  --enable-profiling      turn on profiling])
@@ -690,6 +692,9 @@ case $host_os in
 	case $host_vendor in
 	     pc)
                FLAGS=-mtune=native
+               if test x$enable_native = xyes ; then
+                   FLAGS="$FLAGS -march=native"
+               fi
 	       CONF_CFLAGS="$CONF_CFLAGS $FLAGS";
 	       CONF_CXXFLAGS="$CONF_CXXFLAGS $FLAGS";
 	       CONF_CXXFLAGS="$CONF_CXXFLAGS -fsigned-char";;

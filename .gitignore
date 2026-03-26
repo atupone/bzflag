@@ -116,6 +116,7 @@ work
 *.nativecodeanalysis.xml
 vc.nativecodeanalysis.all.xml
 *.lastcodeanalysissucceeded
+perf.data*
 
 # OS generated files
 .DS_Store
