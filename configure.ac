@@ -172,6 +172,7 @@ if test x$enable_robots != xno; then
 fi
 
 AC_ARG_ENABLE(native,    [  --enable-native         optimized for the CPU used to build])
+AC_ARG_ENABLE(Woverride, [  --enable-Woverride      warning for missing override of virual])
 
 # debugging and profiling
 AC_ARG_ENABLE(debug,     [  --enable-debug          turn on debugging])
@@ -697,7 +698,10 @@ case $host_os in
                fi
 	       CONF_CFLAGS="$CONF_CFLAGS $FLAGS";
 	       CONF_CXXFLAGS="$CONF_CXXFLAGS $FLAGS";
-	       CONF_CXXFLAGS="$CONF_CXXFLAGS -fsigned-char";;
+	       CONF_CXXFLAGS="$CONF_CXXFLAGS -fsigned-char";
+	       if test x$enable_Woverride = xyes ; then
+                   CONF_CXXFLAGS="$CONF_CXXFLAGS -Wsuggest-override -Woverloaded-virtual"
+	       fi;;
 	     ppc)
 	       FLAGS="-mcpu=$host_cpu"
 	       CONF_CFLAGS="$CONF_CFLAGS $FLAGS";
