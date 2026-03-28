@@ -1873,13 +1873,13 @@ static void loadCachedWorld()
     downloadingInitialTexture  = true;
 }
 
-class WorldDownLoader : cURLManager
+class WorldDownLoader final : cURLManager
 {
 public:
     void start(char * hexDigest);
 private:
     void askToBZFS();
-    virtual void finalization(char *data, unsigned int length, bool good);
+    void finalization(char *data, unsigned int length, bool good) override;
 };
 
 void WorldDownLoader::start(char * hexDigest)

@@ -42,7 +42,7 @@ std::map<std::string, std::vector<bz_ClipFieldNotifier*> > clipFieldMap;
 
 void callClipFiledCallbacks ( const char* field );
 
-class MasterBanURLHandler : public bz_BaseURLHandler
+class MasterBanURLHandler final : public bz_BaseURLHandler
 {
 public:
     bool busy;
@@ -70,7 +70,7 @@ public:
         doNext();
     }
 
-    virtual void URLDone ( const char*, const void * data, unsigned int size, bool complete )
+    void URLDone ( const char*, const void * data, unsigned int size, bool complete ) override
     {
         if (!busy)
             return;
@@ -91,12 +91,12 @@ public:
         }
     }
 
-    virtual void URLTimeout ( const char* UNUSED(URL), int UNUSED(errorCode) )
+    void URLTimeout ( const char* UNUSED(URL), int UNUSED(errorCode) ) override
     {
         doNext();
     }
 
-    virtual void URLError ( const char* UNUSED(URL), int UNUSED(errorCode), const char * UNUSED(errorString) )
+    void URLError ( const char* UNUSED(URL), int UNUSED(errorCode), const char * UNUSED(errorString) ) override
     {
         doNext();
     }
@@ -2659,8 +2659,8 @@ class V1SlashCommandWrapper : public bz_CustomSlashCommandHandlerV2
 public:
     bz_CustomSlashCommandHandler *legacyHandler = nullptr;
 
-    virtual bool SlashCommand(int playerID, int UNUSED(sourceChannel), bz_ApiString command, bz_ApiString message,
-                              bz_APIStringList *params)
+    bool SlashCommand(int playerID, int UNUSED(sourceChannel), bz_ApiString command, bz_ApiString message,
+                      bz_APIStringList *params) override final
     {
         if (legacyHandler == nullptr)
             return false;

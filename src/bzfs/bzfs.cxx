@@ -170,10 +170,10 @@ static void dropAssignedFlag(int playerIndex);
 static std::string evaluateString(const std::string&);
 
 // logging to the API
-class APILoggingCallback : public LoggingCallback
+class APILoggingCallback final : public LoggingCallback
 {
 public:
-    void log ( int level, const char* message )
+    void log ( int level, const char* message ) override
     {
         bz_LoggingEventData_V1 data;
         data.level = level;
@@ -185,7 +185,7 @@ public:
 
 APILoggingCallback apiLoggingCallback;
 
-class BZFSNetLogCB : NetworkDataLogCallback
+class BZFSNetLogCB final : NetworkDataLogCallback
 {
 public:
     void Init()
@@ -202,7 +202,7 @@ public:
     {
     }
 
-    virtual void networkDataLog ( bool send, bool udp, const unsigned char *data, unsigned int size, void *param )
+    void networkDataLog ( bool send, bool udp, const unsigned char *data, unsigned int size, void *param ) override
     {
         // let any listeners know we got net data
         NetHandler *h = (NetHandler*)param;

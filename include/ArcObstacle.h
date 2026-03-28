@@ -29,7 +29,7 @@
 #include "BzMaterial.h"
 
 
-class ArcObstacle : public Obstacle
+class ArcObstacle final : public Obstacle
 {
 public:
 
@@ -53,39 +53,39 @@ public:
                 int physics, bool bounce, bool drive, bool shoot, bool ricochet);
     ~ArcObstacle();
 
-    Obstacle* copyWithTransform(const MeshTransform&) const;
+    Obstacle* copyWithTransform(const MeshTransform&) const override;
 
     MeshObstacle* makeMesh();
 
-    const char* getType() const;
+    const char* getType() const override;
     static const char* getClassName(); // const
-    bool isValid() const;
-    bool isFlatTop() const;
+    bool isValid() const override;
+    bool isFlatTop() const override;
 
-    float intersect(const Ray&) const;
-    void getNormal(const float* p, float* n) const;
-    void get3DNormal(const float* p, float* n) const;
+    float intersect(const Ray&) const override;
+    void getNormal(const float* p, float* n) const override;
+    void get3DNormal(const float* p, float* n) const override;
 
-    bool inCylinder(const float* p, float radius, float height) const;
+    bool inCylinder(const float* p, float radius, float height) const override;
     bool inBox(const float* p, float angle,
-               float halfWidth, float halfBreadth, float height) const;
+               float halfWidth, float halfBreadth, float height) const override;
     bool inMovingBox(const float* oldP, float oldAngle,
                      const float *newP, float newAngle,
-                     float halfWidth, float halfBreadth, float height) const;
+                     float halfWidth, float halfBreadth, float height) const override;
     bool isCrossing(const float* p, float angle,
                     float halfWidth, float halfBreadth, float height,
-                    float* plane) const;
+                    float* plane) const override;
 
     bool getHitNormal(const float* pos1, float azimuth1,
                       const float* pos2, float azimuth2,
                       float halfWidth, float halfBreadth,
-                      float height, float* normal) const;
+                      float height, float* normal) const override;
 
-    int packSize() const;
-    void *pack(void*) const;
-    const void *unpack(const void*);
+    int packSize() const override;
+    void *pack(void*) const override;
+    const void *unpack(const void*) override;
 
-    void print(std::ostream& out, const std::string& indent) const;
+    void print(std::ostream& out, const std::string& indent) const override;
 
 private:
     void finalize();

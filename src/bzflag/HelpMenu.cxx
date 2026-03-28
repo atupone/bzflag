@@ -123,20 +123,20 @@ void HelpMenu::resize(int _width, int _height)
 // Help1Menu
 //
 
-class Help1Menu : public HelpMenu
+class Help1Menu final : public HelpMenu
 {
 public:
     Help1Menu();
     ~Help1Menu() {}
 
-    void      resize(int width, int height);
+    void      resize(int width, int height) override;
 
     void      onScan(const std::string& name, bool, const std::string&);
     static void       onScanCB(const std::string& name, bool press,
                                const std::string& cmd, void* userData);
 
 protected:
-    float     getLeftSide(int width, int height);
+    float     getLeftSide(int width, int height) override;
 
 private:
     void      initKeymap(const std::string& name, int index);
@@ -403,14 +403,14 @@ Help4Menu::Help4Menu() : HelpMenu("Flags")
 // Help5Menu
 //
 
-class Help5Menu : public HelpMenu
+class Help5Menu final : public HelpMenu
 {
 public:
     Help5Menu();
     ~Help5Menu() {}
 
 protected:
-    float getLeftSide(int width, int height);
+    float getLeftSide(int width, int height) override;
 };
 
 Help5Menu::Help5Menu() : HelpMenu("Good Flags")
@@ -440,14 +440,14 @@ float           Help5Menu::getLeftSide(int _width, int)
 // Help6Menu
 //
 
-class Help6Menu : public HelpMenu
+class Help6Menu final : public HelpMenu
 {
 public:
     Help6Menu();
     ~Help6Menu() {}
 
 protected:
-    float     getLeftSide(int width, int height);
+    float     getLeftSide(int width, int height) override;
 };
 
 Help6Menu::Help6Menu() : HelpMenu("Bad Flags")

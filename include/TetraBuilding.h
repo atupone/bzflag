@@ -17,14 +17,18 @@
 #ifndef BZF_TETRA_BUILDING_H
 #define BZF_TETRA_BUILDING_H
 
-#include "common.h"
-#include <string>
+// Inherits from
 #include "Obstacle.h"
+
+// System headers
+#include <string>
+
+// Common headers
 #include "MeshObstacle.h"
 #include "MeshTransform.h"
 #include "BzMaterial.h"
 
-class TetraBuilding : public Obstacle
+class TetraBuilding final : public Obstacle
 {
 public:
 
@@ -36,44 +40,44 @@ public:
                   bool drive = false, bool shoot = false, bool ricochet = false);
     ~TetraBuilding();
 
-    Obstacle* copyWithTransform(const MeshTransform&) const;
+    Obstacle* copyWithTransform(const MeshTransform&) const override;
 
     MeshObstacle* makeMesh();
 
     void        finalize();
 
-    const char*     getType() const;
+    const char*     getType() const override;
     static const char*  getClassName(); // const
-    bool        isValid() const;
+    bool        isValid() const override;
 
-    float       intersect(const Ray&) const;
-    void        getNormal(const float* p, float* n) const;
-    void        get3DNormal(const float* p, float* n) const;
+    float       intersect(const Ray&) const override;
+    void        getNormal(const float* p, float* n) const override;
+    void        get3DNormal(const float* p, float* n) const override;
 
-    bool        inCylinder(const float* p, float radius, float height) const;
+    bool        inCylinder(const float* p, float radius, float height) const override;
     bool        inBox(const float* p, float angle,
-                      float halfWidth, float halfBreadth, float height) const;
+                      float halfWidth, float halfBreadth, float height) const override;
     bool        inMovingBox(const float* oldP, float oldAngle,
                             const float *newP, float newAngle,
-                            float halfWidth, float halfBreadth, float height) const;
+                            float halfWidth, float halfBreadth, float height) const override;
     bool        isCrossing(const float* p, float angle,
                            float halfWidth, float halfBreadth, float height,
-                           float* plane) const;
+                           float* plane) const override;
 
     bool        getHitNormal(
         const float* pos1, float azimuth1,
         const float* pos2, float azimuth2,
         float halfWidth, float halfBreadth,
         float height,
-        float* normal) const;
+        float* normal) const override;
 
     void        getCorner(int index, float* pos) const;
 
-    int packSize() const;
-    void *pack(void*) const;
-    const void *unpack(const void*);
+    int packSize() const override;
+    void *pack(void*) const override;
+    const void *unpack(const void*) override;
 
-    void print(std::ostream& out, const std::string& indent) const;
+    void print(std::ostream& out, const std::string& indent) const override;
 
 private:
     void checkVertexOrder();
