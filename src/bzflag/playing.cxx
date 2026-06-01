@@ -3511,11 +3511,20 @@ static void     handlePlayerMessage(uint16_t code, uint16_t,
     {
         ShotUpdate shot;
         msg = shot.unpack(msg);
-        Player* tank = lookupPlayer(shot.player);
+        PlayerId playerId = shot.player;
+        Player* tank = lookupPlayer(playerId);
         if (!tank || tank == myTank) break;
-        RemotePlayer* remoteTank = (RemotePlayer*)tank;
-        RemoteShotPath* shotPath =
-            (RemoteShotPath*)remoteTank->getShot(shot.id);
+        RemoteShotPath* shotPath;
+        if (playerId == ServerPlayer)
+        {
+            WorldPlayer* remotePlayer = static_cast<WorldPlayer*>(tank);
+            shotPath = (RemoteShotPath*)remotePlayer->getShot(shot.id);
+        }
+        else
+        {
+            RemotePlayer* remoteTank = (RemotePlayer*)tank;
+            shotPath = (RemoteShotPath*)remoteTank->getShot(shot.id);
+        }
         if (shotPath) shotPath->update(shot, code, msg);
         PlayerId targetId;
         msg = nboUnpackUByte(msg, targetId);
