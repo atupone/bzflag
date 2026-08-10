@@ -172,35 +172,18 @@ void TetraBuilding::checkVertexOrder()
     // swap vertices 1 & 2 if we are out of order
     if (dot < 0.0f)
     {
-        float tmpVertex[3];
-        memcpy (tmpVertex, vertices[1], sizeof(tmpVertex));
-        memcpy (vertices[1], vertices[2], sizeof(vertices[1]));
-        memcpy (vertices[2], tmpVertex, sizeof(vertices[2]));
+        std::swap(vertices[1], vertices[2]);
 
-        float tmpNormals[3][3];
-        memcpy (tmpNormals, normals[1], sizeof(tmpNormals));
-        memcpy (normals[1], normals[2], sizeof(normals[1]));
-        memcpy (normals[2], tmpNormals, sizeof(normals[2]));
+        std::swap(normals[1],  normals[2]);
 
-        float tmpTexcoords[3][2];
-        memcpy (tmpTexcoords, texcoords[1], sizeof(tmpTexcoords));
-        memcpy (texcoords[1], texcoords[2], sizeof(texcoords[1]));
-        memcpy (texcoords[2], tmpTexcoords, sizeof(texcoords[2]));
+        std::swap(texcoords[1], texcoords[2]);
 
-        bool tmpBool = useNormals[1];
-        useNormals[1] = useNormals[2];
-        useNormals[2] = tmpBool;
+        std::swap(useNormals[1], useNormals[2]);
 
-        tmpBool = useTexcoords[1];
-        useTexcoords[1] = useTexcoords[2];
-        useTexcoords[2] = tmpBool;
+        std::swap(useTexcoords[1], useTexcoords[2]);
 
-        const BzMaterial* tmpMat = materials[1];
-        materials[1] = materials[2];
-        materials[2] = tmpMat;
+        std::swap(materials[1], materials[2]);
     }
-
-    return;
 }
 
 
