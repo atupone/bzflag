@@ -177,7 +177,7 @@ void TetraBuilding::checkVertexOrder()
         memcpy (vertices[1], vertices[2], sizeof(vertices[1]));
         memcpy (vertices[2], tmpVertex, sizeof(vertices[2]));
 
-        float tmpNormals[4][3];
+        float tmpNormals[3][3];
         memcpy (tmpNormals, normals[1], sizeof(tmpNormals));
         memcpy (normals[1], normals[2], sizeof(normals[1]));
         memcpy (normals[2], tmpNormals, sizeof(normals[2]));
