@@ -10,11 +10,16 @@
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#include "common.h"
-#include <math.h>
-#include <string.h>
-#include <iostream>
+// Interface
 #include "Obstacle.h"
+
+// System headers
+#include <cassert>
+#include <math.h>
+#include <iostream>
+#include <string.h>
+
+// Common headers
 #include "Intersect.h"
 #include "StateDatabase.h"
 
@@ -273,6 +278,44 @@ Obstacle* Obstacle::copyWithTransform(MeshTransform const&) const
     exit(1);
     // umm, yeah...make the compiler happy...
     return NULL;
+}
+
+float Obstacle::intersect(const Ray&) const
+{
+    assert(false);
+    return -1.0f;
+}
+
+void Obstacle::getNormal(const float*, float*) const
+{
+    assert(false);
+    return;
+}
+
+bool Obstacle::inCylinder(const float*,float, float) const
+{
+    assert(false);
+    return false;
+}
+
+bool Obstacle::inBox(const float*, float, float, float, float) const
+{
+    assert(false);
+    return false;
+}
+
+bool Obstacle::inMovingBox(const float*, float, const float*, float,
+                           float, float, float) const
+{
+    assert(false);
+    return false;
+}
+
+bool Obstacle::getHitNormal(const float*, float, const float*, float,
+                            float, float, float, float*) const
+{
+    assert(false);
+    return false;
 }
 
 

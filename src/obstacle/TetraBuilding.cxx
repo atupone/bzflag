@@ -15,7 +15,6 @@
 
 // System headers
 #include <math.h>
-#include <assert.h>
 
 // Common headers
 #include "global.h"
@@ -31,12 +30,6 @@
 
 
 const char* TetraBuilding::typeName = "TetraBuilding";
-
-
-TetraBuilding::TetraBuilding()
-{
-    return;
-}
 
 
 TetraBuilding::TetraBuilding(const MeshTransform& xform,
@@ -62,14 +55,6 @@ TetraBuilding::TetraBuilding(const MeshTransform& xform,
     shootThrough = shoot;
     ricochet     = rico;
 
-    finalize();
-
-    return;
-}
-
-
-TetraBuilding::~TetraBuilding()
-{
     return;
 }
 
@@ -84,12 +69,6 @@ Obstacle* TetraBuilding::copyWithTransform(const MeshTransform& xform) const
                           useNormals, useTexcoords, const_cast<const BzMaterial**>(materials),
                           driveThrough, shootThrough, ricochet);
     return copy;
-}
-
-
-void TetraBuilding::finalize()
-{
-    return;
 }
 
 
@@ -203,68 +182,6 @@ bool TetraBuilding::isValid() const
 {
     return true;
 }
-
-
-float TetraBuilding::intersect(const Ray&) const
-{
-    assert(false);
-    return -1.0f;
-}
-
-
-void TetraBuilding::get3DNormal(const float*, float*) const
-{
-    assert(false);
-    return;
-}
-
-
-void TetraBuilding::getNormal(const float*, float*) const
-{
-    assert(false);
-    return;
-}
-
-
-bool TetraBuilding::getHitNormal(const float*, float, const float*, float,
-                                 float, float, float, float*) const
-{
-    assert(false);
-    return false;
-}
-
-
-bool TetraBuilding::inCylinder(const float*,float, float) const
-{
-    assert(false);
-    return false;
-}
-
-
-bool TetraBuilding::inBox(const float*, float, float, float, float) const
-{
-    assert(false);
-    return false;
-}
-
-
-bool TetraBuilding::inMovingBox(const float*, float, const float*, float,
-                                float, float, float) const
-{
-    assert(false);
-    return false;
-}
-
-
-bool TetraBuilding::isCrossing(const float* UNUSED(p), float UNUSED(_angle),
-                               float UNUSED(dx), float UNUSED(dy), float UNUSED(height),
-                               float* UNUSED(_plane)) const
-{
-    assert(false);
-    return false;
-}
-
-
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -408,8 +325,6 @@ const void *TetraBuilding::unpack(const void* buf)
         buf = nboUnpackInt(buf, matindex);
         materials[v] = MATERIALMGR.getMaterial(matindex);
     }
-
-    finalize();
 
     return buf;
 }

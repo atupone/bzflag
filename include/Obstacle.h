@@ -128,11 +128,11 @@ public:
     /** This function returns the time of intersection between the obstacle
         and a Ray object. If the ray does not intersect this obstacle -1 is
         returned. */
-    virtual float intersect(const Ray&) const = 0;
+    virtual float intersect(const Ray&) const;
 
     /** This function computes the two-dimensional surface normal of this
         obstacle at the point @c p. The normal is stored in @c n. */
-    virtual void getNormal(const float* p, float* n) const = 0;
+    virtual void getNormal(const float* p, float* n) const;
 
     /** This function computes the three-dimensional surface normal of this
         obstacle at the point @c p. The normal is stored in @c n. */
@@ -140,19 +140,19 @@ public:
 
     /** This function checks if a tank, approximated as a cylinder with base
         centre in point @c p and radius @c radius, intersects this obstacle. */
-    virtual bool inCylinder(const float* p, float radius, float height) const = 0;
+    virtual bool inCylinder(const float* p, float radius, float height) const;
 
     /** This function checks if a tank, approximated as a box rotated around its
         Z axis, intersects this obstacle. */
     virtual bool inBox(const float* p, float angle,
-                       float halfWidth, float halfBreadth, float height) const = 0;
+                       float halfWidth, float halfBreadth, float height) const;
 
     /** This function checks if a tank, approximated as a box rotated around its
         Z axis, intersects this obstacle. It also factors in the difference
         between the old Z location and the new Z location */
     virtual bool inMovingBox(const float* oldP, float oldAngle,
                              const float* newP, float newAngle,
-                             float halfWidth, float halfBreadth, float height) const = 0;
+                             float halfWidth, float halfBreadth, float height) const;
 
     /** This function checks if a horizontal rectangle crosses the surface of
         this obstacle.
@@ -184,7 +184,7 @@ public:
     virtual bool getHitNormal(const float* pos1, float azimuth1,
                               const float* pos2, float azimuth2,
                               float halfWidth, float halfBreadth,
-                              float height, float* normal) const = 0;
+                              float height, float* normal) const;
 
     /** This function returns @c true if tanks can pass through this object,
         @c false if they can't. */
