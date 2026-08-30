@@ -172,7 +172,7 @@ if test x$enable_robots != xno; then
 fi
 
 AC_ARG_ENABLE(native,    [  --enable-native         optimized for the CPU used to build])
-AC_ARG_ENABLE(Woverride, [  --enable-Woverride      warning for missing override of virual])
+AC_ARG_ENABLE(Woverride, [  --enable-Woverride      warning for missing override of virtual])
 
 # debugging and profiling
 AC_ARG_ENABLE(debug,     [  --enable-debug          turn on debugging])
