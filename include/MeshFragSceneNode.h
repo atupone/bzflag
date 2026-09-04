@@ -33,13 +33,11 @@
 // - The lists are all GL_TRIANGLE lists
 //
 
-class MeshFace;
-
 class MeshFragSceneNode final : public WallSceneNode
 {
 
 public:
-    MeshFragSceneNode(int faceCount, const MeshFace** faces);
+    MeshFragSceneNode(int faceCount, const class MeshFace** faces);
     ~MeshFragSceneNode();
 
     // virtual functions from SceneNode
@@ -58,10 +56,9 @@ protected:
     class Geometry final : public RenderNode
     {
     public:
-        Geometry(MeshFragSceneNode &node);
-        ~Geometry();
+        Geometry(MeshFragSceneNode &node_) : sceneNode(node_) {}
+        ~Geometry() = default;
 
-        void init();
         void setStyle(int style);
         void render() override;
         void renderShadow() override;
@@ -73,14 +70,8 @@ protected:
         void drawVN() const; // draw with normals
         void drawVTN() const; // draw with texcoords and normals
 
-        void initDisplayList();
-        void freeDisplayList();
-        static void initContext(void *data);
-        static void freeContext(void *data);
-
     private:
-        int style;
-        GLuint list;
+        int style = 0;
         MeshFragSceneNode &sceneNode;
     };
 

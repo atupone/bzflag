@@ -23,7 +23,7 @@ class FlagSceneNode final : public SceneNode
 {
 public:
     FlagSceneNode(const GLfloat pos[3]);
-    ~FlagSceneNode();
+    ~FlagSceneNode() = default;
 
     static void     waveFlag(float dt);
     static void     freeFlag();

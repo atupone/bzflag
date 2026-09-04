@@ -16,6 +16,7 @@
 // system headers
 #include <cstdlib>
 #include <cmath>
+#include <vector>
 
 // common implementation headers
 #include "OpenGLGState.h"
@@ -36,7 +37,6 @@ constexpr int waveLists = 8;      // GL list count
 int      flagChunks = 8;     // draw flag as 8 quads
 bool     geoPole = false;    // draw the pole as quads
 bool     realFlag = false;   // don't use billboarding
-bool     flagLists = false;  // use display lists
 int      triCount = 0;       // number of rendered triangles
 
 const GLfloat Unit = 0.8f;        // meters
@@ -66,23 +66,20 @@ public:
     }
 
     void waveFlag(float dt);
-    void freeFlag();
 
     void execute() const;
-    void executeNoList() const;
 
 private:
     int refCount;
     float ripple1;
     float ripple2;
 
-    GLuint glList;
     GLfloat verts[maxChunks * 2][3];
     GLfloat txcds[maxChunks * 2][2];
 };
 
 
-inline void WaveGeometry::executeNoList() const
+inline void WaveGeometry::execute() const
 {
     glDisableClientState(GL_NORMAL_ARRAY);
     glVertexPointer(3, GL_FLOAT, 0, verts);
@@ -92,19 +89,8 @@ inline void WaveGeometry::executeNoList() const
     return;
 }
 
-inline void WaveGeometry::execute() const
-{
-    if (flagLists)
-        glCallList(glList);
-    else
-        executeNoList();
-    return;
-}
-
-
 WaveGeometry::WaveGeometry() : refCount(0)
 {
-    glList = INVALID_GL_LIST_ID;
     ripple1 = (float)(2.0 * M_PI * bzfrand());
     ripple2 = (float)(2.0 * M_PI * bzfrand());
     return;
@@ -165,32 +151,13 @@ void WaveGeometry::waveFlag(float dt)
         txcds[i*2+1][1] = 0.0f;
     }
 
-    // make a GL display list if desired
-    if (flagLists)
-    {
-        glList = glGenLists(1);
-        glNewList(glList, GL_COMPILE);
-        executeNoList();
-        glEndList();
-    }
-    else
-        glList = INVALID_GL_LIST_ID;
-
     triCount = flagChunks * 2;
 
     return;
 }
 
 
-void WaveGeometry::freeFlag()
-{
-    if ((refCount > 0) && (glList != INVALID_GL_LIST_ID))
-        glDeleteLists(glList, 1);
-    return;
-}
-
-
-WaveGeometry allWaves[waveLists];
+std::vector<WaveGeometry> allWaves(waveLists);
 
 
 /******************************************************************************/
@@ -213,22 +180,15 @@ FlagSceneNode::FlagSceneNode(const GLfloat pos[3]) :
     setRadius(6.0f * Unit * Unit);
 }
 
-FlagSceneNode::~FlagSceneNode()
-{
-    // do nothing
-}
-
 void            FlagSceneNode::waveFlag(float dt)
 {
-    flagLists = BZDB.isTrue("flagLists");
-    for (int i = 0; i < waveLists; i++)
-        allWaves[i].waveFlag(dt);
+    for (auto &wave : allWaves)
+        wave.waveFlag(dt);
 }
 
 void            FlagSceneNode::freeFlag()
 {
-    for (int i = 0; i < waveLists; i++)
-        allWaves[i].freeFlag();
+    allWaves.clear();
 }
 
 void            FlagSceneNode::move(const GLfloat pos[3])

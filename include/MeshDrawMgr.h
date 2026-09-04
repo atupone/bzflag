@@ -15,18 +15,11 @@
 // 1st
 #include "common.h"
 
-// System headers
-#include <vector>
-
-// common interface headers
-#include "bzfgl.h"
-#include "MeshDrawInfo.h"
-
 class MeshDrawMgr
 {
 public:
-    MeshDrawMgr(const MeshDrawInfo* drawInfo);
-    ~MeshDrawMgr();
+    MeshDrawMgr(const class MeshDrawInfo* drawInfo_) : drawInfo(drawInfo_) {}
+    ~MeshDrawMgr() = default;
 
     void executeSet(int lod, int set, bool useNormals, bool useTexcoords);
     void executeSetGeometry(int lod, int set);
@@ -34,16 +27,8 @@ public:
 private:
     void rawExecuteCommands(int lod, int set);
 
-    void makeLists();
-    void freeLists();
-    static void initContext(void* data);
-    static void freeContext(void* data);
-
 private:
     const MeshDrawInfo* drawInfo;
-
-    using LodList = std::vector<int>;
-    std::vector<LodList> lodLists;
 };
 
 
