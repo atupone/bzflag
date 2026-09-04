@@ -440,7 +440,7 @@ void            FlagSceneNode::FlagRenderNode::render()
         // Flag drawing
         if (is_billboard)
         {
-            // Wawing flag
+            // Waving flag
             if (realFlag)
             {
                 const float Tilt = sceneNode->tilt;
@@ -466,7 +466,7 @@ void            FlagSceneNode::FlagRenderNode::render()
         }
         else
         {
-            // Not wawing flag
+            // Not waving flag
             glBegin(GL_TRIANGLE_STRIP);
             glTexCoord2f(0.0f, 0.0f);
             glVertex3f(0.0f, 0.0f, base);
