@@ -54,9 +54,11 @@ protected:
     public:
         FlagRenderNode(const FlagSceneNode*);
         ~FlagRenderNode();
-        void        render() override;
+        void        render() override { render(false); }
+        void  renderShadow() override { render(true); }
         const GLfloat*  getPosition() const override;
     private:
+        void render(bool shadow);
         const FlagSceneNode* sceneNode;
         int      waveReference;
     };

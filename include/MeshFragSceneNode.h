@@ -23,6 +23,7 @@
 
 // Global headers
 #include "BzMaterial.h"
+#include "Vertex_Chunk.h"
 
 //
 // NOTES:
@@ -65,12 +66,6 @@ protected:
         const GLfloat* getPosition() const override;
 
     private:
-        void drawV() const; // draw with just vertices
-        void drawVT() const; // draw with texcoords
-        void drawVN() const; // draw with normals
-        void drawVTN() const; // draw with texcoords and normals
-
-    private:
         int style = 0;
         MeshFragSceneNode &sceneNode;
     };
@@ -84,9 +79,8 @@ private:
     bool noRadar;
     bool noShadow;
     GLint arrayCount;
-    GLfloat* vertices;
-    GLfloat* normals;
-    GLfloat* texcoords;
+
+    Vertex_Chunk chunk;
 
     friend class MeshFragSceneNode::Geometry;
 };

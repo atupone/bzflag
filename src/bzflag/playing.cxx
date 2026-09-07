@@ -58,6 +58,7 @@
 #include "Team.h"
 #include "TextureManager.h"
 #include "TextUtils.h"
+#include "Vertex_Chunk.h"
 #include "version.h"
 #include "WordFilter.h"
 #include "ZSceneDatabase.h"
@@ -6992,6 +6993,7 @@ static void     playingLoop()
 
         BZDBCache::update();
 
+        Vertex_Chunk::orphanDynamicBuffers();
         // set this step game time
         GameTime::setStepTime();
 

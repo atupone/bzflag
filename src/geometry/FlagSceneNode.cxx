@@ -23,6 +23,7 @@
 #include "OpenGLMaterial.h"
 #include "StateDatabase.h"
 #include "BZDBCache.h"
+#include "Vertex_Chunk.h"
 
 // local implementation headers
 #include "ViewFrustum.h"
@@ -67,29 +68,26 @@ public:
 
     void waveFlag(float dt);
 
-    void execute() const;
+    void execute(bool shadow) const;
 
 private:
     int refCount;
     float ripple1;
     float ripple2;
 
-    GLfloat verts[maxChunks * 2][3];
-    GLfloat txcds[maxChunks * 2][2];
+    glm::vec3 verts[maxChunks * 2];
+    glm::vec2 txcds[maxChunks * 2];
+
+    mutable Vertex_Chunk chunk;
 };
 
 
-inline void WaveGeometry::execute() const
+inline void WaveGeometry::execute(bool shadow) const
 {
-    glDisableClientState(GL_NORMAL_ARRAY);
-    glVertexPointer(3, GL_FLOAT, 0, verts);
-    glTexCoordPointer(2, GL_FLOAT, 0, txcds);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, (flagChunks + 1) * 2);
-    glEnableClientState(GL_NORMAL_ARRAY);
-    return;
+    chunk.draw(GL_TRIANGLE_STRIP, shadow, (flagChunks + 1) * 2);
 }
 
-WaveGeometry::WaveGeometry() : refCount(0)
+WaveGeometry::WaveGeometry() : refCount(0), chunk(Vertex_Chunk::VT, maxChunks * 2, Vertex_Chunk::Dynamic)
 {
     ripple1 = (float)(2.0 * M_PI * bzfrand());
     ripple2 = (float)(2.0 * M_PI * bzfrand());
@@ -128,30 +126,31 @@ void WaveGeometry::waveFlag(float dt)
         const float wave1 = damp * (sinf(angle2) + sinRipple2S);
         const float wave2 = wave0 + damp * sinRipple2;
 
+        const float wx = Width * x;
         const float shift1 = wave0;
-        verts[i*2][0] = verts[i*2+1][0] = Width * x;
+
+        const int idx = i << 1;
         if (realFlag)
         {
             // flag pole is Z axis
-            verts[i*2][1] = wave1;
-            verts[i*2+1][1] = wave2;
-            verts[i*2][2] = base + Height - shift1;
-            verts[i*2+1][2] = base - shift1;
+            verts[idx]     = glm::vec3(wx, wave1, base + Height - shift1);
+            verts[idx + 1] = glm::vec3(wx, wave2, base - shift1);
         }
         else
         {
             // flag pole is Y axis
-            verts[i*2][1] = base + Height - shift1;
-            verts[i*2+1][1] = base - shift1;
-            verts[i*2][2] = wave1;
-            verts[i*2+1][2] = wave2;
+            verts[idx]     = glm::vec3(wx, base + Height - shift1, wave1);
+            verts[idx + 1] = glm::vec3(wx, base - shift1,          wave2);
         }
-        txcds[i*2][0] = txcds[i*2+1][0] = x;
-        txcds[i*2][1] = 1.0f;
-        txcds[i*2+1][1] = 0.0f;
+        txcds[idx]     = glm::vec2(x, 1.0f);
+        txcds[idx + 1] = glm::vec2(x, 0.0f);
     }
 
     triCount = flagChunks * 2;
+    const int totalVerts = (flagChunks + 1) * 2;
+    chunk.vertexData(verts, totalVerts);
+    chunk.textureData(txcds, totalVerts);
+    chunk.syncInterlaced();
 
     return;
 }
@@ -216,9 +215,10 @@ void            FlagSceneNode::setWind(const GLfloat wind[3], float dt)
     else
     {
         // the angle points from the end of the flag to the pole
-        const float cos_val = cosf(angle * (float)(M_PI / 180.0f));
-        const float sin_val = sinf(angle * (float)(M_PI / 180.0f));
-        const float force = (wind[0] * sin_val) - (wind[1] * cos_val);
+        const float rad = angle * static_cast<float>(M_PI / 180.0f);
+        const float cos_val = cosf(rad);
+        const float sin_val = sinf(rad);
+        const float force = wind[0] * sin_val - wind[1] * cos_val;
         const float angleScale = 25.0f;
         angle = fmodf(angle + (force * dt * angleScale), 360.0f);
 
@@ -368,7 +368,7 @@ FlagSceneNode::FlagRenderNode::~FlagRenderNode()
 }
 
 
-void            FlagSceneNode::FlagRenderNode::render()
+void            FlagSceneNode::FlagRenderNode::render(bool shadow)
 {
     float base = BZDBCache::flagPoleSize;
     float poleWidth = BZDBCache::flagPoleWidth;
@@ -412,7 +412,7 @@ void            FlagSceneNode::FlagRenderNode::render()
             else
                 RENDERER.getViewFrustum().executeBillboard();
 
-            allWaves[waveReference].execute();
+            allWaves[waveReference].execute(shadow);
             addTriangleCount(triCount);
 
             if (realFlag)

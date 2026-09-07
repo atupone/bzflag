@@ -15,20 +15,70 @@
 // 1st
 #include "common.h"
 
+// System headers
+#include <vector>
+#include <cstdint>
+
+// Common headers
+#include "Vertex_Chunk.h"
+#include "Element_Chunk.h"
+
 class MeshDrawMgr
 {
 public:
-    MeshDrawMgr(const class MeshDrawInfo* drawInfo_) : drawInfo(drawInfo_) {}
+    MeshDrawMgr(const class MeshDrawInfo* drawInfo_);
     ~MeshDrawMgr() = default;
 
-    void executeSet(int lod, int set, bool useNormals, bool useTexcoords);
-    void executeSetGeometry(int lod, int set);
+    void executeSet(int lod, int set, bool useNormals = true, bool useTexcoords = true);
 
 private:
-    void rawExecuteCommands(int lod, int set);
+    void ensureSetLoaded(int lod, int set);
 
-private:
-    const MeshDrawInfo* drawInfo;
+    // Fast O(1) inline retrieval: direct pointer + count slice
+    inline const Element_Chunk* getSetChunks(int lod, int set, size_t& count)
+    {
+        if (lod < 0 || lod >= lodCount)
+        {
+            count = 0;
+            return nullptr;
+        }
+
+        const size_t slot = static_cast<size_t>(lod * maxSetsPerLod + set);
+        if (slot >= setOffsets.size())
+        {
+            count = 0;
+            return nullptr;
+        }
+
+        uint32_t offset = setOffsets[slot];
+        count = setCounts[slot];
+
+        // Lazy-load chunk geometry on demand if not ready
+        if (count == 0 && isSetUnloaded(lod, set))
+        {
+            ensureSetLoaded(lod, set);
+            offset = setOffsets[slot];
+            count = setCounts[slot];
+        }
+
+        return (count > 0) ? &flatChunks[offset] : nullptr;
+    }
+
+    bool isSetUnloaded(int lod, int set) const;
+
+    const MeshDrawInfo* drawInfo = nullptr;
+    Vertex_Chunk  vChunk;
+
+    int lodCount = 0;
+    int maxSetsPerLod = 0;
+
+    // Contiguous memory pool for all chunks
+    std::vector<Element_Chunk> flatChunks;
+
+    // Flat indexing lookup: slot = (lod * maxSetsPerLod) + set
+    std::vector<uint32_t> setOffsets;
+    std::vector<uint32_t> setCounts;
+    std::vector<uint8_t>  setLoadedFlags;
 };
 
 

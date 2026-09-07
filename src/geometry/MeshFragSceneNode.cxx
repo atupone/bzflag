@@ -38,60 +38,6 @@
 // NOTE: this should be based on visual pixel area
 static int minLightDisabling = 100;
 
-inline void MeshFragSceneNode::Geometry::drawV() const
-{
-    glDisableClientState(GL_NORMAL_ARRAY);
-    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-
-    glVertexPointer(3, GL_FLOAT, 0, sceneNode.vertices);
-    glDrawArrays(GL_TRIANGLES, 0, sceneNode.arrayCount * 3);
-
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-    glEnableClientState(GL_NORMAL_ARRAY);
-
-    return;
-}
-
-
-inline void MeshFragSceneNode::Geometry::drawVT() const
-{
-    glDisableClientState(GL_NORMAL_ARRAY);
-
-    glVertexPointer(3, GL_FLOAT, 0, sceneNode.vertices);
-    glTexCoordPointer(2, GL_FLOAT, 0, sceneNode.texcoords);
-    glDrawArrays(GL_TRIANGLES, 0, sceneNode.arrayCount * 3);
-
-    glEnableClientState(GL_NORMAL_ARRAY);
-
-    return;
-}
-
-
-inline void MeshFragSceneNode::Geometry::drawVN() const
-{
-    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-
-    glVertexPointer(3, GL_FLOAT, 0, sceneNode.vertices);
-    glNormalPointer(GL_FLOAT, 0, sceneNode.normals);
-    glDrawArrays(GL_TRIANGLES, 0, sceneNode.arrayCount * 3);
-
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-
-    return;
-}
-
-
-inline void MeshFragSceneNode::Geometry::drawVTN() const
-{
-    glVertexPointer(3, GL_FLOAT, 0, sceneNode.vertices);
-    glNormalPointer(GL_FLOAT, 0, sceneNode.normals);
-    glTexCoordPointer(2, GL_FLOAT, 0, sceneNode.texcoords);
-    glDrawArrays(GL_TRIANGLES, 0, sceneNode.arrayCount * 3);
-
-    return;
-}
-
-
 void MeshFragSceneNode::Geometry::render()
 {
     const int triangles = sceneNode.arrayCount;
@@ -103,20 +49,8 @@ void MeshFragSceneNode::Geometry::render()
     // set the color
     sceneNode.setColor();
 
-    if (BZDBCache::lighting)
-    {
-        if (BZDBCache::texture)
-            drawVTN();
-        else
-            drawVN();
-    }
-    else
-    {
-        if (BZDBCache::texture)
-            drawVT();
-        else
-            drawV();
-    }
+    sceneNode.chunk.enableArrays(BZDBCache::texture, BZDBCache::lighting, false);
+    sceneNode.chunk.glDrawArrays(GL_TRIANGLES);
 
     if (switchLights)
         RENDERER.reenableLights();
@@ -129,11 +63,8 @@ void MeshFragSceneNode::Geometry::render()
 
 void MeshFragSceneNode::Geometry::renderShadow()
 {
-    const int triangles = sceneNode.arrayCount;
-    glVertexPointer(3, GL_FLOAT, 0, sceneNode.vertices);
-    glDrawArrays(GL_TRIANGLES, 0, triangles * 3);
-    addTriangleCount(triangles);
-    return;
+    sceneNode.chunk.draw(GL_TRIANGLES, true);
+    addTriangleCount(sceneNode.arrayCount);
 }
 
 void MeshFragSceneNode::Geometry::setStyle(int style_)
@@ -155,6 +86,7 @@ MeshFragSceneNode::MeshFragSceneNode(int faceCount_, const MeshFace** faces_)
     , faceCount(faceCount_)
     , faces(faces_)
     , arrayCount(0)
+    , chunk()
 {
     int i, j, k;
 
@@ -204,73 +136,73 @@ MeshFragSceneNode::MeshFragSceneNode(int faceCount_, const MeshFace** faces_)
 
     // make the lists
     const int vertexCount = (arrayCount * 3);
-    normals = new GLfloat[vertexCount * 3];
-    vertices = new GLfloat[vertexCount * 3];
-    texcoords = new GLfloat[vertexCount * 2];
+    std::vector<glm::vec3> normals(vertexCount);
+    std::vector<glm::vec3> vertices(vertexCount);
+    std::vector<glm::vec2> texcoords(vertexCount);
 
     // fill in the lists
     int arrayIndex = 0;
     for (i = 0; i < faceCount; i++)
     {
         const MeshFace* face = faces[i];
+        const int vCount = face->getVertexCount();
+        // number of triangles
+        const int tcount = (vCount - 2);
 
         // pre-generate the texcoords if required
-        std::vector<glm::vec2> t(face->getVertexCount());
+        std::vector<glm::vec2> t(vCount);
         if (!face->useTexcoords())
         {
-            std::vector<glm::vec3> v(face->getVertexCount());
-            for (j = 0; j < face->getVertexCount(); j++)
+            std::vector<glm::vec3> v(vCount);
+            for (j = 0; j < vCount; j++)
                 v[j] = face->getVertex(j);
             MeshSceneNodeGenerator::makeTexcoords(face->getPlane(), v, t);
         }
 
-        // number of triangles
-        const int tcount = (face->getVertexCount() - 2);
+        const glm::vec3 facePlaneNormal = glm::make_vec3(face->getPlane());
+        const bool useNorms = face->useNormals();
+        const bool useUVs = face->useTexcoords();
 
-        for (j = 0; j < tcount; j++)
+        const int numVertsInFace = tcount * 3;
+        for (int n = 0; n < numVertsInFace; n++)
         {
-            for (k = 0; k < 3 ; k++)
-            {
-                const int aIndex = (arrayIndex + (j * 3) + k);
-                int vIndex; // basically GL_TRIANGLE_FAN done the hard way
-                if (k == 0)
-                    vIndex = 0;
-                else
-                    vIndex = (j + k) % face->getVertexCount();
+            j = n / 3;
+            k = n % 3;
+            // basically GL_TRIANGLE_FAN done the hard way
+            const int vIndex = (k == 0) ? 0 : (j + k);
 
-                // get the vertices
-                memcpy(&vertices[aIndex * 3], glm::value_ptr(face->getVertex(vIndex)), sizeof(float[3]));
+            // get the vertices
+            vertices[arrayIndex] = face->getVertex(vIndex);
 
-                // get the normals
-                if (face->useNormals())
-                    memcpy(&normals[aIndex * 3], glm::value_ptr(face->getNormal(vIndex)), sizeof(float[3]));
-                else
-                    memcpy(&normals[aIndex * 3], face->getPlane(), sizeof(float[3]));
+            // get the normals
+            normals[arrayIndex] = useNorms ? face->getNormal(vIndex) : facePlaneNormal;
 
-                // get the texcoords
-                if (face->useTexcoords())
-                    memcpy(&texcoords[aIndex * 2], glm::value_ptr(face->getTexcoord(vIndex)), sizeof(float[2]));
-                else
-                {
-                    texcoords[aIndex * 2]     = t[vIndex].x;
-                    texcoords[aIndex * 2 + 1] = t[vIndex].y;
-                }
-            }
+            // get the texcoords
+            texcoords[arrayIndex] = useUVs ? face->getTexcoord(vIndex) : t[vIndex];
+
+            ++arrayIndex;
         }
-
-        arrayIndex = arrayIndex + (3 * tcount);
     }
 
     assert(arrayIndex == (arrayCount * 3));
+
+    // Upload geometry data into Vertex_Chunk
+    const int totalVerts = arrayCount * 3;
+
+    // Allocate the actual chunk memory via move-assignment operator
+    chunk = Vertex_Chunk(Vertex_Chunk::VTN, totalVerts);
+
+    // Fill and upload data safely
+    chunk.vertexData(vertices);
+    chunk.normalData(normals);
+    chunk.textureData(texcoords);
+    chunk.syncInterlaced();
 }
 
 
 MeshFragSceneNode::~MeshFragSceneNode()
 {
     delete[] faces;
-    delete[] vertices;
-    delete[] normals;
-    delete[] texcoords;
 }
 
 

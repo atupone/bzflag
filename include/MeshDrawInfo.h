@@ -86,6 +86,7 @@ public:
     int getLodCount() const;
     const DrawLod* getDrawLods() const;
 
+    int getVertexCount() const { return cornerCount; }
     const glm::vec3* getVertices() const;
     const glm::vec3* getNormals() const;
     const glm::vec2* getTexcoords() const;
