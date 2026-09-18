@@ -93,11 +93,11 @@ void            PolyWallSceneNode::Geometry::drawVT() const
 PolyWallSceneNode::PolyWallSceneNode(const std::vector<glm::vec3>& vertex,
                                      const std::vector<glm::vec2>& uv)
 {
-    const int count = vertex.size();
+    const auto count = vertex.size();
     assert(uv.size() == count);
 
     // figure out plane (find non-colinear edges and get cross product)
-    int i;
+    size_t i;
     glm::vec3 uEdge = vertex[0] - vertex[count - 1];
     float uLen = glm::length2(uEdge);
     glm::vec3 norm(0.0f);

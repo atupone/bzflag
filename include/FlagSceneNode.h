@@ -60,7 +60,7 @@ protected:
     private:
         void render(bool shadow);
         const FlagSceneNode* sceneNode;
-        int      waveReference;
+        size_t waveReference;
     };
     friend class FlagRenderNode;
 

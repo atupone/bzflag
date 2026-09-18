@@ -364,6 +364,8 @@ FlagSceneNode::FlagRenderNode::FlagRenderNode(
 
 FlagSceneNode::FlagRenderNode::~FlagRenderNode()
 {
+    if (waveReference >= allWaves.size())
+        return;
     allWaves[waveReference].unrefer();
 }
 

@@ -150,8 +150,9 @@ MeshPolySceneNode::MeshPolySceneNode(const float _plane[4],
                                      const std::vector<glm::vec2>& texcoords) :
     node(this, vertices, normals, texcoords, plane)
 {
-    int i, j;
-    const int count = vertices.size();
+    size_t i;
+    int j;
+    const auto count = vertices.size();
     assert(texcoords.size() == count);
     assert(normals.empty() || (normals.size() == count));
 
